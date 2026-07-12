@@ -89,8 +89,8 @@ export const availabilitySchema = z.object({
 });
 
 export const bookingDraftSchema = z.object({
-  alumniId: z.string().cuid(),
-  sessionTypeOfferingId: z.string().cuid(),
+  alumniId: z.string().min(1),
+  sessionTypeOfferingId: z.string().min(1),
   scheduledStartAt: z.string().datetime(),
   scheduledEndAt: z.string().datetime(),
 });
