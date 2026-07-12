@@ -58,27 +58,23 @@ export async function createBookingDraft(input: unknown) {
         error: "That time was just booked. Please choose another slot.",
       } as const;
 
-    const booking = await prisma.$transaction(async (tx) => {
-      const b = await tx.booking.create({
-        data: {
-          studentId: userId,
-          alumniId: data.alumniId,
-          sessionTypeOfferingId: data.sessionTypeOfferingId,
-          scheduledStartAt: new Date(data.scheduledStartAt),
-          scheduledEndAt: new Date(data.scheduledEndAt),
-          status: "pending_payment",
-        },
-        include: { alumni: true, sessionType: true },
-      });
+    const booking = await prisma.booking.create({
+      data: {
+        studentId: userId,
+        alumniId: data.alumniId,
+        sessionTypeOfferingId: data.sessionTypeOfferingId,
+        scheduledStartAt: new Date(data.scheduledStartAt),
+        scheduledEndAt: new Date(data.scheduledEndAt),
+        status: "pending_payment",
+      },
+      include: { alumni: true, sessionType: true },
+    });
 
-      await tx.payment.create({
-        data: {
-          bookingId: b.id,
-          amountPaise: offering.pricePaise,
-        },
-      });
-
-      return b;
+    await prisma.payment.create({
+      data: {
+        bookingId: booking.id,
+        amountPaise: offering.pricePaise,
+      },
     });
 
     return { success: true, data: booking } as const;
