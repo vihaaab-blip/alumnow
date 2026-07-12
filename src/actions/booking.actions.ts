@@ -80,7 +80,8 @@ export async function createBookingDraft(input: unknown) {
     return { success: true, data: booking } as const;
   } catch (error) {
     console.error("createBookingDraft failed", error);
-    return { success: false, error: "Could not create booking. Please refresh and try again." } as const;
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: `Could not create booking: ${detail}` } as const;
   }
 }
 
