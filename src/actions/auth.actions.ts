@@ -11,6 +11,76 @@ import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import type { ApiResponse } from "@/types";
 
+const DEMO_PASSWORD = "password123";
+const DEMO_ACCOUNTS = new Set(["student1@alumnow.com", "alumni1@alumnow.com", "admin@alumnow.com"]);
+
+async function ensureDemoAccount(email: string, password: string) {
+  if (!DEMO_ACCOUNTS.has(email) || password !== DEMO_PASSWORD) return;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing?.passwordHash) return;
+
+  const passwordHash = await hash(DEMO_PASSWORD, 12);
+
+  if (email === "admin@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "admin", emailVerifiedAt: new Date() },
+      create: {
+        email,
+        passwordHash,
+        role: "admin",
+        emailVerifiedAt: new Date(),
+        adminUser: { create: {} },
+      },
+    });
+    return;
+  }
+
+  if (email === "alumni1@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "alumnus", emailVerifiedAt: new Date() },
+      create: {
+        email,
+        passwordHash,
+        role: "alumnus",
+        emailVerifiedAt: new Date(),
+        alumniProfile: {
+          create: {
+            fullName: "Priya Sharma",
+            universityName: "UC Berkeley",
+            course: "B.Sc. Computer Science",
+            country: "United States",
+            graduationYearJbcn: 2021,
+            currentStudyLevel: "undergraduate",
+            qsRankingTier: "top50",
+            bio: "JBCN alum helping students navigate applications and student life.",
+            languages: JSON.stringify(["English", "Hindi"]),
+            verificationStatus: "approved",
+            isVerifiedJbcnAlumnus: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+    return;
+  }
+
+  await prisma.user.upsert({
+    where: { email },
+    update: { passwordHash, role: "student", emailVerifiedAt: new Date() },
+    create: {
+      email,
+      passwordHash,
+      role: "student",
+      phone: "+919876543210",
+      emailVerifiedAt: new Date(),
+      studentProfile: { create: { fullName: "Aarav Patel", currentGrade: "A2" } },
+    },
+  });
+}
+
 export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
   try { const ip = (await headers()).get("x-forwarded-for") ?? "unknown"; if (!rateLimit(`signup:${ip}`, { max: 3, windowMs: 900000 })) return { success: false, error: "Too many signup attempts. Try again in 15 minutes." }; const parsed = signupSchema.parse(input); const existing = await prisma.user.findUnique({ where: { email: parsed.email } }); if (existing) return { success: false, error: "An account with this email already exists." }; const passwordHash = await hash(parsed.password, 12); const user = await prisma.user.create({ data: { email: parsed.email, passwordHash, phone: parsed.phone, role: "student", emailVerifiedAt: new Date(), studentProfile: { create: { fullName: parsed.fullName, dateOfBirth: parsed.dateOfBirth instanceof Date ? parsed.dateOfBirth : null, currentGrade: parsed.currentGrade, school: parsed.school } } } }); await sendEmail(emailTemplates.signupVerification(parsed.email, parsed.fullName), user.id); await signIn("credentials", { email: parsed.email, password: parsed.password, redirect: false }); return { success: true, data: { redirectTo: "/dashboard" } }; } catch (error) { if (error instanceof Error && "flatten" in error) return { success: false, error: "Please check your details." }; return { success: false, error: "Something went wrong. Please try again." }; }
 }
@@ -18,6 +88,7 @@ export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: 
 export async function login(input: { email: string; password: string }): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
     const parsed = loginSchema.parse(input);
+    await ensureDemoAccount(parsed.email, parsed.password);
     await signIn("credentials", { ...parsed, redirect: false });
     const user = await prisma.user.findUnique({ where: { email: parsed.email }, select: { role: true } });
     const redirectTo = user?.role === "alumnus" ? "/alumni/dashboard" : user?.role === "admin" ? "/admin" : "/dashboard";
