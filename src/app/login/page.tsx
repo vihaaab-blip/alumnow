@@ -53,7 +53,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="relative min-h-screen overflow-hidden bg-white">
       {mounted && (
         <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="fixed top-4 right-4 z-50 h-9 w-9 rounded-[10px] bg-white/15 backdrop-blur-lg border border-white/20 flex items-center justify-center shadow-sm hover:bg-white/25 transition-all duration-150"
@@ -61,12 +61,6 @@ export default function LoginPage() {
           {theme === "dark" ? <Sun size={15} className="text-white" /> : <Moon size={15} className="text-white" />}
         </button>
       )}
-
-      {/* Fixed background video + overlay */}
-      <video autoPlay muted loop playsInline className="fixed inset-0 w-full h-full object-cover scale-105">
-        <source src="https://cdn.midjourney.com/video/71048e88-d8e6-470e-88ef-555c01eacb12/0.mp4" type="video/mp4" />
-      </video>
-      <div className="fixed inset-0 bg-black/10 backdrop-blur-sm" />
 
       {/* Main card */}
       <div className="relative z-10 mx-auto flex min-h-screen items-center justify-center px-4 py-8">
