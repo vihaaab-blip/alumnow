@@ -86,7 +86,7 @@ function StudentForm({ onStatusChange }: { onStatusChange: (s: string) => void }
         <Input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`mt-2 ${inputGlass}`} placeholder="At least 8 characters" />
       </label>
       {error && <p className="text-sm text-red-300">{error}</p>}
-      <Button disabled={status !== "idle"} className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md">
+      <Button type="submit" disabled={status !== "idle"} className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md">
         {status === "idle" ? "Create account" : "Creating..."}
       </Button>
       <p className="text-center text-xs text-white/40">By creating an account you agree to our <Link href="/terms" className="text-white/70 hover:text-white underline underline-offset-2">Terms</Link> & <Link href="/privacy" className="text-white/70 hover:text-white underline underline-offset-2">Privacy Policy</Link></p>
