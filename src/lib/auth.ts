@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcrypt-ts";
 import { prisma } from "./prisma";
 import { loginSchema } from "./validation";
@@ -11,7 +10,6 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_
 const googleConfigured = Boolean(googleClientId && googleClientSecret);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: { signIn: "/login", error: "/login" },
   providers: [
