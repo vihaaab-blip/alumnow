@@ -5,3 +5,4 @@ out
 *.db
 *.db-journal
 .vercel
+.playwright-cli/

@@ -26,6 +26,18 @@ How accounts are created, how login works, how sessions are managed, and how eve
 
 ---
 
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-07-14 | **Audit fix**: Added missing routes (`/browse`, `/alumni`, `/apply`) to middleware protected paths |
+| 2026-07-14 | **Audit fix**: Added Zod validation (`signupAlumniSchema`) to `signupAlumni()` server action |
+| 2026-07-14 | **Audit fix**: Fixed `getMyBookings()` to include `alumni → user` relation for image/name display |
+| 2026-07-14 | **Doc update**: Fixed inaccuracies in authorize callback, middleware paths, and `getAlumniBookings` query |
+| 2026-07-14 | **Doc update**: Added auth flow health checklist |
+
+---
+
 ## 1. Prisma schema — The `User` model
 
 Every account is a single row in the `User` table.
@@ -152,7 +164,7 @@ export async function signup(input) {
       studentProfile: {
         create: {
           fullName: parsed.fullName,
-          dateOfBirth: parsed.dateOfBirth,
+          dateOfBirth: parsed.dateOfBirth instanceof Date ? parsed.dateOfBirth : null,
           currentGrade: parsed.currentGrade,
           school: parsed.school,
         },
@@ -248,27 +260,34 @@ const handleSubmit = async () => {
 
 ```ts
 export async function signupAlumni(input) {
+  // Zod validation (via signupAlumniSchema)
+  const parsed = signupAlumniSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "Please check your details." };
+
   // Rate limit, duplicate check, hash password (same as student flow)
 
   const user = await prisma.user.create({
     data: {
-      email: input.email,
+      email: parsed.data.email,
       passwordHash,
-      phone: input.phone,
+      phone: parsed.data.phone,
       role: "alumnus",
       emailVerifiedAt: new Date(),
       alumniProfile: {
         create: {
-          fullName: input.fullName,
-          profilePhotoUrl: input.profilePhotoUrl,
-          universityName: input.universityName,
-          course: input.course,
-          country: input.country,
-          graduationYearJbcn: input.graduationYearJbcn,
-          bio: input.bio,
+          fullName: parsed.data.fullName,
+          profilePhotoUrl: parsed.data.profilePhotoUrl,
+          universityName: parsed.data.universityName,
+          course: parsed.data.course,
+          country: parsed.data.country,
+          graduationYearJbcn: parsed.data.graduationYearJbcn,
+          bio: parsed.data.bio,
+          languages: parsed.data.languages
+            ? JSON.stringify(parsed.data.languages.split(",").map((l) => l.trim()).filter(Boolean))
+            : "[]",
           // Creates ALL session types in one nested create
           sessionTypes: {
-            create: input.sessionTypes.map((st) => ({
+            create: parsed.data.sessionTypes.map((st) => ({
               type: st.type,
               pricePaise: st.pricePaise,
               maxParticipants: st.maxParticipants ?? 1,
@@ -277,7 +296,7 @@ export async function signupAlumni(input) {
           },
           // Creates ALL availability slots in one nested create
           availability: {
-            create: input.availability.map((a) => ({
+            create: parsed.data.availability.map((a) => ({
               dayOfWeek: a.dayOfWeek,
               startTime: a.startTime,
               endTime: a.endTime,
@@ -288,7 +307,7 @@ export async function signupAlumni(input) {
     },
   });
 
-  await signIn("credentials", { email: input.email, password: input.password, redirect: false });
+  await signIn("credentials", { email: parsed.data.email, password: parsed.data.password, redirect: false });
   return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }
 ```
@@ -350,23 +369,32 @@ async function handleSubmit(e: React.FormEvent) {
 
 ```ts
 export async function login(input) {
-  const parsed = loginSchema.parse(input);
+  try {
+    const parsed = loginSchema.parse(input);
 
-  // Validate credentials via NextAuth
-  await signIn("credentials", { ...parsed, redirect: false });
+    // Auto-ensure demo accounts exist (so they always work)
+    await ensureDemoAccount(parsed.email, parsed.password);
 
-  // Look up the user's role to determine where to redirect
-  const user = await prisma.user.findUnique({
-    where: { email: parsed.email },
-    select: { role: true },
-  });
+    // Validate credentials via NextAuth
+    await signIn("credentials", { ...parsed, redirect: false });
 
-  const redirectTo =
-    user?.role === "alumnus"  ? "/alumni/dashboard"
-    : user?.role === "admin"  ? "/admin"
-    : "/dashboard";
+    // Look up the user's role to determine where to redirect
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.email },
+      select: { role: true },
+    });
 
-  return { success: true, data: { redirectTo } };
+    const redirectTo =
+      user?.role === "alumnus"  ? "/alumni/dashboard"
+      : user?.role === "admin"  ? "/admin"
+      : "/dashboard";
+
+    return { success: true, data: { redirectTo } };
+  } catch (error) {
+    if (error instanceof AuthError)
+      return { success: false, error: "Invalid email or password." };
+    return { success: false, error: "Unable to sign in." };
+  }
 }
 ```
 
@@ -376,18 +404,23 @@ This is what validates the credentials on every `signIn("credentials")` call:
 
 ```ts
 authorize: async (credentials) => {
-  const parsed = loginSchema.parse(credentials);
-  const user = await prisma.user.findUnique({ where: { email: parsed.email } });
-  if (!user?.passwordHash) return null;
+  const parsed = loginSchema.safeParse(credentials);
+  if (!parsed.success) throw new Error("Invalid email or password.");
 
-  const valid = await compare(parsed.password, user.passwordHash);
-  if (!valid) return null;
+  const user = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+    include: { studentProfile: true, alumniProfile: true },
+  });
+  if (!user?.passwordHash) throw new Error("Invalid email or password.");
+
+  const valid = await compare(parsed.data.password, user.passwordHash);
+  if (!valid) throw new Error("Invalid email or password.");
 
   // This object is passed to the jwt callback
   return {
     id: user.id,
     email: user.email,
-    name: user.studentProfile?.fullName ?? user.alumniProfile?.fullName ?? user.name,
+    name: user.studentProfile?.fullName ?? user.alumniProfile?.fullName ?? user.email,
     role: user.role,
   };
 },
@@ -483,23 +516,18 @@ export const authConfig = {
   pages: { signIn: "/login" },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = Boolean(auth?.user);
-      const protectedPaths = [
+      const loggedIn = Boolean(auth?.user);
+      const protectedPath = [
         "/browse", "/bookings", "/dashboard",
         "/profile", "/alumni", "/apply",
-      ];
-      const isProtected = protectedPaths.some((p) =>
-        nextUrl.pathname.startsWith(p)
-      );
+      ].some((p) => nextUrl.pathname.startsWith(p));
 
       // Admin routes: only admin role allowed
       if (nextUrl.pathname.startsWith("/admin"))
         return auth?.user?.role === "admin";
 
       // Protected route but not logged in → redirect to login
-      if (isProtected && !isLoggedIn) return false;
-
-      return true;
+      return !protectedPath || loggedIn;
     },
   },
   providers: [],
@@ -623,16 +651,20 @@ export default function DashboardPage() {
 // booking.actions.ts
 export async function getMyBookings() {
   const session = await auth();
-  if (!session?.user?.id) return [];
+  if (!session?.user?.id || (session.user as any).role !== "student")
+    throw new Error("Please sign in as a student.");
 
   return prisma.booking.findMany({
     where: { studentId: session.user.id },   // ← ONLY this user's bookings
     include: {
       alumni: {
-        include: { user: true },
+        include: { user: true },             // needed for alumni.user.image
       },
+      sessionType: true,
+      payment: true,
+      review: true,
     },
-    orderBy: { scheduledStartAt: "desc" },
+    orderBy: { scheduledStartAt: "asc" },
   });
 }
 ```
@@ -642,16 +674,26 @@ export async function getMyBookings() {
 ```ts
 export async function getAlumniBookings() {
   const session = await auth();
-  if (!session?.user?.id) return [];
+  if (!session?.user?.id || (session.user as any).role !== "alumnus")
+    return [];
 
+  const profile = await prisma.alumniProfile.findUnique({
+    where: { userId: session.user.id },
+  });
+  if (!profile) return [];
+
+  // Note: `alumniId` is the AlumniProfile.id, NOT User.id
   return prisma.booking.findMany({
-    where: { alumniId: session.user.id },     // ← ONLY this user's alumni bookings
+    where: { alumniId: profile.id },
     include: {
       student: {
         include: { studentProfile: true },
       },
+      sessionType: true,
+      payment: true,
+      review: true,
     },
-    orderBy: { scheduledStartAt: "desc" },
+    orderBy: { scheduledStartAt: "asc" },
   });
 }
 ```
@@ -845,10 +887,11 @@ type ApiResponse<T> = {
 
 | Scenario | Error message | Where |
 |----------|--------------|-------|
-| Duplicate email | "An account with this email already exists." | `signup()` |
+| Duplicate email | "An account with this email already exists." | `signup()` / `signupAlumni()` |
 | Wrong password | "Invalid email or password." | `login()` |
-| Rate limited | "Too many signup attempts. Try again in 15 minutes." | `signup()` |
-| Validation failed | "Please check your details." | `signup()` |
+| Rate limited (signup) | "Too many signup attempts. Try again in 15 minutes." | `signup()` / `signupAlumni()` |
+| Rate limited (forgot) | "Too many requests. Try again later." | `forgotPassword()` |
+| Validation failed | "Please check your details." | `signup()` / `signupAlumni()` |
 | Google not configured | "Google Sign-In is not configured..." | Login page |
 
 ### Unauthenticated access
@@ -982,9 +1025,10 @@ During signup, the `emailVerifiedAt` field is set to `new Date()`. In a producti
                               │   WHERE studentId   │
                               │   = user.id         │
                               │                     │
-                              │ getAlumniBookings()→│
-                              │   WHERE alumniId    │
-                              │   = user.id         │
+                               │ getAlumniBookings()→│
+                               │   WHERE alumniId    │
+                               │   = profile.id     │
+                               │   (AlumniProfile.id)│
                               │                     │
                               │ Render: charts,     │
                               │ stats, session list │
@@ -992,3 +1036,98 @@ During signup, the `emailVerifiedAt` field is set to `new Date()`. In a producti
 ```
 
 **Every piece of data in the app is tied to `User.id` via Prisma foreign keys. No user can ever see another user's data because every database query filters by the authenticated user's ID from the session JWT.**
+
+---
+
+## Checklist — Auth flow health check
+
+### Registration flows
+
+- [ ] Signup creates `User` + `StudentProfile` in one transaction
+- [ ] `signupAlumni` creates `User` + `AlumniProfile` + `SessionTypeOffering` + `AlumniAvailability`
+- [ ] `signupAlumni` validates input via Zod `signupAlumniSchema` before any DB operation
+- [ ] Rate limiting on signup (3 per 15 min per IP)
+- [ ] Password hashed with bcrypt (12 rounds)
+- [ ] Duplicate email returns "An account with this email already exists."
+- [ ] Verification email logged via `sendEmail()` + `NotificationLog`
+
+### Login flow
+
+- [ ] Login validates credentials via NextAuth credentials provider
+- [ ] `authorize` callback uses `safeParse` + `throw new Error` pattern
+- [ ] `ensureDemoAccount` auto-creates demo accounts if missing
+- [ ] Login queries role and returns correct `redirectTo`
+- [ ] `AuthError` caught and returns "Invalid email or password."
+- [ ] Student redirects to `/dashboard`
+- [ ] Alumni redirects to `/alumni/dashboard`
+- [ ] Admin redirects to `/admin`
+
+### JWT & Session
+
+- [ ] JWT callback stores `id` and `role` in token when `user` is present
+- [ ] Session callback copies `id` and `role` from token to `session.user`
+- [ ] Cast `(session.user as any)` used because NextAuth types don't include custom fields
+- [ ] Session strategy is `"jwt"` (no database sessions)
+
+### Middleware
+
+- [ ] All private routes protected: `/browse`, `/bookings`, `/dashboard`, `/profile`, `/alumni`, `/apply`
+- [ ] Middleware restricts `/admin` to users with `role === "admin"`
+- [ ] Unauthenticated access to protected routes redirects to `/login`
+- [ ] `/login` and `/register` are always public
+
+### Redirects
+
+- [ ] Full page reload (`window.location.href`) used after auth, not `router.push`
+- [ ] `signup()` returns `redirectTo: "/dashboard"`
+- [ ] `signupAlumni()` returns `redirectTo: "/alumni/dashboard"`
+- [ ] `login()` determines redirect based on `role` column
+
+### Dashboard scoping
+
+- [ ] `getMyBookings()` queries `studentId: session.user.id` (User.id)
+- [ ] `getAlumniBookings()` queries `alumniId: profile.id` (AlumniProfile.id, not User.id)
+- [ ] `getAlumniBookings()` checks `role === "alumnus"` before querying
+- [ ] Student dashboard shows loading skeleton while `status === "loading"`
+- [ ] Alumni dashboard shows loading skeleton while `status === "loading"`
+- [ ] Both dashboards guard against `status === "unauthenticated"` with `router.push("/login")`
+
+### Alumni wizard
+
+- [ ] Step 1 creates account data (name, email, phone, password)
+- [ ] Step 2 creates profile data (university, course, country, grad year, bio)
+- [ ] Step 3 creates session type offerings (type, pricePaise, maxParticipants)
+- [ ] Step 4 creates availability slots (dayOfWeek, startTime, endTime)
+- [ ] All 4 steps submitted atomically in one `prisma.user.create` transaction
+- [ ] `sessionTypes` and `availability` are created via nested `create`
+
+### Error handling
+
+- [ ] Server actions return `ApiResponse<{ redirectTo: string }>` with `success` / `error`
+- [ ] Catch blocks handle `AuthError` for login
+- [ ] Catch blocks handle Zod errors for signup
+- [ ] Forms show inline error messages
+- [ ] Submission button disabled while submitting
+- [ ] Google sign-in catch block shows "Google Sign-In is not configured."
+
+### Google OAuth
+
+- [ ] Google provider conditionally included based on `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`
+- [ ] Fallback env var names: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+- [ ] Without Google env vars, credentials-only login still works
+
+### Rate limiting & security
+
+- [ ] `signup` — 3 attempts per 15 min per IP
+- [ ] `signupAlumni` — 3 attempts per 15 min per IP
+- [ ] `forgotPassword` — 2 attempts per 15 min per IP
+- [ ] In-memory rate limiter with auto-cleanup every 60s
+- [ ] Password hashing: bcrypt with 12 salt rounds
+
+### Demo accounts
+
+- [ ] `ensureDemoAccount` creates student1@alumnow.com with StudentProfile
+- [ ] `ensureDemoAccount` creates alumni1@alumnow.com with AlumniProfile
+- [ ] `ensureDemoAccount` creates admin@alumnow.com with AdminUser
+- [ ] Demo accounts only re-created if passwordHash is missing (upsert pattern)
+- [ ] Login page quick-access buttons auto-fill and submit in one click

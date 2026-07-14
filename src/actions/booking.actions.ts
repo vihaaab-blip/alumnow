@@ -101,7 +101,7 @@ export async function getMyBookings() {
     const userId = await studentId();
     return await prisma.booking.findMany({
       where: { studentId: userId },
-      include: { alumni: true, sessionType: true, payment: true, review: true },
+      include: { alumni: { include: { user: true } }, sessionType: true, payment: true, review: true },
       orderBy: { scheduledStartAt: "asc" },
     });
   } catch {

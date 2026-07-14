@@ -6,7 +6,7 @@ import { AuthError } from "next-auth";
 import { headers } from "next/headers";
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema } from "@/lib/validation";
+import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, signupAlumniSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import type { ApiResponse } from "@/types";
@@ -107,33 +107,36 @@ export async function signupAlumni(input: {
   availability: { dayOfWeek: number; startTime: string; endTime: string }[];
 }): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
+    const parsed = signupAlumniSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: "Please check your details." };
+    const { data } = parsed;
     const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
     if (!rateLimit(`signup:${ip}`, { max: 3, windowMs: 900000 }))
       return { success: false, error: "Too many signup attempts. Try again in 15 minutes." };
-    const existing = await prisma.user.findUnique({ where: { email: input.email } });
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) return { success: false, error: "An account with this email already exists." };
-    const passwordHash = await hash(input.password, 12);
+    const passwordHash = await hash(data.password, 12);
     const user = await prisma.user.create({
       data: {
-        email: input.email, passwordHash, phone: input.phone, role: "alumnus", emailVerifiedAt: new Date(),
+        email: data.email, passwordHash, phone: data.phone, role: "alumnus", emailVerifiedAt: new Date(),
         alumniProfile: {
           create: {
-            fullName: input.fullName,
-            profilePhotoUrl: input.profilePhotoUrl,
-            universityName: input.universityName,
-            course: input.course,
-            country: input.country,
-            graduationYearJbcn: input.graduationYearJbcn,
-            bio: input.bio,
-            languages: input.languages ? JSON.stringify(input.languages.split(",").map((l: string) => l.trim()).filter(Boolean)) : "[]",
-            sessionTypes: { create: input.sessionTypes.map((st) => ({ type: st.type, pricePaise: st.pricePaise, maxParticipants: st.maxParticipants ?? 1, descriptionOneLiner: st.descriptionOneLiner })) },
-            availability: { create: input.availability.map((a) => ({ dayOfWeek: a.dayOfWeek, startTime: a.startTime, endTime: a.endTime })) },
+            fullName: data.fullName,
+            profilePhotoUrl: data.profilePhotoUrl,
+            universityName: data.universityName,
+            course: data.course,
+            country: data.country,
+            graduationYearJbcn: data.graduationYearJbcn,
+            bio: data.bio,
+            languages: data.languages ? JSON.stringify(data.languages.split(",").map((l: string) => l.trim()).filter(Boolean)) : "[]",
+            sessionTypes: { create: data.sessionTypes.map((st) => ({ type: st.type, pricePaise: st.pricePaise, maxParticipants: st.maxParticipants ?? 1, descriptionOneLiner: st.descriptionOneLiner })) },
+            availability: { create: data.availability.map((a) => ({ dayOfWeek: a.dayOfWeek, startTime: a.startTime, endTime: a.endTime })) },
           },
         },
       },
     });
-    await sendEmail(emailTemplates.signupVerification(input.email, input.fullName), user.id);
-    await signIn("credentials", { email: input.email, password: input.password, redirect: false });
+    await sendEmail(emailTemplates.signupVerification(data.email, data.fullName), user.id);
+    await signIn("credentials", { email: data.email, password: data.password, redirect: false });
     return { success: true, data: { redirectTo: "/alumni/dashboard" } };
   } catch (error) {
     return { success: false, error: "Something went wrong. Please try again." };

@@ -99,6 +99,31 @@ export const paymentRefSchema = z.object({
   upiTransactionRef: z.string().regex(/^[A-Za-z0-9.-]{8,}$/, "Reference must be 8+ characters (letters, numbers, hyphens, dots)"),
 });
 
+export const signupAlumniSchema = z.object({
+  fullName: z.string().min(2).max(100),
+  email: z.string().email(),
+  phone: z.string().regex(/^(\+91)?[0-9]{10}$/, "Phone must be 10 digits (optionally with +91 prefix)"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  universityName: z.string().min(2).max(200),
+  course: z.string().min(2).max(200),
+  country: z.string().min(2).max(100),
+  graduationYearJbcn: z.number().int().min(1990).max(2030),
+  bio: z.string().max(750).optional(),
+  profilePhotoUrl: z.string().optional(),
+  languages: z.string().optional(),
+  sessionTypes: z.array(z.object({
+    type: z.string().min(1),
+    pricePaise: z.number().int().min(0),
+    maxParticipants: z.number().int().min(1).default(1),
+    descriptionOneLiner: z.string().optional(),
+  })).min(1, "At least one session type is required"),
+  availability: z.array(z.object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:mm format"),
+    endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:mm format"),
+  })).min(1, "At least one availability slot is required"),
+});
+
 export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().max(200, "Review must be under 200 characters").optional(),
