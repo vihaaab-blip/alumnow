@@ -41,13 +41,34 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
   const shiftRef = useRef(false);
+  const skipDebounce = useRef(true);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
       setInputValue(value);
+      skipDebounce.current = true;
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, value]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("recent-searches");
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (skipDebounce.current) {
+      skipDebounce.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      onChange(inputValue);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [inputValue, onChange]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -65,10 +86,20 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", handler); };
   }, [open, onOpenChange]);
 
+  const saveRecent = useCallback((v: string) => {
+    if (!v.trim()) return;
+    setRecentSearches((prev) => {
+      const next = [v, ...prev.filter((s) => s !== v)].slice(0, 5);
+      try { localStorage.setItem("recent-searches", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
   const commit = useCallback((v: string) => {
+    saveRecent(v);
     onChange(v);
     onOpenChange(false);
-  }, [onChange, onOpenChange]);
+  }, [onChange, onOpenChange, saveRecent]);
 
   const handleKeyClick = useCallback((keyCode: string) => {
     const input = inputRef.current;
@@ -151,7 +182,24 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
                 </div>
               </div>
               <div className="px-6 py-5 bg-gradient-to-b from-gray-50 to-white" onMouseDown={(e) => e.preventDefault()}>
-                <Keyboard onKeyClick={handleKeyClick} />
+                <div className="shadow-lg rounded-xl">
+                  <Keyboard onKeyClick={handleKeyClick} />
+                </div>
+                {recentSearches.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Recent searches</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {recentSearches.map((s, i) => (
+                        <button key={i}
+                          onClick={() => { setInputValue(s); commit(s); }}
+                          className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <p className="text-center text-xs text-white/60 mt-3">
@@ -168,11 +216,12 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="relative w-48 group cursor-pointer"
+      title="Search alumni by name, university, or course"
+      className="relative w-56 group cursor-pointer"
     >
-      <div className="flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[var(--color-border)] rounded-lg focus-within:border-primary/40 transition-colors text-gray-400 group-hover:border-gray-300">
+      <div className="flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[var(--color-border)] rounded-lg transition-all duration-200 text-gray-400 group-hover:border-gray-300 group-hover:shadow-[0_0_16px_rgba(91,79,233,0.15)]">
         <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <span className="flex-1 text-left">Search...</span>
+        <span className="flex-1 text-left">Search alumni...</span>
         <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-mono">
           <span>⌘</span>K
         </kbd>

@@ -32,37 +32,73 @@ const FADE_UP = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
 };
 
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+function getWeekRange(offset = 0) {
+  const now = new Date();
+  const day = now.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = new Date(now);
+  start.setDate(now.getDate() + mondayOffset + offset * 7);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  return { start, end };
 }
 
-function generateMonthlySessions() {
-  const r = seededRandom(42);
+function generateMonthlySessions(bookings: any[]) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return months.map((m) => ({ month: m, sessions: Math.floor(r() * 10) + 3 }));
+  const year = new Date().getFullYear();
+  return months.map((month) => {
+    const monthIndex = months.indexOf(month);
+    const monthBookings = bookings.filter((b) => {
+      const d = new Date(b.scheduledStartAt);
+      return d.getFullYear() === year && d.getMonth() === monthIndex;
+    });
+    return {
+      month,
+      sessions: monthBookings.filter((b) => b.status !== "cancelled").length,
+    };
+  });
 }
 
-function generateWeeklyStudents() {
-  const r = seededRandom(77);
+function generateWeeklyStudents(bookings: any[]) {
+  const { start } = getWeekRange(0);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((d) => ({ day: d, students: Math.floor(r() * 6) + 1 }));
+  return days.map((day, i) => {
+    const dayStart = new Date(start);
+    dayStart.setDate(start.getDate() + i);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayStart.getDate() + 1);
+    const students = new Set(
+      bookings
+        .filter((b) => new Date(b.scheduledStartAt) >= dayStart && new Date(b.scheduledStartAt) < dayEnd)
+        .map((b) => b.studentId)
+    );
+    return { day, students: students.size };
+  });
 }
 
-function generateEarnings() {
-  const r = seededRandom(31);
+function generateEarnings(bookings: any[]) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return months.map((m) => ({ month: m, amount: Math.round((r() * 25000 + 5000) / 100) * 100 }));
+  const year = new Date().getFullYear();
+  return months.map((month) => {
+    const monthIndex = months.indexOf(month);
+    const amount = bookings
+      .filter((b) => {
+        const d = new Date(b.scheduledStartAt);
+        return d.getFullYear() === year && d.getMonth() === monthIndex && b.status !== "cancelled";
+      })
+      .reduce((sum, b) => sum + (b.payment?.amountPaise ?? b.sessionType?.pricePaise ?? 0), 0);
+    return { month, amount };
+  });
 }
 
-function generateRatingDist() {
-  return [
-    { rating: "5★", count: 22, color: "#16A34A" },
-    { rating: "4★", count: 30, color: "#65A30D" },
-    { rating: "3★", count: 7, color: "#D97706" },
-    { rating: "2★", count: 2, color: "#DC2626" },
-    { rating: "1★", count: 1, color: "#EF4444" },
-  ];
+function generateRatingDist(bookings: any[]) {
+  const dist = [5, 4, 3, 2, 1].map((r) => ({
+    rating: `${r}★`,
+    count: bookings.filter((b) => b.review?.rating === r).length,
+    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#D97706" : r === 2 ? "#DC2626" : "#EF4444",
+  }));
+  return dist;
 }
 
 function getGreeting() {
@@ -136,13 +172,13 @@ export default function AlumniDashboardPage() {
 
   const now = Date.now();
 
-  const sessionsData = useMemo(() => generateMonthlySessions(), []);
-  const studentsData = useMemo(() => generateWeeklyStudents(), []);
-  const earningsData = useMemo(() => generateEarnings(), []);
-  const ratingData = useMemo(() => generateRatingDist(), []);
+  const sessionsData = useMemo(() => generateMonthlySessions(bookings), [bookings]);
+  const studentsData = useMemo(() => generateWeeklyStudents(bookings), [bookings]);
+  const earningsData = useMemo(() => generateEarnings(bookings), [bookings]);
+  const ratingData = useMemo(() => generateRatingDist(bookings), [bookings]);
 
   const totalSessions = useMemo(() => sessionsData.reduce((a, d) => a + d.sessions, 0), [sessionsData]);
-  const totalStudents = useMemo(() => studentsData.reduce((a, d) => a + d.students, 0), [studentsData]);
+  const totalStudents = useMemo(() => new Set(bookings.map((b) => b.studentId)).size, [bookings]);
   const totalEarnings = useMemo(() => earningsData.reduce((a, d) => a + d.amount, 0), [earningsData]);
   const totalRatings = useMemo(() => ratingData.reduce((s, r) => s + r.count, 0), [ratingData]);
   const avgRating = useMemo(() => {
@@ -199,7 +235,7 @@ export default function AlumniDashboardPage() {
       icon: Users, label: "Students Mentored", value: String(totalStudents), unit: "",
       color: "#16A34A", bg: "bg-[#16A34A]/8",
       trend: { value: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`, positive: true }, sparkData: sparkStudents,
-      detail: `${studentsData.reduce((a, d) => a + d.students, 0)} total interactions`,
+      detail: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`,
     },
     {
       icon: DollarSign, label: "Total Earnings", value: `₹${(totalEarnings / 100000).toFixed(1)}`, unit: "L",

@@ -30,7 +30,7 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
   return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }
 
-export type AlumniListFilters = { search?: string; university?: string; country?: string; course?: string; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; availability?: string; sessionType?: string; page?: number; pageSize?: number };
+export type AlumniListFilters = { search?: string; university?: string; country?: string; course?: string; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; availability?: string; sessionType?: string; sortBy?: string; page?: number; pageSize?: number };
 
 const alumniInclude = { sessionTypes: true, availability: true } as const;
 
@@ -80,11 +80,22 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
       where.availability = { some: {} };
     }
 
+    let orderBy: Record<string, unknown> = { fullName: "asc" };
+    if (filters.sortBy === "rating") {
+      orderBy = { ratingAvg: { sort: "desc", nulls: "last" } };
+    } else if (filters.sortBy === "newest") {
+      orderBy = { id: "desc" };
+    } else if (filters.sortBy === "price_asc") {
+      orderBy = { id: "asc" };
+    } else if (filters.sortBy === "price_desc") {
+      orderBy = { id: "desc" };
+    }
+
     const [items, total] = await Promise.all([
       prisma.alumniProfile.findMany({
         where,
         include: alumniInclude,
-        orderBy: { fullName: "asc" },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

@@ -177,6 +177,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showInsight, setShowInsight] = useState(true);
 
   useEffect(() => {
     if (session?.user && (session.user as any).role === "alumnus") setDashboardMode("alumnus");
@@ -335,18 +336,20 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
         <div className="ml-0 min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
-            <Skeleton className="h-[130px] w-full rounded-[16px]" />
-            <div className="grid grid-cols-4 gap-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+              <Skeleton className="h-[130px] w-full rounded-[16px]" />
+            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="grid grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[120px] rounded-[16px]" />)}
-            </div>
-            <div className="grid grid-cols-12 gap-4">
+            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }} className="grid grid-cols-12 gap-4">
               <Skeleton className="col-span-7 rounded-[16px] h-[300px]" />
               <Skeleton className="col-span-5 rounded-[16px] h-[300px]" />
-            </div>
-            <div className="grid grid-cols-12 gap-4">
+            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.15 }} className="grid grid-cols-12 gap-4">
               <Skeleton className="col-span-5 rounded-[16px] h-[300px]" />
               <Skeleton className="col-span-7 rounded-[16px] h-[300px]" />
-            </div>
+            </motion.div>
           </div>
           <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} value="" onChange={(v) => { router.push(`/browse${v ? `?search=${encodeURIComponent(v)}` : ""}`); }} />
         </div>
@@ -364,7 +367,7 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.5, ease: [0.2, 0, 0.1, 1] }}
             className="relative overflow-hidden rounded-[16px] bg-[#0F0F10] p-6 mb-6"
           >
             <div className="absolute inset-0 aurora-mesh" />
@@ -403,17 +406,19 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* ─── Insight Callout ─── */}
-          <motion.div variants={FADE_UP} initial="hidden" animate="show" className="mb-5">
-            <div className="rounded-[12px] border border-[#5B4FE9]/15 bg-gradient-to-r from-[#5B4FE9]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#5B4FE9]/10">
-                <Sparkles size={15} style={{ color: ACCENT }} />
+          {showInsight && (
+            <motion.div variants={FADE_UP} initial="hidden" animate="show" className="mb-5">
+              <div className="rounded-[12px] border border-[#5B4FE9]/15 bg-gradient-to-r from-[#5B4FE9]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#5B4FE9]/10">
+                  <Sparkles size={15} style={{ color: ACCENT }} />
+                </div>
+                <p className="text-[13px] text-primary font-medium">{insight}</p>
+                <button type="button" onClick={() => setShowInsight(false)} className="ml-auto shrink-0 rounded-[8px] p-1.5 text-muted-foreground hover:bg-muted transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 10L10 4M10 4H5M10 4V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </button>
               </div>
-              <p className="text-[13px] text-primary font-medium">{insight}</p>
-              <button type="button" className="ml-auto shrink-0 rounded-[8px] p-1.5 text-muted-foreground hover:bg-muted transition-colors">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 10L10 4M10 4H5M10 4V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* ─── Top Bar Controls ─── */}
           <div className="flex items-center justify-between mb-4">
@@ -432,7 +437,9 @@ export default function DashboardPage() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
-                className="rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5 flex flex-col"
+                whileHover={{ scale: 1.02, y: -2 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5 flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow duration-200"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`h-9 w-9 rounded-[10px] ${s.bg} flex items-center justify-center shrink-0`} style={s.color ? { backgroundColor: `${s.color}14` } : {}}>
@@ -479,7 +486,7 @@ export default function DashboardPage() {
                     <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} domain={[0, 'dataMax + 1']} />
                     <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#EBEBEC", strokeDasharray: "3 3" }} />
-                    <Area type="monotone" dataKey="hours" stroke={ACCENT} strokeWidth={2.5} fill="url(#hoursGrad)" name="Hours" dot={false} activeDot={{ r: 4, fill: ACCENT, stroke: "#fff", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="hours" stroke={ACCENT} strokeWidth={2.5} fill="url(#hoursGrad)" name="Hours" dot={false} activeDot={{ r: 6, fill: ACCENT, stroke: "#fff", strokeWidth: 2.5 }} />
                     <Area type="monotone" data={lastWeekData} dataKey="hours" stroke="#9A9AA2" strokeWidth={1.5} strokeDasharray="4 3" fill="none" name="Last week" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -558,9 +565,13 @@ export default function DashboardPage() {
               {dashboardMode === "student" ? (
                 recentMentors.length === 0 ? (
                   <div className="py-10 text-center">
-                    <div className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3">
+                    <motion.div
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                    >
                       <GraduationCap size={24} className="text-[#5B4FE9]/30" />
-                    </div>
+                    </motion.div>
                     <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">Your mentor journey starts here</p>
                     <p className="text-[12px] text-[#6E6E76] dark:text-[#9A9AA2] mt-1 mb-4">Browse alumni to find the perfect mentor.</p>
                     <Link href="/browse">
@@ -596,9 +607,13 @@ export default function DashboardPage() {
               ) : (
                 recentStudents.length === 0 ? (
                   <div className="py-10 text-center">
-                    <div className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3">
+                    <motion.div
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                    >
                       <GraduationCap size={24} className="text-[#5B4FE9]/30" />
-                    </div>
+                    </motion.div>
                     <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">Your mentoring starts here</p>
                     <p className="text-[12px] text-[#6E6E76] dark:text-[#9A9AA2] mt-1">Students will appear here once they book a session.</p>
                   </div>
@@ -647,9 +662,13 @@ export default function DashboardPage() {
                     <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[48px] rounded-[10px]" />)}</div>
                   ) : filtered.length === 0 ? (
                     <div className="py-8 text-center">
-                      <div className="h-12 w-12 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3">
+                      <motion.div
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="h-12 w-12 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                      >
                         <CalendarDays size={22} className="text-[#5B4FE9]/30" />
-                      </div>
+                      </motion.div>
                       <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">
                         {tab === "upcoming" ? "No upcoming sessions" : "No past sessions"}
                       </p>

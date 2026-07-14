@@ -1,8 +1,17 @@
 "use client";
-import { useState } from "react";
-import { SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, Book, Globe, Languages, Star, BookOpen, Award, DollarSign, Calendar, GraduationCap, Video, Clock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { AlumniFilters } from "@/types";
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 type Options = { universities: string[]; countries: string[]; courses: string[] };
 
@@ -15,10 +24,25 @@ const qsTierOptions = [
   { value: "unranked", label: "Unranked" },
 ];
 
+const languageOptions = [
+  { value: "English", label: "English" },
+  { value: "Hindi", label: "Hindi" },
+  { value: "Spanish", label: "Spanish" },
+  { value: "French", label: "French" },
+  { value: "German", label: "German" },
+  { value: "Mandarin", label: "Mandarin" },
+];
+
+const ratingOptions = [
+  { value: "4", label: "4+ \u2605" },
+  { value: "3", label: "3+ \u2605" },
+  { value: "2", label: "2+ \u2605" },
+];
+
 const GRAD_YEAR_MIN = 2015;
 const GRAD_YEAR_MAX = new Date().getFullYear();
 
-function FilterSection({ title, count, defaultOpen = true, children }: { title: string; count?: number; defaultOpen?: boolean; children: React.ReactNode }) {
+function FilterSection({ title, count, defaultOpen = true, icon, children }: { title: string; count?: number; defaultOpen?: boolean; icon?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-[var(--color-border-light)] last:border-b-0">
@@ -26,7 +50,10 @@ function FilterSection({ title, count, defaultOpen = true, children }: { title: 
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between w-full py-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
       >
-        <span>{title}</span>
+        <span className="flex items-center gap-2">
+          {icon}
+          {title}
+        </span>
         <span className="flex items-center gap-1.5">
           {count != null && count > 0 && (
             <span className="text-[10px] font-bold text-[var(--color-primary)] bg-primary/10 px-1.5 py-0.5 rounded-full">{count}</span>
@@ -34,7 +61,13 @@ function FilterSection({ title, count, defaultOpen = true, children }: { title: 
           {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </span>
       </button>
-      {open && <div className="pb-3">{children}</div>}
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-in-out ${
+          open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="pb-3">{children}</div>
+      </div>
     </div>
   );
 }
@@ -48,7 +81,7 @@ function ChipGroup({ options, selected, onChange }: { options: { value: string; 
           <button
             key={opt.value}
             onClick={() => onChange(active ? selected!.filter((v) => v !== opt.value) : [...(selected ?? []), opt.value])}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${active ? "chip-active" : "chip-inactive"}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${active ? "chip-active" : "chip-inactive"}`}
           >
             {opt.label}
           </button>
@@ -65,7 +98,7 @@ function PillGroup<T extends string>({ options, selected, onChange }: { options:
         <button
           key={`${opt.value}-${index}`}
           onClick={() => onChange(opt.value)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${selected === opt.value ? "chip-active" : "chip-inactive"}`}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${selected === opt.value ? "chip-active" : "chip-inactive"}`}
         >
           {opt.label}
         </button>
@@ -134,6 +167,38 @@ export function FilterPanel({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const [uniInput, setUniInput] = useState(filters.university ?? "");
+  const [courseInput, setCourseInput] = useState(filters.course ?? "");
+  const [countryInput, setCountryInput] = useState("");
+
+  const debouncedUni = useDebounce(uniInput, 300);
+  const debouncedCourse = useDebounce(courseInput, 300);
+  const debouncedCountryInput = useDebounce(countryInput, 300);
+
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    onChangeRef.current({ university: debouncedUni || undefined });
+  }, [debouncedUni]);
+
+  useEffect(() => {
+    onChangeRef.current({ course: debouncedCourse || undefined });
+  }, [debouncedCourse]);
+
+  useEffect(() => {
+    setUniInput(filters.university ?? "");
+  }, [filters.university]);
+
+  useEffect(() => {
+    setCourseInput(filters.course ?? "");
+  }, [filters.course]);
+
+  const countryList = options.countries.map((c) => ({ value: c, label: c }));
+  const filteredCountries = debouncedCountryInput.trim()
+    ? countryList.filter((c) => c.label.toLowerCase().includes(debouncedCountryInput.toLowerCase()))
+    : countryList;
+
   const activeCount = [
     filters.university,
     filters.country,
@@ -143,9 +208,10 @@ export function FilterPanel({
     filters.gradYearMin || filters.gradYearMax ? "grad" : null,
     filters.qsTiers?.length ? `qs-${filters.qsTiers.length}` : null,
     (filters.availability && filters.availability !== "any") ? filters.availability : null,
+    filters.priceMin || filters.priceMax ? "price" : null,
+    filters.languages?.length ? `lang-${filters.languages.length}` : null,
+    filters.minRating ? "rating" : null,
   ].filter(Boolean).length;
-
-  const countryList = options.countries.map((c) => ({ value: c, label: c }));
 
   const content = (
     <div className="rounded-2xl border border-[var(--color-border)] bg-white overflow-hidden">
@@ -169,39 +235,85 @@ export function FilterPanel({
       {/* Filter sections */}
       <div className="px-5">
         {/* University */}
-        <FilterSection title="University" count={filters.university ? 1 : 0}>
+        <FilterSection title="University" count={filters.university ? 1 : 0} icon={<Book size={14} />}>
           <input
             type="text"
             placeholder="Search universities..."
             className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
-            value={filters.university ?? ""}
-            onChange={(e) => onChange({ university: e.target.value || undefined })}
+            value={uniInput}
+            onChange={(e) => setUniInput(e.target.value)}
           />
         </FilterSection>
 
         {/* Country */}
-        <FilterSection title="Country" count={filters.country ? 1 : 0}>
-          <ChipGroup options={countryList} selected={filters.country ? [filters.country] : []} onChange={(vals) => onChange({ country: vals[vals.length - 1] || undefined })} />
+        <FilterSection title="Country" count={filters.country ? 1 : 0} icon={<Globe size={14} />}>
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Search countries..."
+              className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
+              value={countryInput}
+              onChange={(e) => setCountryInput(e.target.value)}
+            />
+            {filteredCountries.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {filteredCountries.map((c) => {
+                  const active = filters.country === c.value;
+                  return (
+                    <button
+                      key={c.value}
+                      onClick={() => onChange({ country: active ? undefined : c.value })}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${active ? "chip-active" : "chip-inactive"}`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--color-text-tertiary)]">No countries match</p>
+            )}
+          </div>
+        </FilterSection>
+
+        {/* Language */}
+        <FilterSection title="Language" count={filters.languages?.length} icon={<Languages size={14} />}>
+          <ChipGroup options={languageOptions} selected={filters.languages} onChange={(vals) => onChange({ languages: vals.length > 0 ? vals : undefined })} />
+        </FilterSection>
+
+        {/* Minimum Rating */}
+        <FilterSection title="Minimum Rating" count={filters.minRating ? 1 : 0} icon={<Star size={14} />}>
+          <PillGroup options={ratingOptions} selected={filters.minRating ?? ""} onChange={(v) => onChange({ minRating: v || undefined })} />
         </FilterSection>
 
         {/* Course */}
-        <FilterSection title="Course" count={filters.course ? 1 : 0}>
+        <FilterSection title="Course" count={filters.course ? 1 : 0} icon={<BookOpen size={14} />}>
           <input
             type="text"
             placeholder="Search courses..."
             className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
-            value={filters.course ?? ""}
-            onChange={(e) => onChange({ course: e.target.value || undefined })}
+            value={courseInput}
+            onChange={(e) => setCourseInput(e.target.value)}
           />
         </FilterSection>
 
         {/* QS Ranking */}
-        <FilterSection title="QS Ranking" count={filters.qsTiers?.length}>
+        <FilterSection title="QS Ranking" count={filters.qsTiers?.length} icon={<Award size={14} />}>
           <ChipGroup options={qsTierOptions} selected={filters.qsTiers} onChange={(vals) => onChange({ qsTiers: vals.length > 0 ? vals : undefined })} />
         </FilterSection>
 
+        {/* Price Range */}
+        <FilterSection title="Price Range" count={filters.priceMin || filters.priceMax ? 1 : 0} icon={<DollarSign size={14} />}>
+          <DualRangeSlider
+            min={0}
+            max={10000}
+            value={filters.priceMin != null || filters.priceMax != null ? [filters.priceMin ?? 0, filters.priceMax ?? 10000] : undefined}
+            onChange={(val) => onChange({ priceMin: val?.[0], priceMax: val?.[1] })}
+          />
+        </FilterSection>
+
         {/* Graduation Year */}
-        <FilterSection title="Graduation Year" count={filters.gradYearMin || filters.gradYearMax ? 1 : 0}>
+        <FilterSection title="Graduation Year" count={filters.gradYearMin || filters.gradYearMax ? 1 : 0} icon={<Calendar size={14} />}>
           <DualRangeSlider
             min={GRAD_YEAR_MIN}
             max={GRAD_YEAR_MAX}
@@ -211,7 +323,7 @@ export function FilterPanel({
         </FilterSection>
 
         {/* Study Level */}
-        <FilterSection title="Study Level">
+        <FilterSection title="Study Level" icon={<GraduationCap size={14} />}>
           <PillGroup
             options={[
               { value: undefined as any, label: "All" },
@@ -224,7 +336,7 @@ export function FilterPanel({
         </FilterSection>
 
         {/* Session Type */}
-        <FilterSection title="Session Type">
+        <FilterSection title="Session Type" icon={<Video size={14} />}>
           <PillGroup
             options={[
               { value: "both" as const, label: "All" },
@@ -237,7 +349,7 @@ export function FilterPanel({
         </FilterSection>
 
         {/* Availability */}
-        <FilterSection title="Availability">
+        <FilterSection title="Availability" icon={<Clock size={14} />}>
           <PillGroup
             options={[
               { value: "any" as const, label: "Any" },

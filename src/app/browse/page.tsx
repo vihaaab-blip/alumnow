@@ -61,6 +61,7 @@ function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
     qsTiers: qsTiers.length > 0 ? qsTiers : undefined,
     availability: (sp.get("availability") as AlumniFilters["availability"]) ?? undefined,
     sessionType: (sp.get("sessionType") as AlumniFilters["sessionType"]) ?? undefined,
+    sortBy: (sp.get("sortBy") as AlumniFilters["sortBy"]) ?? "relevance",
   };
 }
 
@@ -75,11 +76,12 @@ function filtersToParams(filters: AlumniFilters): string {
 }
 
 const activeFilterLabels: Record<string, (v: any) => string> = {
-  search: () => "Search",
+  search: (v) => v,
   availability: (v: string) => v === "this_week" ? "This week" : "This month",
   sessionType: (v: string) => v === "1:1" ? "1-on-1" : "Group",
   studyLevel: (v: string) => v === "undergraduate" ? "Undergrad" : "Postgrad",
   qsTiers: (v: string[]) => v.map((t) => `QS ${t}`).join(", "),
+  sortBy: (v) => `Sort: ${v}`,
 };
 
 export default function BrowsePage() {
@@ -99,16 +101,16 @@ function BrowsePageContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState("relevance");
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniCardData | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
+  const sortBy = searchParams.get("sortBy") ?? "relevance";
   const tab = searchParams.get("view") === "saved" ? "saved" : "browse";
   const swipe = searchParams.get("swipe") === "1";
   const spStr = searchParams.toString();
 
-  const queryParams = useMemo(() => ({ ...filters, page: tab === "browse" ? page : 1, pageSize: ITEMS_PER_PAGE }), [filters, page, tab]);
+  const queryParams = useMemo(() => ({ ...filters, sortBy, page: tab === "browse" ? page : 1, pageSize: ITEMS_PER_PAGE }), [filters, sortBy, page, tab]);
 
   const { data, isFetching, error } = useQuery({
     queryKey: [...ALUMNI_KEY, queryParams],
@@ -196,12 +198,12 @@ function BrowsePageContent() {
                 key={tab.label}
                 onClick={() => {
                   const p = new URLSearchParams();
+                  const s = searchParams.get("search");
+                  if (s) p.set("search", s);
                   Object.entries(tab.filters).forEach(([k, v]) => {
                     if (Array.isArray(v)) v.forEach((item) => p.append(k, String(item)));
                     else p.set(k, String(v));
                   });
-                  const s = searchParams.get("search");
-                  if (s) p.set("search", s);
                   const qs = p.toString();
                   router.replace(`/browse${qs ? `?${qs}` : ""}`, { scroll: false });
                 }}
@@ -286,7 +288,12 @@ function BrowsePageContent() {
             <div className="relative">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  const p = new URLSearchParams(searchParams.toString());
+                  if (e.target.value === "relevance") p.delete("sortBy");
+                  else p.set("sortBy", e.target.value);
+                  router.replace(`/browse${p.toString() ? `?${p.toString()}` : ""}`, { scroll: false });
+                }}
                 className="appearance-none bg-transparent text-xs font-semibold text-[var(--color-text)] outline-none cursor-pointer pr-4"
               >
                 {sortOptions.map((opt) => (
