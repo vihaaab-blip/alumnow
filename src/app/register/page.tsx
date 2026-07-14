@@ -7,12 +7,9 @@ import { Check, LoaderCircle, Sun, Moon, Plus, X, Video, Users, Upload } from "l
 import { signup, signupAlumni } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Label } from "@/components/ui/Label";
 
 /* ─── Constants ─── */
 const inputGlass = "bg-white/10 border-white/20 text-white placeholder:text-white/40 backdrop-blur-md focus:border-white/50 focus:ring-white/30";
-const DEMO_STUDENT = { fullName: "Aarav Sharma", email: "student1@alumnow.com", phone: "+919876543210", password: "password123", confirmPassword: "password123" };
 const DEMO_ALUMNI = {
   fullName: "Ananya Patel", email: "alumni1@alumnow.com", phone: "+919876543210", password: "password123",
   universityName: "University of California, Berkeley", course: "Computer Science", country: "United States",
@@ -43,20 +40,35 @@ type AvailRow = { dayOfWeek: number; startTime: string; endTime: string };
 
 /* ─── Student Form ─── */
 function StudentForm({ onStatusChange }: { onStatusChange: (s: string) => void }) {
-  const [data, setData] = useState({ fullName: "", email: "", phone: "", password: "", confirmPassword: "" });
-  const [tosAccepted, setTosAccepted] = useState(false);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("idle");
-
-  const update = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
-  const fill = () => { setData(DEMO_STUDENT); setTosAccepted(true); };
+  const errorState = useState("");
+  const error = errorState[0]!;
+  const setError = errorState[1]!;
+  const statusState = useState("idle");
+  const status = statusState[0]!;
+  const setStatus = statusState[1]!;
+  const emailState = useState("");
+  const email = emailState[0]!;
+  const setEmail = emailState[1]!;
+  const passwordState = useState("");
+  const password = passwordState[0]!;
+  const setPassword = passwordState[1]!;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
-    if (data.password !== data.confirmPassword) { setError("Passwords don't match"); return; }
-    if (!tosAccepted) { setError("You must accept the Terms of Service"); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setStatus("creating"); onStatusChange("creating");
-    const r = await signup({ ...data, dateOfBirth: null, currentGrade: "AS", school: "Demo School", tosAccepted: true });
+    const name = email.split("@")[0]!.replace(/[^a-zA-Z0-9]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const r = await signup({
+      email,
+      password,
+      fullName: name,
+      phone: "+919876543210",
+      dateOfBirth: null,
+      currentGrade: "Other",
+      school: "JBCN International School Borivali",
+      confirmPassword: password,
+      tosAccepted: true,
+    });
     if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
     setStatus("verifying"); onStatusChange("verifying");
     await new Promise((r) => setTimeout(r, 800));
@@ -67,26 +79,17 @@ function StudentForm({ onStatusChange }: { onStatusChange: (s: string) => void }
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <button type="button" onClick={fill}
-        className="flex w-full items-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm text-white/50 hover:text-white/80 hover:border-white/30 hover:bg-white/10 transition-all">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        Auto-fill demo student data
-      </button>
-      <label className="block text-sm font-semibold text-white/80">Full name <Input required value={data.fullName} onChange={(e) => update("fullName", e.target.value)} className={`mt-2 ${inputGlass}`} /></label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm font-semibold text-white/80">Email <Input required type="email" value={data.email} onChange={(e) => update("email", e.target.value)} className={`mt-2 ${inputGlass}`} /></label>
-        <label className="block text-sm font-semibold text-white/80">Phone (+91) <Input required placeholder="+919876543210" value={data.phone} onChange={(e) => update("phone", e.target.value)} className={`mt-2 ${inputGlass}`} /></label>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm font-semibold text-white/80">Password <Input required minLength={8} type="password" value={data.password} onChange={(e) => update("password", e.target.value)} className={`mt-2 ${inputGlass}`} /></label>
-        <label className="block text-sm font-semibold text-white/80">Confirm <Input required type="password" value={data.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} className={`mt-2 ${inputGlass}`} /></label>
-      </div>
-      <div className="flex items-start gap-3">
-        <Checkbox id="tos-s" checked={tosAccepted} onCheckedChange={(c) => setTosAccepted(c === true)} className="border-white/30 data-[state=checked]:bg-white/20" />
-        <Label htmlFor="tos-s" className="text-sm font-normal text-white/60">I accept the <Link href="/terms" className="font-semibold text-white/90 hover:text-white underline underline-offset-2">Terms</Link> and <Link href="/privacy" className="font-semibold text-white/90 hover:text-white underline underline-offset-2">Privacy Policy</Link></Label>
-      </div>
+      <label className="block text-sm font-semibold text-white/80">Email
+        <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`mt-2 ${inputGlass}`} placeholder="you@example.com" />
+      </label>
+      <label className="block text-sm font-semibold text-white/80">Password
+        <Input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`mt-2 ${inputGlass}`} placeholder="At least 8 characters" />
+      </label>
       {error && <p className="text-sm text-red-300">{error}</p>}
-      <Button disabled={!tosAccepted || status !== "idle"} className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md">{status === "idle" ? "Create student account" : "Creating..."}</Button>
+      <Button disabled={status !== "idle"} className="w-full bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md">
+        {status === "idle" ? "Create account" : "Creating..."}
+      </Button>
+      <p className="text-center text-xs text-white/40">By creating an account you agree to our <Link href="/terms" className="text-white/70 hover:text-white underline underline-offset-2">Terms</Link> & <Link href="/privacy" className="text-white/70 hover:text-white underline underline-offset-2">Privacy Policy</Link></p>
     </form>
   );
 }
