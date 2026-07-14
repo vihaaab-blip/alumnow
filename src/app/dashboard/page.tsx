@@ -20,49 +20,80 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Label,
 } from "recharts";
 
-/* ─── Seeded Data Generators ─── */
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+/* ─── Real Data Generators ─── */
+function getWeekRange(offset = 0) {
+  const now = new Date();
+  const day = now.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = new Date(now);
+  start.setDate(now.getDate() + mondayOffset + offset * 7);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  return { start, end };
 }
 
-function generateWeeklyHours() {
-  const r = seededRandom(42);
+function generateWeeklyHours(bookings: any[]) {
+  const { start } = getWeekRange(0);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((day) => ({
-    day,
-    hours: Math.round(r() * 4 * 10) / 10 + 0.5,
-    sessions: Math.floor(r() * 5) + 1,
-  }));
+  return days.map((day, i) => {
+    const dayStart = new Date(start);
+    dayStart.setDate(start.getDate() + i);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayStart.getDate() + 1);
+    const hours = bookings
+      .filter((b) => b.status === "completed" && new Date(b.scheduledStartAt) >= dayStart && new Date(b.scheduledStartAt) < dayEnd)
+      .reduce((sum, b) => {
+        const dur = (new Date(b.scheduledEndAt).getTime() - new Date(b.scheduledStartAt).getTime()) / 3600000;
+        return sum + dur;
+      }, 0);
+    const sessions = bookings.filter((b) => b.status === "completed" && new Date(b.scheduledStartAt) >= dayStart && new Date(b.scheduledStartAt) < dayEnd).length;
+    return { day, hours: Math.round(hours * 10) / 10, sessions };
+  });
 }
 
-function generateLastWeekHours() {
-  const r = seededRandom(55);
+function generateLastWeekHours(bookings: any[]) {
+  const { start } = getWeekRange(-1);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((day) => ({
-    day,
-    hours: Math.round(r() * 3.5 * 10) / 10 + 0.5,
-  }));
+  return days.map((day, i) => {
+    const dayStart = new Date(start);
+    dayStart.setDate(start.getDate() + i);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayStart.getDate() + 1);
+    const hours = bookings
+      .filter((b) => b.status === "completed" && new Date(b.scheduledStartAt) >= dayStart && new Date(b.scheduledStartAt) < dayEnd)
+      .reduce((sum, b) => {
+        const dur = (new Date(b.scheduledEndAt).getTime() - new Date(b.scheduledStartAt).getTime()) / 3600000;
+        return sum + dur;
+      }, 0);
+    return { day, hours: Math.round(hours * 10) / 10 };
+  });
 }
 
-function generateMonthlySessions() {
-  const r = seededRandom(99);
+function generateMonthlySessions(bookings: any[]) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return months.map((month) => ({
-    month,
-    completed: Math.floor(r() * 12) + 2,
-    cancelled: Math.floor(r() * 3),
-  }));
+  const year = new Date().getFullYear();
+  return months.map((month) => {
+    const monthIndex = months.indexOf(month);
+    const count = bookings.filter((b) => {
+      const d = new Date(b.scheduledStartAt);
+      return d.getFullYear() === year && d.getMonth() === monthIndex;
+    });
+    return {
+      month,
+      completed: count.filter((b) => b.status === "completed").length,
+      cancelled: count.filter((b) => b.status === "cancelled").length,
+    };
+  });
 }
 
-function generateRatingDist() {
-  return [
-    { rating: "5★", count: 18, color: "#16A34A" },
-    { rating: "4★", count: 24, color: "#65A30D" },
-    { rating: "3★", count: 8, color: "#D97706" },
-    { rating: "2★", count: 3, color: "#DC2626" },
-    { rating: "1★", count: 1, color: "#EF4444" },
-  ];
+function generateRatingDist(bookings: any[]) {
+  const dist = [5, 4, 3, 2, 1].map((r) => ({
+    rating: `${r}★`,
+    count: bookings.filter((b) => b.review?.rating === r).length,
+    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#D97706" : r === 2 ? "#DC2626" : "#EF4444",
+  }));
+  return dist;
 }
 
 /* ─── Mini Sparkline ─── */
@@ -166,11 +197,11 @@ export default function DashboardPage() {
       : new Date(b.scheduledStartAt).getTime() < now || b.status === "cancelled"
   );
 
-  /* ------- Derived Data ------- */
-  const weeklyData = useMemo(() => generateWeeklyHours(), []);
-  const lastWeekData = useMemo(() => generateLastWeekHours(), []);
-  const monthlyData = useMemo(() => generateMonthlySessions(), []);
-  const ratingData = useMemo(() => generateRatingDist(), []);
+  /* ------- Derived Data from Real Bookings ------- */
+  const weeklyData = useMemo(() => generateWeeklyHours(activeBookings), [activeBookings]);
+  const lastWeekData = useMemo(() => generateLastWeekHours(activeBookings), [activeBookings]);
+  const monthlyData = useMemo(() => generateMonthlySessions(activeBookings), [activeBookings]);
+  const ratingData = useMemo(() => generateRatingDist(activeBookings), [activeBookings]);
 
   const chartTotalHours = useMemo(() => weeklyData.reduce((a, d) => a + d.hours, 0), [weeklyData]);
   const chartTotalCompleted = useMemo(() => monthlyData.reduce((a, d) => a + d.completed, 0), [monthlyData]);
@@ -192,15 +223,15 @@ export default function DashboardPage() {
     const half = Math.ceil(monthlyData.length / 2);
     const first = monthlyData.slice(0, half).reduce((a, d) => a + d.completed, 0);
     const second = monthlyData.slice(half).reduce((a, d) => a + d.completed, 0);
-    if (!first) return { value: "New", positive: true };
+    if (!first) return { value: chartTotalCompleted > 0 ? `${chartTotalCompleted} total` : "New", positive: true };
     const pct = Math.round(((second - first) / first) * 100);
     return { value: `${pct > 0 ? "+" : ""}${pct}%`, positive: pct >= 0 };
-  }, [monthlyData]);
+  }, [monthlyData, chartTotalCompleted]);
 
   const hoursTrend = useMemo(() => {
     const thisW = weeklyData.reduce((a, d) => a + d.hours, 0);
     const lastW = lastWeekData.reduce((a, d) => a + d.hours, 0);
-    if (!lastW) return { value: "New", positive: true };
+    if (!lastW) return { value: thisW > 0 ? `${thisW.toFixed(1)}h` : "New", positive: true };
     const pct = Math.round(((thisW - lastW) / lastW) * 100);
     return { value: `${pct > 0 ? "+" : ""}${pct}%`, positive: pct >= 0 };
   }, [weeklyData, lastWeekData]);
@@ -219,9 +250,9 @@ export default function DashboardPage() {
     const peak = [...monthlyData].sort((a, b) => b.completed - a.completed)[0];
     const avg = monthlyData.reduce((a, d) => a + d.completed, 0) / monthlyData.length;
     const latest = monthlyData[monthlyData.length - 1]?.completed ?? 0;
-    if (latest > avg) return `You completed ${Math.round((latest / avg - 1) * 100)}% more sessions this month than your monthly average.`;
-    if (chartTotalCompleted > 0) return `You've completed ${chartTotalCompleted} sessions this year, peaking in ${peak?.month}. Keep the momentum going!`;
-    return "Book your first session to start tracking your mentoring journey.";
+    if (chartTotalCompleted === 0) return "Book your first session to start tracking your mentoring journey.";
+    if (latest > avg && avg > 0) return `You completed ${Math.round((latest / avg - 1) * 100)}% more sessions this month than your monthly average.`;
+    return `You've completed ${chartTotalCompleted} sessions this year${peak?.month && peak.completed > 0 ? `, peaking in ${peak.month}` : ""}. Keep the momentum going!`;
   }, [monthlyData, chartTotalCompleted]);
 
   /* Recent mentors/students */
@@ -235,14 +266,22 @@ export default function DashboardPage() {
     return alumniBookings.filter((b) => { const id = b.student?.id || b.studentId; if (seen.has(id)) return false; seen.add(id); return true; }).slice(0, 4);
   }, [alumniBookings]);
 
-  /* Sparkline data */
+  /* Sparkline data from real metrics */
   const sparklineCompleted = useMemo(() => monthlyData.map((d) => d.completed), [monthlyData]);
   const sparklineHours = useMemo(() => weeklyData.map((d) => d.hours), [weeklyData]);
   const sparklineRatings = useMemo(() => ratingData.map((d) => d.count), [ratingData]);
   const sparklineUpcoming = useMemo(() => {
-    const r = seededRandom(77);
-    return Array.from({ length: 7 }, () => Math.floor(r() * 5) + (realUpcomingCount > 0 ? 1 : 0));
-  }, [realUpcomingCount]);
+    const upcoming = activeBookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled");
+    const byDay: number[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(d); dayEnd.setHours(23, 59, 59, 999);
+      byDay.push(upcoming.filter((b) => { const t = new Date(b.scheduledStartAt).getTime(); return t >= dayStart.getTime() && t <= dayEnd.getTime(); }).length);
+    }
+    return byDay;
+  }, [activeBookings, now]);
 
   /* Peak annotation for bar chart */
   const peakMonth = useMemo(() => {
@@ -294,7 +333,6 @@ export default function DashboardPage() {
   if (status === "loading" || !session) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
-
         <div className="ml-0 min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
             <Skeleton className="h-[130px] w-full rounded-[16px]" />
@@ -320,7 +358,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B] transition-colors duration-150">
-
       <div className="ml-0 min-h-screen">
         <div className="p-6 max-w-[1400px]">
           {/* ─── Hero Banner ─── */}
@@ -353,7 +390,6 @@ export default function DashboardPage() {
                       : "Ready for your upcoming mentoring sessions?"}
                 </p>
               </div>
-              {/* Toggle */}
               {(session.user as any).role === "alumnus" && (
                 <div className="flex bg-white/10 p-0.5 rounded-[10px] mr-2">
                   <button onClick={() => setDashboardMode("alumnus")}
@@ -438,10 +474,6 @@ export default function DashboardPage() {
                         <stop offset="0%" stopColor={ACCENT} stopOpacity={0.25} />
                         <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="hoursGradHover" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={ACCENT} stopOpacity={0.35} />
-                        <stop offset="100%" stopColor={ACCENT} stopOpacity={0.02} />
-                      </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EBEBEC" className="dark:opacity-[0.08]" vertical={false} />
                     <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
@@ -501,7 +533,7 @@ export default function DashboardPage() {
                     <span>{chartTotalCancelled} cancelled</span>
                   </div>
                 </div>
-                {peakMonth && (
+                {peakMonth && peakMonth.completed > 0 && (
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <svg width="10" height="10" viewBox="0 0 10 10" fill={ACCENT}><circle cx="5" cy="5" r="2" /></svg>
                     Peak: {peakMonth.month}
@@ -723,8 +755,6 @@ export default function DashboardPage() {
                             <Cell key={i} fill={entry.color}
                               className="transition-all duration-150 hover:opacity-80"
                               style={{ filter: "drop-shadow(0 0 4px rgba(0,0,0,0.05))" }}
-                              onMouseEnter={(e) => { (e.target as HTMLElement).style.transform = "scale(1.05)"; }}
-                              onMouseLeave={(e) => { (e.target as HTMLElement).style.transform = "scale(1)"; }}
                             />
                           ))}
                           <Label value={`${chartAvgRating > 0 ? chartAvgRating.toFixed(1) : "—"}`}
