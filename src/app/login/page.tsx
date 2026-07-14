@@ -48,7 +48,7 @@ export default function LoginPage() {
     try {
       await signIn("google", { redirectTo: "/dashboard" });
     } catch {
-      setError("Google Sign-In is not configured. Please use email and password.");
+      setError("Google Sign-In requires OAuth credentials. Add AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET to your .env file.");
     }
   }
 
@@ -83,8 +83,8 @@ export default function LoginPage() {
               <h1 className="text-center text-[40px] font-semibold tracking-tight text-gray-900">Welcome back</h1>
               <p className="mt-2 text-center text-sm text-gray-500">Sign in to your account</p>
 
-              {/* Social buttons */}
-              <div className="mt-8 space-y-3">
+              {/* Social button */}
+              <div className="mt-8">
                 <button type="button" onClick={handleGoogleSignIn}
                   className="group flex w-full items-center justify-between rounded-[1.25rem] border border-gray-200 bg-gray-50 px-4 py-4 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100">
                   <span className="flex items-center gap-3">
@@ -95,18 +95,6 @@ export default function LoginPage() {
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     Continue with Google
-                  </span>
-                  <ArrowRight size={18} className="text-gray-400 transition-all group-hover:text-gray-600" />
-                </button>
-
-                <button type="button"
-                  onClick={() => setError("X Sign-In is not configured.")}
-                  className="group flex w-full items-center justify-between rounded-[1.25rem] border border-gray-200 bg-gray-50 px-4 py-4 text-sm font-medium text-gray-700 transition-all hover:bg-gray-100">
-                  <span className="flex items-center gap-3">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                    Continue with X
                   </span>
                   <ArrowRight size={18} className="text-gray-400 transition-all group-hover:text-gray-600" />
                 </button>
