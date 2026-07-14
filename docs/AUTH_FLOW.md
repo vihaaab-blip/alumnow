@@ -30,6 +30,13 @@ How accounts are created, how login works, how sessions are managed, and how eve
 
 | Date | Change |
 |------|--------|
+| 2026-07-14 | **Role-based redirect**: `login()` now queries user role and redirects students → `/dashboard`, alumni → `/alumni/dashboard`, admin → `/admin` |
+| 2026-07-14 | **Student signup redirect**: Changed from `/browse` to `/dashboard` |
+| 2026-07-14 | **Full page reload**: Changed all post-auth redirects from `router.push` to `window.location.href` — fixes session not being picked up by `SessionProvider` |
+| 2026-07-14 | **Quick access buttons**: "Continue as Student/Alumni/Admin" buttons now directly call `login()` + redirect (one click, no form filling) |
+| 2026-07-14 | **Login autocomplete**: Typing email shows dropdown with matching demo accounts that auto-fill email + password |
+| 2026-07-14 | **Register role selector**: Added Student/Alumni tabs; student has simplified form, alumni has 4-step wizard (Account → Profile → Pricing → Availability) |
+| 2026-07-14 | **Alumni dashboard redesign**: Full rewrite as client component with stat cards, sparklines, trend pills, sessions chart, rating donut, earnings chart, quick actions sidebar, upcoming bookings with countdown timers |
 | 2026-07-14 | **Audit fix**: Added missing routes (`/browse`, `/alumni`, `/apply`) to middleware protected paths |
 | 2026-07-14 | **Audit fix**: Added Zod validation (`signupAlumniSchema`) to `signupAlumni()` server action |
 | 2026-07-14 | **Audit fix**: Fixed `getMyBookings()` to include `alumni → user` relation for image/name display |
