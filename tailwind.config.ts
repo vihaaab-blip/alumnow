@@ -44,6 +44,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "var(--font-inter)", "system-ui", "sans-serif"],
+        heading: ["Inter", "var(--font-inter)", "system-ui", "sans-serif"],
+        body: ["Inter", "var(--font-inter)", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "SF Mono", "Fira Code", "monospace"],
       },
       borderRadius: { sm: "6px", md: "10px", lg: "16px", xl: "20px" },
