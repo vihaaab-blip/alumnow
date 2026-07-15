@@ -8,7 +8,7 @@ export function SelectTrigger({ className, children, ...props }: ComponentPropsW
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-[6px] border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 data-[placeholder]:text-muted-foreground",
+        "flex h-10 w-full items-center justify-between rounded-[6px] border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 data-[placeholder]:text-white/40",
         className
       )}
       {...props}
@@ -26,7 +26,7 @@ export function SelectContent({ className, children, ...props }: ComponentPropsW
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-[10px] border border-[var(--color-border)] bg-white shadow-md animate-in fade-in-80",
+          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-[10px] border border-white/10 bg-[#0A0A0B] shadow-md animate-in fade-in-80",
           className
         )}
         {...props}
@@ -41,7 +41,7 @@ export function SelectItem({ className, children, ...props }: ComponentPropsWith
   return (
     <SelectPrimitive.Item
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-[6px] py-2 pl-8 pr-2 text-sm outline-none focus:bg-[var(--color-bg-hover)] focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex w-full cursor-default select-none items-center rounded-[6px] py-2 pl-8 pr-2 text-sm text-white outline-none focus:bg-white/10 focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
       {...props}

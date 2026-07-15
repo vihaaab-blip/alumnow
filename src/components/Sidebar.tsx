@@ -2,11 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Search, CalendarDays, Star,
-  Users, Sun, Moon
+  Users
 } from "lucide-react";
 
 const navItems = [
@@ -20,10 +18,6 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -64,24 +58,6 @@ export function Sidebar() {
 
       {/* Bottom section */}
       <div className="px-3 pb-4 space-y-1 border-t border-white/[0.04] pt-3 shrink-0">
-        {/* Theme toggle pill */}
-        {mounted && (
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-[12px] text-white/40 font-medium">Appearance</span>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex items-center gap-1 bg-white/[0.06] hover:bg-white/[0.10] rounded-full px-2.5 py-1 transition-all duration-150"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? (
-                <><Sun size={12} className="text-amber-300" /><span className="text-[11px] text-white/60 font-medium ml-1">Light</span></>
-              ) : (
-                <><Moon size={12} className="text-indigo-300" /><span className="text-[11px] text-white/60 font-medium ml-1">Dark</span></>
-              )}
-            </button>
-          </div>
-        )}
-
         {/* User */}
         {session?.user && (
           <div className="flex items-center gap-3 px-3 py-2.5">

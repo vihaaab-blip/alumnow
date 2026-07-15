@@ -1,7 +1,6 @@
 import { HeroSection } from "./_components/HeroSection";
 import { SecondSection } from "./_components/SecondSection";
 import { SectionBridge } from "./_components/SectionBridge";
-import { SocialProofSection } from "./_components/SocialProofSection";
 import { Footer } from "@/components/Footer";
 
 export default function HomePage() {
@@ -10,7 +9,6 @@ export default function HomePage() {
       <HeroSection />
       <SectionBridge />
       <SecondSection />
-      <SocialProofSection />
       <Footer />
     </div>
   );

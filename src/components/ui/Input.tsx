@@ -1,2 +1,14 @@
-import { cn } from "@/lib/utils"; import type { InputHTMLAttributes } from "react";
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) { return <input className={cn("h-11 w-full rounded-[10px] border border-border bg-white px-3.5 text-sm text-foreground outline-none placeholder:text-muted-foreground transition-[border-color,box-shadow] duration-150 focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-muted", className)} {...props} />; }
+import { cn } from "@/lib/utils";
+import type { InputHTMLAttributes } from "react";
+
+export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        "h-11 w-full rounded-[10px] border border-white/10 bg-white/5 px-3.5 text-sm text-white outline-none placeholder:text-white/30 transition-[border-color,box-shadow] duration-150 focus:border-white/20 focus:ring-4 focus:ring-white/5 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-white/30",
+        className
+      )}
+      {...props}
+    />
+  );
+}

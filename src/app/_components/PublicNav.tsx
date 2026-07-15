@@ -4,5 +4,73 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
-const sections = ["hero", "how-it-works", "testimonials"];
-export function PublicNav() { const { data: session } = useSession(); const [scrolled, setScrolled] = useState(false); const [active, setActive] = useState(""); const [open, setOpen] = useState(false); useEffect(() => { const onScroll = () => setScrolled(window.scrollY > 80); onScroll(); window.addEventListener("scroll", onScroll, { passive: true }); return () => window.removeEventListener("scroll", onScroll); }, []); useEffect(() => { const observer = new IntersectionObserver((entries) => { for (const entry of entries) { if (entry.isIntersecting) { setActive(entry.target.id); } } }, { rootMargin: "-80px 0px -50% 0px" }); for (const id of sections) { const el = document.getElementById(id); if (el) observer.observe(el); } return () => observer.disconnect(); }, []); const jump = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); setOpen(false); }; if (session?.user) return null; return <header className={`fixed inset-x-0 top-0 z-30 transition-[background-color,box-shadow] duration-200 ${scrolled ? "bg-white/95 shadow-sm" : "bg-transparent"}`}><div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6"><Link href="/" className="text-xl font-bold tracking-tight text-primary">Alum<span className="text-accent">Now</span></Link><nav className="hidden items-center gap-8 text-sm md:flex"><button onClick={() => jump("how-it-works")} className={`${active === "how-it-works" ? "text-primary border-b-2 border-primary" : "text-primary/75 hover:text-primary"}`}>How it works</button><Link href="/about" className="text-primary/75 hover:text-primary">About</Link><Link href="/apply" className="text-primary/75 hover:text-primary">For alumni</Link></nav><div className="hidden items-center gap-4 md:flex"><Link href="/login" className="text-sm font-semibold text-primary">Log in</Link><Link href="/register"><Button variant="accent">Find your mentor</Button></Link></div><button className="rounded-md p-2 text-primary md:hidden" aria-label={open ? "Close navigation" : "Open navigation"} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <Menu size={22}/>}</button></div>{open && <div className="border-t border-border bg-white px-6 py-5 md:hidden"><div className="grid gap-2"><button onClick={() => jump("how-it-works")} className="px-3 py-3 text-left text-sm font-semibold text-primary">How it works</button><Link href="/about" onClick={() => setOpen(false)} className="px-3 py-3 text-sm font-semibold text-primary">About</Link><Link href="/apply" onClick={() => setOpen(false)} className="px-3 py-3 text-sm font-semibold text-primary">For alumni</Link><div className="mt-4 grid gap-3"><Link href="/login" onClick={() => setOpen(false)} className="text-center text-sm font-semibold text-primary">Log in</Link><Link href="/register" onClick={() => setOpen(false)}><Button variant="accent" className="w-full">Find your mentor</Button></Link></div></div></div>}</header> }
+
+const sections = ["hero", "how-it-works"];
+
+export function PublicNav() {
+  const { data: session } = useSession();
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          setActive(entry.target.id);
+        }
+      }
+    }, { rootMargin: "-80px 0px -50% 0px" });
+    for (const id of sections) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  const jump = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setOpen(false);
+  };
+
+  if (session?.user) return null;
+
+  return (
+    <header className={`fixed inset-x-0 top-0 z-30 transition-[background-color,box-shadow] duration-200 ${scrolled ? "bg-[#0A0A0B]/95 backdrop-blur-md shadow-sm border-b border-white/5" : "bg-transparent"}`}>
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6">
+        <Link href="/" className="text-xl font-bold tracking-tight text-white">
+          Alum<span className="text-accent">Now</span>
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm md:flex">
+          <button onClick={() => jump("how-it-works")} className={`${active === "how-it-works" ? "text-white border-b-2 border-accent" : "text-white/50 hover:text-white"}`}>How it works</button>
+          <Link href="/about" className="text-white/50 hover:text-white">About</Link>
+          <Link href="/apply" className="text-white/50 hover:text-white">For alumni</Link>
+        </nav>
+        <div className="hidden items-center gap-4 md:flex">
+          <Link href="/login" className="text-sm font-semibold text-white/80 hover:text-white">Log in</Link>
+          <Link href="/register"><Button variant="accent">Find your mentor</Button></Link>
+        </div>
+        <button className="rounded-md p-2 text-white/50 md:hidden" aria-label="Toggle menu" onClick={() => setOpen(!open)}>
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+      {open && (
+        <div className="md:hidden border-t border-white/5 bg-[#0A0A0B]/98 backdrop-blur-md px-6 py-4 space-y-3">
+          <button onClick={() => jump("how-it-works")} className="block w-full text-left text-sm text-white/60 hover:text-white py-2">How it works</button>
+          <Link href="/about" onClick={() => setOpen(false)} className="block text-sm text-white/60 hover:text-white py-2">About</Link>
+          <Link href="/apply" onClick={() => setOpen(false)} className="block text-sm text-white/60 hover:text-white py-2">For alumni</Link>
+          <hr className="border-white/5" />
+          <Link href="/login" onClick={() => setOpen(false)} className="block text-sm font-semibold text-white/80 py-2">Log in</Link>
+          <Link href="/register" onClick={() => setOpen(false)} className="block text-sm font-semibold text-white py-2">Get started</Link>
+        </div>
+      )}
+    </header>
+  );
+}
