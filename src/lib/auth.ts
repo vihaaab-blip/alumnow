@@ -47,15 +47,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user?.email) {
-        const existing = await prisma.user.findUnique({ where: { email: user.email } });
+        const email = user.email;
+        const existing = await prisma.user.findUnique({ where: { email } });
         if (!existing) {
           const newUser = await prisma.user.create({
             data: {
-              email: user.email,
+              email,
               emailVerifiedAt: new Date(),
               role: "student",
               studentProfile: {
-                create: { fullName: user.name ?? user.email.split("@")[0] },
+                create: { fullName: user.name ?? email.split("@")[0] ?? email },
               },
             },
           });

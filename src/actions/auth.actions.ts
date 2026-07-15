@@ -135,7 +135,7 @@ export async function signupAlumni(input: {
     await sendEmail(emailTemplates.signupVerification(data.email, data.fullName), user.id);
     await signIn("credentials", { email: data.email, password: data.password, redirect: false });
     return { success: true, data: { redirectTo: "/alumni/dashboard" } };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Something went wrong. Please try again." };
   }
 }
