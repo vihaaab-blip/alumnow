@@ -13,7 +13,7 @@ export function ReviewForm({ bookingId, onSubmitted }: { bookingId: string; onSu
   const reduced = useReducedMotion();
 
   return (
-    <div className="rounded-xl border border-border bg-white p-5" aria-label="Review form">
+    <div className="rounded-xl border border-border bg-[#1A1A1A] p-5" aria-label="Review form">
       <h3 className="font-semibold text-primary">How was your session?</h3>
       <div className="mt-4 flex gap-1" role="radiogroup" aria-label="Rating">
         {[1, 2, 3, 4, 5].map((value) => (
@@ -40,7 +40,7 @@ export function ReviewForm({ bookingId, onSubmitted }: { bookingId: string; onSu
           placeholder="Share a helpful note (optional)"
           rows={4}
           maxLength={200}
-          className="w-full rounded-[10px] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
+          className="w-full rounded-[10px] border border-border bg-[#1A1A1A] px-4 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
           aria-label="Review text"
         />
         <span className="absolute bottom-3 right-3 text-xs text-muted-foreground" aria-live="polite">

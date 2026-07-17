@@ -74,9 +74,9 @@ export function PaymentModal({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-background to-white p-6 text-center dark:to-[#131316]">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#5B4FE9]/10">
-          <Smartphone size={28} style={{ color: "#5B4FE9" }} />
+      <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-background to-white p-6 text-center to-[#131316]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E8573A]/10">
+          <Smartphone size={28} style={{ color: "#E8573A" }} />
         </div>
         <h3 className="mt-4 text-lg font-semibold text-primary">Pay with UPI</h3>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -94,7 +94,7 @@ export function PaymentModal({
         </div>
 
         {!qrLoading && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-white px-4 py-2.5 dark:bg-[#131316]">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-[#131316] px-4 py-2.5">
             <code className="font-mono text-sm font-semibold text-primary">
               {upiId}
             </code>
@@ -126,7 +126,7 @@ export function PaymentModal({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="flex flex-col items-center gap-3 rounded-2xl bg-green-50 py-10 dark:bg-green-950/30"
+            className="flex flex-col items-center gap-3 rounded-2xl bg-green-950/30 py-10"
           >
             <CheckCircle size={48} className="text-green-600" />
             <p className="text-lg font-semibold text-primary">Payment verified!</p>
@@ -138,7 +138,7 @@ export function PaymentModal({
             exit={{ opacity: 0 }}
             className="space-y-5"
           >
-            <div className="rounded-2xl border border-border/80 bg-white p-5 dark:bg-[#131316]">
+            <div className="rounded-2xl border border-border/80 bg-[#131316] p-5">
               <label className="block text-sm font-semibold text-primary">
                 Enter UPI transaction reference
                 <Input
@@ -174,8 +174,8 @@ export function PaymentModal({
                 )}
               </Button>
             ) : (
-              <div className="flex items-center justify-center gap-3 rounded-2xl border border-[#5B4FE9]/20 bg-[#5B4FE9]/5 py-6">
-                <Loader2 className="animate-spin" style={{ color: "#5B4FE9" }} size={22} />
+              <div className="flex items-center justify-center gap-3 rounded-2xl border border-[#E8573A]/20 bg-[#E8573A]/5 py-6">
+                <Loader2 className="animate-spin" style={{ color: "#E8573A" }} size={22} />
                 <div>
                   <p className="text-sm font-semibold text-primary">
                     {stage === "verifying"

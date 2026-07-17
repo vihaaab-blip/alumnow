@@ -46,7 +46,7 @@ export function SessionPricingCard({
                 setSelectedId(offering.id);
               }
             }}
-            className={`flex items-center justify-between gap-4 rounded-xl border bg-white p-4 ${
+            className={`flex items-center justify-between gap-4 rounded-xl border bg-[#1A1A1A] border-white/5 p-4 ${
               isSelected
                 ? "border-primary ring-2 ring-primary"
                 : "border-border hover:border-primary/30"

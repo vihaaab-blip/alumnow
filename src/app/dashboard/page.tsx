@@ -129,8 +129,8 @@ function TrendPill({ value, positive }: { value: string; positive: boolean }) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1C1C1F] border border-[#EBEBEC] dark:border-[#232326] rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-      <p className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] mb-1.5">{label}</p>
+    <div className="bg-[#1A1A1A] border border-white/5 rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+      <p className="text-[11px] font-semibold text-white/40 mb-1.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: p.color }}>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
@@ -145,7 +145,7 @@ function ChartTooltip({ active, payload, label }: any) {
 const STATUS_MAP: Record<string, { label: string; classes: string; icon?: any }> = {
   pending_payment: { label: "Pending Payment", classes: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20", icon: Clock },
   payment_submitted: { label: "Payment Submitted", classes: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" },
-  confirmed: { label: "Confirmed", classes: "bg-[#5B4FE9]/10 text-[#5B4FE9] border-[#5B4FE9]/20" },
+  confirmed: { label: "Confirmed", classes: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
   completed: { label: "Completed", classes: "bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20" },
   cancelled: { label: "Cancelled", classes: "bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20" },
   no_show: { label: "No Show", classes: "bg-[#6E6E76]/10 text-[#6E6E76] border-[#6E6E76]/20" },
@@ -159,7 +159,7 @@ function getGreeting() {
   return "Good evening";
 }
 
-const ACCENT = "#5B4FE9";
+const ACCENT = "#E8573A";
 const CONTAINER = {
   hidden: {},
   show: { transition: { staggerChildren: 0.04 } },
@@ -344,7 +344,7 @@ function DashboardContent() {
   /* ──── Loading ──── */
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
+      <div className="min-h-screen bg-[#0D0D0D]">
         <div className="ml-0 min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -371,7 +371,7 @@ function DashboardContent() {
   const userName = session.user?.name?.split(" ")[0] || "there";
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B] transition-colors duration-150">
+    <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
       <div className="ml-0 min-h-screen">
         <div className="p-6 max-w-[1400px]">
           {/* ─── Hero Banner ─── */}
@@ -382,8 +382,8 @@ function DashboardContent() {
             className="relative overflow-hidden rounded-[16px] bg-[#0F0F10] p-6 mb-6"
           >
             <div className="absolute inset-0 aurora-mesh" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#5B4FE9]/20" />
-            <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#5B4FE9]/10 blur-3xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
+            <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#E8573A]/10 blur-3xl pointer-events-none" />
             <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#3B82F6]/8 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
               <div className="relative">
@@ -407,9 +407,9 @@ function DashboardContent() {
               {session.user?.role === "alumnus" && (
                 <div className="flex bg-white/10 p-0.5 rounded-[10px] mr-2">
                   <button onClick={() => setDashboardMode("alumnus")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "alumnus" ? "bg-white text-[#0F0F10] shadow-sm" : "text-white/60 hover:text-white"}`}>Alumni view</button>
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "alumnus" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Alumni view</button>
                   <button onClick={() => setDashboardMode("student")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "student" ? "bg-white text-[#0F0F10] shadow-sm" : "text-white/60 hover:text-white"}`}>Student view</button>
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "student" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Student view</button>
                 </div>
               )}
               <SearchTrigger onClick={() => setSearchOpen(true)} />
@@ -419,8 +419,8 @@ function DashboardContent() {
           {/* ─── Insight Callout ─── */}
           {showInsight && (
             <motion.div variants={FADE_UP} initial="hidden" animate="show" className="mb-5">
-              <div className="rounded-[12px] border border-[#5B4FE9]/15 bg-gradient-to-r from-[#5B4FE9]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#5B4FE9]/10">
+              <div className="rounded-[12px] border border-[#E8573A]/15 bg-gradient-to-r from-[#E8573A]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
                   <Sparkles size={15} style={{ color: ACCENT }} />
                 </div>
                 <p className="text-[13px] text-primary font-medium">{insight}</p>
@@ -435,10 +435,10 @@ function DashboardContent() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[15px] font-semibold text-primary">Analytics overview</h2>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-white dark:bg-[#131316] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
+              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
                 <Filter size={13} /> Last 30 days <ChevronDown size={12} />
               </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-white dark:bg-[#131316] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <button type="button" className="rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
                 <Download size={13} /> Export
               </button>
             </div>
@@ -450,7 +450,7 @@ function DashboardContent() {
               <motion.div key={s.label} variants={FADE_UP}
                 whileHover={{ scale: 1.02, y: -2 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5 flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow duration-200"
+                className="rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5 flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow duration-200"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`h-9 w-9 rounded-[10px] ${s.bg} flex items-center justify-center shrink-0`} style={s.color ? { backgroundColor: `${s.color}14` } : {}}>
@@ -458,16 +458,16 @@ function DashboardContent() {
                   </div>
                   <TrendPill value={s.trend.value} positive={s.trend.positive} />
                 </div>
-                <p className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em] mb-1">{s.label}</p>
+                <p className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-1">{s.label}</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-[40px] font-bold text-[#0F0F10] dark:text-[#F5F5F6] tabular-nums leading-none tracking-[-0.03em]"
+                  <p className="text-[40px] font-bold text-white tabular-nums leading-none tracking-[-0.03em]"
                     style={s.label === "Rating" && s.value === "—" ? { color: "#9A9AA2", fontSize: 32 } : {}}>
                     {s.value}
                   </p>
-                  {s.unit && <span className="text-[#6E6E76] dark:text-[#9A9AA2] text-[16px] font-semibold ml-0.5">{s.unit}</span>}
+                  {s.unit && <span className="text-white/40 text-[16px] font-semibold ml-0.5">{s.unit}</span>}
                 </div>
                 <div className="flex items-center justify-between mt-2.5">
-                  <span className="text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">{s.detail}</span>
+                  <span className="text-[11px] text-white/40">{s.detail}</span>
                   <Sparkline data={s.sparkData} color={s.color} />
                 </div>
               </motion.div>
@@ -477,10 +477,10 @@ function DashboardContent() {
           {/* ─── Charts Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
             {/* Weekly Hours */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Weekly hours</h3>
-                <button type="button" className="flex items-center gap-1 text-[10px] font-medium text-[#6E6E76] dark:text-[#9A9AA2] hover:text-primary transition-colors">
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Weekly hours</h3>
+                <button type="button" className="flex items-center gap-1 text-[10px] font-medium text-white/40 hover:text-primary transition-colors">
                   This week <ChevronDown size={11} />
                 </button>
               </div>
@@ -493,22 +493,22 @@ function DashboardContent() {
                         <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EBEBEC" className="dark:opacity-[0.08]" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                     <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} domain={[0, 'dataMax + 1']} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#EBEBEC", strokeDasharray: "3 3" }} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.1)", strokeDasharray: "3 3" }} />
                     <Area type="monotone" dataKey="hours" stroke={ACCENT} strokeWidth={2.5} fill="url(#hoursGrad)" name="Hours" dot={false} activeDot={{ r: 6, fill: ACCENT, stroke: "#fff", strokeWidth: 2.5 }} />
                     <Area type="monotone" data={lastWeekData} dataKey="hours" stroke="#9A9AA2" strokeWidth={1.5} strokeDasharray="4 3" fill="none" name="Last week" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#EBEBEC] dark:border-[#232326]">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
                     <span>Mentoring hours</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full bg-[#9A9AA2]" />
                     <span>Last week</span>
                   </div>
@@ -518,35 +518,35 @@ function DashboardContent() {
             </motion.div>
 
             {/* Monthly Sessions */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Monthly sessions</h3>
-                <span className="text-[10px] font-medium text-[#6E6E76] dark:text-[#9A9AA2]">{new Date().getFullYear()}</span>
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Monthly sessions</h3>
+                <span className="text-[10px] font-medium text-white/40">{new Date().getFullYear()}</span>
               </div>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }} {...CHART_ANIM}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#EBEBEC" className="dark:opacity-[0.08]" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#9A9AA2" }} axisLine={false} tickLine={false} interval={2} />
                     <YAxis tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "#EBEBEC", opacity: 0.3 }} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.1)", opacity: 0.3 }} />
                     <Bar dataKey="completed" fill={ACCENT} radius={[4, 4, 0, 0]} name="Completed" maxBarSize={18}>
                       {peakMonth ? monthlyData.map((entry, idx) => {
                         const isPeak = entry.month === peakMonth.month && entry.completed === peakMonth.completed;
-                        return <Cell key={idx} fill={isPeak ? "#4A3FD1" : ACCENT} />;
+                        return <Cell key={idx} fill={isPeak ? ACCENT : ACCENT} />;
                       }) : undefined}
                     </Bar>
                     <Bar dataKey="cancelled" fill="#DC2626" radius={[4, 4, 0, 0]} name="Cancelled" maxBarSize={18} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#EBEBEC] dark:border-[#232326]">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
                     <span>{chartTotalCompleted} completed</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full bg-[#DC2626]/60" />
                     <span>{chartTotalCancelled} cancelled</span>
                   </div>
@@ -564,13 +564,13 @@ function DashboardContent() {
           {/* ─── Bottom Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
             {/* Recent Mentors / Students */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">
                   {dashboardMode === "student" ? "Recent mentors" : "Recent students"}
                 </h3>
                 {dashboardMode === "student" && (
-                  <Link href="/browse" className="text-[11px] font-medium text-[#5B4FE9] hover:text-[#4A3FD6] transition-colors">View all</Link>
+                  <Link href="/browse" className="text-[11px] font-medium text-[#E8573A] hover:text-[#D44A2E] transition-colors">View all</Link>
                 )}
               </div>
               {dashboardMode === "student" ? (
@@ -579,14 +579,14 @@ function DashboardContent() {
                     <motion.div
                       animate={{ y: [0, -6, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                      className="h-14 w-14 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
                     >
-                      <GraduationCap size={24} className="text-[#5B4FE9]/30" />
+                      <GraduationCap size={24} className="text-[#E8573A]/30" />
                     </motion.div>
-                    <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">Your mentor journey starts here</p>
-                    <p className="text-[12px] text-[#6E6E76] dark:text-[#9A9AA2] mt-1 mb-4">Browse alumni to find the perfect mentor.</p>
+                    <p className="text-[14px] font-semibold text-white">Your mentor journey starts here</p>
+                    <p className="text-[12px] text-white/40 mt-1 mb-4">Browse alumni to find the perfect mentor.</p>
                     <Link href="/browse">
-                      <Button className="bg-[#5B4FE9] text-white hover:bg-[#4A3FD6] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
+                      <Button className="bg-[#E8573A] text-white hover:bg-[#D44A2E] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
                         <Search size={14} className="mr-1.5" /> Find a mentor
                       </Button>
                     </Link>
@@ -596,15 +596,15 @@ function DashboardContent() {
                     {recentMentors.map((b) => {
                       const statusInfo = formatBadge(b.status);
                       return (
-                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
+                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
                           <div className="relative shrink-0">
                             <img src={b.alumni?.user?.image ?? b.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${b.alumniId}/80/80`}
                               alt={b.alumni?.fullName || "Mentor"} className="h-9 w-9 rounded-full object-cover" />
                             <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6] truncate">{b.alumni?.fullName || b.alumni?.user?.name || "Mentor"}</p>
-                            <p className="text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">{b.alumni?.universityName || "University"}</p>
+                            <p className="text-[13px] font-semibold text-white truncate">{b.alumni?.fullName || b.alumni?.user?.name || "Mentor"}</p>
+                            <p className="text-[11px] text-white/40">{b.alumni?.universityName || "University"}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
                             {statusInfo.icon && <statusInfo.icon size={10} />}
@@ -621,27 +621,27 @@ function DashboardContent() {
                     <motion.div
                       animate={{ y: [0, -6, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                      className="h-14 w-14 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
                     >
-                      <GraduationCap size={24} className="text-[#5B4FE9]/30" />
+                      <GraduationCap size={24} className="text-[#E8573A]/30" />
                     </motion.div>
-                    <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">Your mentoring starts here</p>
-                    <p className="text-[12px] text-[#6E6E76] dark:text-[#9A9AA2] mt-1">Students will appear here once they book a session.</p>
+                    <p className="text-[14px] font-semibold text-white">Your mentoring starts here</p>
+                    <p className="text-[12px] text-white/40 mt-1">Students will appear here once they book a session.</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     {recentStudents.map((b) => {
                       const statusInfo = formatBadge(b.status);
                       return (
-                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
+                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
                           <div className="relative shrink-0">
                             <img src={b.student?.image ?? `https://picsum.photos/seed/${b.studentId}/80/80`}
                               alt={b.student?.studentProfile?.fullName || "Student"} className="h-9 w-9 rounded-full object-cover" />
                             <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6] truncate">{b.student?.studentProfile?.fullName || b.student?.name || "Student"}</p>
-                            <p className="text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">{b.student?.email || "Student"}</p>
+                            <p className="text-[13px] font-semibold text-white truncate">{b.student?.studentProfile?.fullName || b.student?.name || "Student"}</p>
+                            <p className="text-[11px] text-white/40">{b.student?.email || "Student"}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
                             {statusInfo.icon && <statusInfo.icon size={10} />}
@@ -656,14 +656,14 @@ function DashboardContent() {
             </motion.div>
 
             {/* Sessions + Rating */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Sessions</h3>
-                <div className="flex gap-0.5 bg-[#F3F4F6] dark:bg-white/[0.04] rounded-[10px] p-0.5">
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions</h3>
+                <div className="flex gap-0.5 bg-white/[0.04] rounded-[10px] p-0.5">
                   <button onClick={() => setTab("upcoming")}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "upcoming" ? "bg-white dark:bg-[#232326] text-[#0F0F10] dark:text-[#F5F5F6] shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-[#6E6E76] dark:text-[#9A9AA2] hover:text-[#0F0F10] dark:hover:text-[#F5F5F6]"}`}>Upcoming</button>
+                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "upcoming" ? "bg-[#232326] text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-white/40 hover:text-white"}`}>Upcoming</button>
                   <button onClick={() => setTab("past")}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "past" ? "bg-white dark:bg-[#232326] text-[#0F0F10] dark:text-[#F5F5F6] shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-[#6E6E76] dark:text-[#9A9AA2] hover:text-[#0F0F10] dark:hover:text-[#F5F5F6]"}`}>Past</button>
+                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "past" ? "bg-[#232326] text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-white/40 hover:text-white"}`}>Past</button>
                 </div>
               </div>
               <div className="grid grid-cols-12 gap-4">
@@ -676,21 +676,21 @@ function DashboardContent() {
                       <motion.div
                         animate={{ y: [0, -6, 0] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="h-12 w-12 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3"
+                        className="h-12 w-12 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
                       >
-                        <CalendarDays size={22} className="text-[#5B4FE9]/30" />
+                        <CalendarDays size={22} className="text-[#E8573A]/30" />
                       </motion.div>
-                      <p className="text-[14px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6]">
+                      <p className="text-[14px] font-semibold text-white">
                         {tab === "upcoming" ? "No upcoming sessions" : "No past sessions"}
                       </p>
-                      <p className="text-[12px] text-[#6E6E76] dark:text-[#9A9AA2] mt-1">
+                      <p className="text-[12px] text-white/40 mt-1">
                         {tab === "upcoming"
                           ? (dashboardMode === "student" ? "Book a session with a mentor to get started." : "Your upcoming scheduled sessions will appear here.")
                           : "Your completed sessions will appear here."}
                       </p>
                       {tab === "upcoming" && dashboardMode === "student" && (
                         <Link href="/browse">
-                          <Button className="mt-4 bg-[#5B4FE9] text-white hover:bg-[#4A3FD6] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
+                          <Button className="mt-4 bg-[#E8573A] text-white hover:bg-[#D44A2E] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
                             <Sparkles size={14} className="mr-1.5" /> Browse mentors
                           </Button>
                         </Link>
@@ -706,7 +706,7 @@ function DashboardContent() {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.03, duration: 0.25 }}
-                            className="flex items-start justify-between gap-3 py-2.5 border-b border-[#EBEBEC]/50 dark:border-[#232326]/50 last:border-b-0"
+                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5/50 last:border-b-0"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">
@@ -718,10 +718,10 @@ function DashboardContent() {
                                 <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(booking.status), opacity: 0.5 }} />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[13px] font-semibold text-[#0F0F10] dark:text-[#F5F5F6] truncate">
+                                <p className="text-[13px] font-semibold text-white truncate">
                                   {dashboardMode === "student" ? (booking.alumni?.fullName || "Mentor") : (booking.student?.studentProfile?.fullName || "Student")}
                                 </p>
-                                <p className="text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">
+                                <p className="text-[11px] text-white/40">
                                   {new Date(booking.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                   {" · "}
                                   {new Date(booking.scheduledStartAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
@@ -764,8 +764,8 @@ function DashboardContent() {
                     </div>
                   )}
                   {!loading && filtered.length > 6 && (
-                    <div className="pt-2 mt-1 border-t border-[#EBEBEC] dark:border-[#232326]">
-                      <Link href="/bookings" className="text-[11px] text-[#5B4FE9] hover:text-[#4A3FD6] transition-colors flex items-center gap-1 justify-center font-medium py-1">
+                    <div className="pt-2 mt-1 border-t border-white/5">
+                      <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
                         View all {filtered.length} sessions <ArrowRight size={11} />
                       </Link>
                     </div>
@@ -773,8 +773,8 @@ function DashboardContent() {
                 </div>
 
                 {/* Rating donut */}
-                <div className="col-span-5 pl-4 border-l border-[#EBEBEC] dark:border-[#232326]">
-                  <h4 className="text-[10px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
+                <div className="col-span-5 pl-4 border-l border-white/5">
+                  <h4 className="text-[10px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
                   <div className="h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -790,7 +790,7 @@ function DashboardContent() {
                           <Label value={`${chartAvgRating > 0 ? chartAvgRating.toFixed(1) : "—"}`}
                             position="center"
                             className="text-[22px] font-bold tabular-nums"
-                            fill="#0F0F10"
+                            fill="#FFFFFF"
                             style={{ fontSize: 22, fontWeight: 700, dominantBaseline: "central" }}
                           />
                         </Pie>
@@ -805,11 +805,11 @@ function DashboardContent() {
                       return (
                         <div key={r.rating} className="flex items-center gap-2 text-[10px]">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                          <span className="text-[#6E6E76] dark:text-[#9A9AA2] w-[20px]">{r.rating}</span>
-                          <div className="flex-1 h-1.5 rounded-full bg-[#F3F4F6] dark:bg-white/[0.06] overflow-hidden">
+                          <span className="text-white/40 w-[20px]">{r.rating}</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: r.color }} />
                           </div>
-                          <span className="text-[#0F0F10] dark:text-[#F5F5F6] font-medium tabular-nums w-[24px] text-right">{pct}%</span>
+                          <span className="text-white font-medium tabular-nums w-[24px] text-right">{pct}%</span>
                         </div>
                       );
                     })}

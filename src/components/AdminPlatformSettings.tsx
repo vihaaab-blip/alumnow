@@ -71,7 +71,7 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
 
   return (
     <div className="max-w-xl space-y-8">
-      <div className="rounded-2xl border border-border bg-white p-6">
+      <div className="rounded-2xl border border-border bg-[#1A1A1A] p-6">
         <h2 className="font-semibold text-primary">Payment settings</h2>
         <label className="mt-4 block text-sm font-semibold">
           UPI ID
@@ -82,7 +82,7 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-border bg-white p-6">
+      <div className="rounded-2xl border border-border bg-[#1A1A1A] p-6">
         <h2 className="font-semibold text-primary">UPI QR Code</h2>
         {qrCode && (
           <div className="mt-4">
@@ -94,7 +94,7 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
         <input ref={fileRef} type="file" accept="image/*" onChange={handleQrUpload} className="mt-4 block text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white" />
       </div>
 
-      <div className="rounded-2xl border border-border bg-white p-6">
+      <div className="rounded-2xl border border-border bg-[#1A1A1A] p-6">
         <h2 className="font-semibold text-primary">Platform stats</h2>
         {STAT_KEYS.map((key) => (
           <label key={key} className="mt-4 block text-sm font-semibold">

@@ -31,7 +31,7 @@ export function AdminReviewModeration({ reviews: initial }: { reviews: AdminRevi
           </p>
         )}
         {items.map((review) => (
-          <div key={review.id} className="rounded-xl border border-border bg-white p-5">
+          <div key={review.id} className="rounded-xl border border-border bg-[#1A1A1A] p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-primary">{review.rating}/5 · {review.alumnus?.fullName ?? "Unknown"}</p>

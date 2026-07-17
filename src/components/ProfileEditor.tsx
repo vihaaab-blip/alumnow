@@ -143,7 +143,7 @@ export function ProfileEditor({ initial }: ProfileEditorProps) {
             <select
               value={form.currentStudyLevel}
               onChange={(e) => setForm({ ...form, currentStudyLevel: e.target.value })}
-              className="h-11 w-full rounded-[10px] border border-border bg-white px-3.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 w-full rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:ring-4 focus:ring-primary/10"
             >
               <option value="undergraduate">Undergraduate</option>
               <option value="postgraduate">Postgraduate</option>
@@ -157,7 +157,7 @@ export function ProfileEditor({ initial }: ProfileEditorProps) {
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               rows={4}
               maxLength={750}
-              className="h-24 w-full resize-none rounded-[10px] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-24 w-full resize-none rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <div className="sm:col-span-2">

@@ -159,9 +159,9 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
             className="w-full max-w-4xl mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden">
-              <div className="flex items-center gap-3 px-4 h-14 border-b border-gray-100">
-                <Search size={16} className="text-gray-400 shrink-0" />
+            <div className="rounded-2xl bg-[#1A1A1A] shadow-2xl ring-1 ring-white/5 overflow-hidden">
+              <div className="flex items-center gap-3 px-4 h-14 border-b border-white/5">
+                <Search size={16} className="text-white/25 shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -171,30 +171,30 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
                     if (e.key === "Enter") commit(inputValue);
                   }}
                   placeholder="Search alumni by name, university, course..."
-                  className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
+                  className="flex-1 text-sm text-white placeholder:text-white/25 bg-transparent outline-none"
                 />
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-mono shrink-0">⏎</span>
+                  <span className="text-[10px] text-white/25 bg-white/5 px-1.5 py-0.5 rounded font-mono shrink-0">⏎</span>
                   <button
                     onClick={() => onOpenChange(false)}
-                    className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="p-1 rounded-md hover:bg-white/5 text-white/25 hover:text-white/50 transition-colors"
                   >
                     <X size={14} />
                   </button>
                 </div>
               </div>
-              <div className="px-6 py-5 bg-gradient-to-b from-gray-50 to-white" onMouseDown={(e) => e.preventDefault()}>
+              <div className="px-6 py-5 bg-gradient-to-b from-white/[0.03] to-transparent" onMouseDown={(e) => e.preventDefault()}>
                 <div className="shadow-lg rounded-xl">
                   <Keyboard onKeyClick={handleKeyClick} />
                 </div>
                 {recentSearches.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Recent searches</p>
+                  <div className="mt-3 pt-3 border-t border-white/5">
+                    <p className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">Recent searches</p>
                     <div className="flex flex-wrap gap-1.5">
                       {recentSearches.map((s, i) => (
                         <button key={i}
                           onClick={() => { setInputValue(s); commit(s); }}
-                          className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                          className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white/5 hover:bg-white/10 text-white/50 transition-colors"
                         >
                           {s}
                         </button>
@@ -221,10 +221,10 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
       title="Search alumni by name, university, or course"
       className="relative w-56 group cursor-pointer"
     >
-      <div className="flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[var(--color-border)] rounded-lg transition-all duration-200 text-gray-400 group-hover:border-gray-300 group-hover:shadow-[0_0_16px_rgba(91,79,233,0.15)]">
-        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg transition-all duration-200 text-white/25 group-hover:border-white/20 group-hover:shadow-[0_0_16px_rgba(232,87,58,0.1)]">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25" />
         <span className="flex-1 text-left">Search alumni...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-mono">
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-white/25 bg-white/5 px-1.5 py-0.5 rounded font-mono">
           <span>⌘</span>K
         </kbd>
       </div>

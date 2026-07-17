@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="h-11 rounded-[10px] border border-border bg-white px-3.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
         >
           <option value="ALL">All roles</option>
           <option value="student">Student</option>
@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
         </select>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-white">
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
         <table className="w-full min-w-[650px] text-left text-sm">
           <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
             <tr>

@@ -85,7 +85,7 @@ export function Keyboard({ className, onKeyClick }: { className?: string; onKeyC
   return (
     <Ctx.Provider value={{ pressedKeys, setPressed, setReleased, onKeyClick }}>
       <div className={cn("mx-auto w-fit scale-[0.55] sm:scale-[0.7] md:scale-[0.85] lg:scale-100 origin-top", className)}>
-        <div className="rounded-xl bg-neutral-200 p-1.5 shadow-sm ring-1 shadow-black/5 ring-black/5">
+        <div className="rounded-xl bg-neutral-800 p-1.5 shadow-sm ring-1 shadow-black/5 ring-black/5">
           <Row>
             <KBtn keyCode="Backquote"><span>`</span></KBtn>
             {["1","2","3","4","5","6","7","8","9","0"].map((n) => <KBtn key={n} keyCode={`Digit${n}`}>{n}</KBtn>)}
@@ -148,8 +148,8 @@ function KBtn({ className, children, keyCode }: { className?: string; children?:
         setTimeout(() => ctx!.setReleased(keyCode), 100);
       }}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-md bg-white text-[9px] text-neutral-700 font-semibold shadow-[0px_1px_2px_0px_rgba(0,0,0,0.15),0px_1px_0px_0px_rgba(255,255,255,1)_inset] transition-all duration-75 select-none",
-        isPressed && "scale-[0.92] bg-neutral-800 text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]",
+        "flex h-9 w-9 items-center justify-center rounded-md bg-neutral-700 text-[9px] text-neutral-200 font-semibold shadow-[0px_1px_2px_0px_rgba(0,0,0,0.3),0px_1px_0px_0px_rgba(255,255,255,0.05)_inset] transition-all duration-75 select-none",
+        isPressed && "scale-[0.92] bg-coral text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]",
         className
       )}
     >

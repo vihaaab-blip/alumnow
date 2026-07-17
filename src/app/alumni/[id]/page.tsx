@@ -42,7 +42,7 @@ export default async function AlumniProfilePage({ params }: { params: Promise<{ 
   } catch {
     return (
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-white p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-[#1A1A1A] p-12 text-center">
           <h2 className="text-xl font-bold text-primary">Something went wrong</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             We couldn&apos;t load this alumni profile. It may have been removed or is temporarily unavailable.
@@ -109,7 +109,7 @@ export default async function AlumniProfilePage({ params }: { params: Promise<{ 
           </div>
         </aside>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white p-4 shadow-lg lg:static lg:mt-8 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0D0D0D]/95 backdrop-blur-sm p-4 shadow-lg lg:static lg:mt-8 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <p className="text-sm font-semibold text-primary max-lg:hidden">
             Book a session with {alumni.fullName}

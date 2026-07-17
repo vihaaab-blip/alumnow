@@ -44,9 +44,9 @@ export function ConfirmationScreen({ booking }: Props) {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100"
+        className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-900/30"
       >
-        <CheckCircle size={48} className="text-green-600" />
+        <CheckCircle size={48} className="text-green-400" />
       </motion.div>
       <div>
         <h2 className="text-2xl font-bold text-primary">Session booked!</h2>

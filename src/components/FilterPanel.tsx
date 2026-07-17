@@ -45,10 +45,10 @@ const GRAD_YEAR_MAX = new Date().getFullYear();
 function FilterSection({ title, count, defaultOpen = true, icon, children }: { title: string; count?: number; defaultOpen?: boolean; icon?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-[var(--color-border-light)] last:border-b-0">
+    <div className="border-b border-white/5 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full py-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
+        className="flex items-center justify-between w-full py-3 text-xs font-semibold uppercase tracking-wider text-white/40 hover:text-white transition-colors"
       >
         <span className="flex items-center gap-2">
           {icon}
@@ -56,7 +56,7 @@ function FilterSection({ title, count, defaultOpen = true, icon, children }: { t
         </span>
         <span className="flex items-center gap-1.5">
           {count != null && count > 0 && (
-            <span className="text-[10px] font-bold text-[var(--color-primary)] bg-primary/10 px-1.5 py-0.5 rounded-full">{count}</span>
+            <span className="text-[10px] font-bold text-coral bg-coral/10 px-1.5 py-0.5 rounded-full">{count}</span>
           )}
           {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </span>
@@ -131,13 +131,13 @@ function DualRangeSlider({ min, max, value, onChange }: { min: number; max: numb
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+        <span className="text-xs font-medium text-white/50">
           {minVal} – {maxVal}
         </span>
         {active && (
           <button
             onClick={() => { setLocal([min, max]); onChange(undefined); }}
-            className="text-[11px] text-[var(--color-primary)] hover:underline font-medium"
+            className="text-[11px] text-coral hover:underline font-medium"
           >
             Reset
           </button>
@@ -214,18 +214,18 @@ export function FilterPanel({
   ].filter(Boolean).length;
 
   const content = (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white overflow-hidden">
+    <div className="rounded-2xl border border-white/5 bg-[#1A1A1A] overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[var(--color-border-light)]">
+      <div className="px-5 py-4 border-b border-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[var(--color-text)]">Filters</h2>
+            <h2 className="text-sm font-bold text-white">Filters</h2>
             {resultCount != null && (
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{resultCount} result{resultCount !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-white/50 mt-0.5">{resultCount} result{resultCount !== 1 ? "s" : ""}</p>
             )}
           </div>
           {activeCount > 0 && (
-            <button onClick={onClear} className="text-xs font-semibold text-[var(--color-primary)] hover:underline transition-all">
+            <button onClick={onClear} className="text-xs font-semibold text-coral hover:underline transition-all">
               Reset
             </button>
           )}
@@ -239,7 +239,7 @@ export function FilterPanel({
           <input
             type="text"
             placeholder="Search universities..."
-            className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
+            className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
             value={uniInput}
             onChange={(e) => setUniInput(e.target.value)}
           />
@@ -251,7 +251,7 @@ export function FilterPanel({
             <input
               type="text"
               placeholder="Search countries..."
-              className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
+              className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
               value={countryInput}
               onChange={(e) => setCountryInput(e.target.value)}
             />
@@ -271,7 +271,7 @@ export function FilterPanel({
                 })}
               </div>
             ) : (
-              <p className="text-xs text-[var(--color-text-tertiary)]">No countries match</p>
+              <p className="text-xs text-white/25">No countries match</p>
             )}
           </div>
         </FilterSection>
@@ -291,7 +291,7 @@ export function FilterPanel({
           <input
             type="text"
             placeholder="Search courses..."
-            className="h-9 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-[var(--color-text-tertiary)]"
+            className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
             value={courseInput}
             onChange={(e) => setCourseInput(e.target.value)}
           />
@@ -380,12 +380,12 @@ export function FilterPanel({
       <div className="lg:hidden mb-4">
         <button
           onClick={() => setDrawerOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] bg-white text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-[#1A1A1A] text-sm font-medium text-white hover:bg-white/5 transition-all"
         >
           <SlidersHorizontal size={15} />
           Filters
           {activeCount > 0 && (
-            <span className="ml-1 rounded-full bg-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold text-white">{activeCount}</span>
+            <span className="ml-1 rounded-full bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">{activeCount}</span>
           )}
         </button>
       </div>
@@ -394,10 +394,10 @@ export function FilterPanel({
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[var(--color-bg)] p-4 shadow-2xl animate-slide-up">
+          <div className="fixed bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#0D0D0D] p-4 shadow-2xl animate-slide-up">
             <div className="mb-3 flex items-center justify-between px-1">
-              <h2 className="font-semibold text-[var(--color-text)]">Filters</h2>
-              <button onClick={() => setDrawerOpen(false)} className="p-1.5 rounded-lg hover:bg-primary/5 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors">
+              <h2 className="font-semibold text-white">Filters</h2>
+              <button onClick={() => setDrawerOpen(false)} className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>

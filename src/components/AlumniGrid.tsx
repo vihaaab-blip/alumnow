@@ -59,7 +59,7 @@ export function AlumniGrid({ items, hasMore, loadMore, loading, onSelect }: {
       {loading && items.length === 0 && (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={`sk-${i}`} className="rounded-lg border border-[var(--color-border)] bg-white overflow-hidden">
+            <div key={`sk-${i}`} className="rounded-lg border border-white/5 bg-[#1A1A1A] overflow-hidden">
               <div className="aspect-[4/3] bg-[var(--color-surface)]" />
               <div className="p-5 space-y-3">
                 <Skeleton className="h-5 w-3/4 rounded-md" />
@@ -76,7 +76,7 @@ export function AlumniGrid({ items, hasMore, loadMore, loading, onSelect }: {
       {loading && items.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 mt-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={`lm-sk-${i}`} className="rounded-lg border border-[var(--color-border)] bg-white overflow-hidden">
+            <div key={`lm-sk-${i}`} className="rounded-lg border border-white/5 bg-[#1A1A1A] overflow-hidden">
               <div className="aspect-[4/3] bg-[var(--color-surface)]" />
               <div className="p-5 space-y-3">
                 <Skeleton className="h-5 w-3/4 rounded-md" />
@@ -90,7 +90,7 @@ export function AlumniGrid({ items, hasMore, loadMore, loading, onSelect }: {
       <div ref={sentinelRef} className="h-10" aria-hidden="true" />
 
       {!hasMore && items.length > 0 && (
-        <p className="py-8 text-center text-sm text-[var(--color-text-tertiary)]" aria-live="polite">
+        <p className="py-8 text-center text-sm text-white/30" aria-live="polite">
           You&apos;ve seen all {items.length} alumni
         </p>
       )}
@@ -102,9 +102,9 @@ export function AlumniGrid({ items, hasMore, loadMore, loading, onSelect }: {
       )}
 
       {!loading && items.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white px-6 py-20 text-center">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">No alumni match your filters</h2>
-          <p className="mt-2 text-sm text-[var(--color-text-tertiary)]">Try widening your search or clearing the filters.</p>
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-6 py-20 text-center">
+          <h2 className="text-lg font-semibold text-white">No alumni match your filters</h2>
+          <p className="mt-2 text-sm text-white/30">Try widening your search or clearing the filters.</p>
         </div>
       )}
     </>

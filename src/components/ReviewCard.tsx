@@ -9,7 +9,7 @@ export function ReviewCard({ review }: { review: { rating: number; text: string 
   const displayText = shouldTruncate && !expanded ? text.slice(0, 200) + "\u2026" : text;
 
   return (
-    <article className="rounded-xl border border-border bg-white p-5">
+    <article className="rounded-xl border border-border bg-[#1A1A1A] p-5">
       <div className="flex items-center justify-between">
         <div className="flex text-accent" aria-label={`Rating: ${review.rating} out of 5`}>
           {[1, 2, 3, 4, 5].map((star) => (

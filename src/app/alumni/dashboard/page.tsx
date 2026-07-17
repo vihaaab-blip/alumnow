@@ -23,7 +23,7 @@ import {
   Download, Filter,
 } from "lucide-react";
 
-const ACCENT = "#5B4FE9";
+const ACCENT = "#E8573A";
 const CONTAINER = {
   hidden: {},
   show: { transition: { staggerChildren: 0.04 } },
@@ -112,7 +112,7 @@ function getGreeting() {
 const STATUS_MAP: Record<string, { label: string; classes: string }> = {
   pending_payment: { label: "Pending Payment", classes: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20" },
   payment_submitted: { label: "Payment Submitted", classes: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" },
-  confirmed: { label: "Confirmed", classes: "bg-[#5B4FE9]/10 text-[#5B4FE9] border-[#5B4FE9]/20" },
+  confirmed: { label: "Confirmed", classes: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
   completed: { label: "Completed", classes: "bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20" },
   cancelled: { label: "Cancelled", classes: "bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20" },
   no_show: { label: "No Show", classes: "bg-[#6E6E76]/10 text-[#6E6E76] border-[#6E6E76]/20" },
@@ -145,8 +145,8 @@ function TrendPill({ value, positive }: { value: string; positive: boolean }) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1C1C1F] border border-[#EBEBEC] dark:border-[#232326] rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-      <p className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] mb-1.5">{label}</p>
+    <div className="bg-[#1A1A1A] border border-white/5 rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+      <p className="text-[11px] font-semibold text-white/40 mb-1.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: p.color }}>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
@@ -238,7 +238,7 @@ function AlumniDashboardContent() {
   const statCards = useMemo(() => [
     {
       icon: Award, label: "Total Sessions", value: String(totalSessions), unit: "",
-      color: "#5B4FE9", bg: "bg-[#5B4FE9]/8",
+      color: "#E8573A", bg: "bg-[#E8573A]/8",
       trend: sessionsTrend, sparkData: sparkSessions,
       detail: `${sessionsData[sessionsData.length - 1]?.sessions ?? 0} this month · peak in ${peakMonth?.month}`,
     },
@@ -266,7 +266,7 @@ function AlumniDashboardContent() {
 
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
+      <div className="min-h-screen bg-[#0D0D0D]">
         <Sidebar />
       <div className="ml-[240px] min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
@@ -280,7 +280,7 @@ function AlumniDashboardContent() {
   const userName = session.user?.name?.split(" ")[0] || "there";
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B] transition-colors duration-150">
+    <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
       <Sidebar />
       <div className="ml-[240px] min-h-screen">
         <div className="p-6 max-w-[1400px]">
@@ -293,8 +293,8 @@ function AlumniDashboardContent() {
             className="relative overflow-hidden rounded-[16px] bg-gradient-to-br from-[#0F0F10] via-[#0F0F10] to-[#1A0F2E] p-6 mb-6"
           >
             <div className="absolute inset-0 aurora-mesh" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#5B4FE9]/20" />
-            <div className="absolute -bottom-10 -right-10 w-56 h-56 rounded-full bg-[#5B4FE9]/15 blur-3xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
+            <div className="absolute -bottom-10 -right-10 w-56 h-56 rounded-full bg-[#E8573A]/15 blur-3xl pointer-events-none" />
             <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#EC4899]/8 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
               <div className="relative">
@@ -306,7 +306,7 @@ function AlumniDashboardContent() {
                 <span className="absolute -bottom-0.5 -right-0.5 w-[13px] h-[13px] rounded-full bg-[#16A34A] border-[2.5px] border-[#0F0F10] shadow-[0_0_6px_rgba(22,163,74,0.5)]" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B4FE9]">Alumni dashboard</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#E8573A]">Alumni dashboard</p>
                 <h1 className="text-[24px] font-bold text-white tracking-[-0.02em] mt-0.5">{getGreeting()}, {userName}</h1>
                 <p className="text-[13px] text-white/50 mt-0.5">
                   {upcomingCount > 0
@@ -327,8 +327,8 @@ function AlumniDashboardContent() {
 
           {/* ─── Insight ─── */}
           <motion.div variants={FADE_UP} initial="hidden" animate="show" className="mb-5">
-            <div className="rounded-[12px] border border-[#5B4FE9]/15 bg-gradient-to-r from-[#5B4FE9]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#5B4FE9]/10">
+            <div className="rounded-[12px] border border-[#E8573A]/15 bg-gradient-to-r from-[#E8573A]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
                 <Sparkles size={15} style={{ color: ACCENT }} />
               </div>
               <p className="text-[13px] text-primary font-medium">{insight}</p>
@@ -342,10 +342,10 @@ function AlumniDashboardContent() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[15px] font-semibold text-primary">Mentor analytics</h2>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-white dark:bg-[#131316] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
+              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
                 <Filter size={13} /> This year <ChevronDown size={12} />
               </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-white dark:bg-[#131316] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <button type="button" className="rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
                 <Download size={13} /> Export
               </button>
             </div>
@@ -355,7 +355,7 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
-                className={`relative overflow-hidden rounded-[16px] border border-[#EBEBEC] dark:border-[#232326] ${s.bg} p-5 transition-all duration-150`}
+                className={`relative overflow-hidden rounded-[16px] border border-white/5 ${s.bg} p-5 transition-all duration-150`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-[10px]`} style={{ backgroundColor: `${s.color}15` }}>
@@ -363,14 +363,14 @@ function AlumniDashboardContent() {
                   </div>
                   {s.trend && <TrendPill value={s.trend.value} positive={s.trend.positive} />}
                 </div>
-                <p className="text-[11px] text-[#6E6E76] dark:text-[#9A9AA2] font-medium mb-0.5">{s.label}</p>
+                <p className="text-[11px] text-white/40 font-medium mb-0.5">{s.label}</p>
                 <div className="flex items-end justify-between">
                   <p className="text-[28px] font-bold tabular-nums text-primary tracking-[-0.02em]" style={{ lineHeight: 1 }}>
                     {s.value}<span className="text-[14px] font-semibold text-muted-foreground ml-0.5">{s.unit}</span>
                   </p>
                   <Sparkline data={s.sparkData} color={s.color} />
                 </div>
-                <p className="mt-1.5 text-[11px] text-[#6E6E76] dark:text-[#9A9AA2]">{s.detail}</p>
+                <p className="mt-1.5 text-[11px] text-white/40">{s.detail}</p>
                 <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${s.color}40, ${s.color}80, ${s.color}40)` }} />
               </motion.div>
             ))}
@@ -380,11 +380,11 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
 
             {/* Sessions bar chart */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Sessions per month</h3>
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions per month</h3>
                 <div className="flex items-center gap-2 text-[11px]">
-                  <span className="flex items-center gap-1 text-[#6E6E76] dark:text-[#9A9AA2]">
+                  <span className="flex items-center gap-1 text-white/40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
                     Completed
                   </span>
@@ -393,7 +393,7 @@ function AlumniDashboardContent() {
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sessionsData} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-[#EBEBEC] dark:text-[#232326]" strokeWidth={1} vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-white/10" strokeWidth={1} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 10, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "transparent" }} />
@@ -413,8 +413,8 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Rating donut + overview */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
-              <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em] mb-3">Rating breakdown</h3>
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h3>
               <div className="h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -444,11 +444,11 @@ function AlumniDashboardContent() {
                   return (
                     <div key={r.rating} className="flex items-center gap-2 text-[10px]">
                       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                      <span className="text-[#6E6E76] dark:text-[#9A9AA2] w-[20px]">{r.rating}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-[#F3F4F6] dark:bg-white/[0.06] overflow-hidden">
+                      <span className="text-white/40 w-[20px]">{r.rating}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: r.color }} />
                       </div>
-                      <span className="text-[#0F0F10] dark:text-[#F5F5F6] font-medium tabular-nums w-[24px] text-right">{pct}%</span>
+                      <span className="text-white font-medium tabular-nums w-[24px] text-right">{pct}%</span>
                     </div>
                   );
                 })}
@@ -460,11 +460,11 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
 
             {/* Quick actions */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
-              <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em] mb-4">Quick actions</h3>
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-4">Quick actions</h3>
               <div className="space-y-1.5">
-                <Link href="/alumni/profile/edit" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#5B4FE9]/10">
+                <Link href="/alumni/profile/edit" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
                     <Edit3 size={14} style={{ color: ACCENT }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -473,7 +473,7 @@ function AlumniDashboardContent() {
                   </div>
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
-                <Link href="/alumni/profile/availability" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors group">
+                <Link href="/alumni/profile/availability" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
                   <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#16A34A]/10">
                     <CalendarDays size={14} style={{ color: "#16A34A" }} />
                   </div>
@@ -483,7 +483,7 @@ function AlumniDashboardContent() {
                   </div>
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
-                <Link href="/alumni/profile/pricing" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors group">
+                <Link href="/alumni/profile/pricing" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
                   <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#D97706]/10">
                     <DollarSign size={14} style={{ color: "#D97706" }} />
                   </div>
@@ -493,7 +493,7 @@ function AlumniDashboardContent() {
                   </div>
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
-                <Link href="/browse" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[#FAFAFA] dark:hover:bg-white/[0.03] transition-colors group">
+                <Link href="/browse" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
                   <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#EC4899]/10">
                     <GraduationCap size={14} style={{ color: "#EC4899" }} />
                   </div>
@@ -507,15 +507,15 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Earnings chart */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-4 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-4 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Earnings</h3>
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Earnings</h3>
                 <span className="text-[13px] font-bold tabular-nums text-primary">₹{(totalEarnings / 100000).toFixed(1)}L</span>
               </div>
               <div className="h-[170px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={earningsData} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-[#EBEBEC] dark:text-[#232326]" strokeWidth={1} vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-white/10" strokeWidth={1} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 9, fill: "#9A9AA2" }} axisLine={false} tickLine={false} interval={2} />
                     <YAxis tick={{ fontSize: 9, fill: "#9A9AA2" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}K`} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "transparent" }} />
@@ -534,10 +534,10 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Upcoming bookings */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-white dark:bg-[#131316] border border-[#EBEBEC] dark:border-[#232326] p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-[#6E6E76] dark:text-[#9A9AA2] uppercase tracking-[0.06em]">Upcoming bookings</h3>
-                <Link href="/bookings" className="text-[11px] text-[#5B4FE9] hover:text-[#4A3FD6] font-medium flex items-center gap-1 transition-colors">
+                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Upcoming bookings</h3>
+                <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] font-medium flex items-center gap-1 transition-colors">
                   View all <ArrowRight size={11} />
                 </Link>
               </div>
@@ -545,8 +545,8 @@ function AlumniDashboardContent() {
                 <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[48px] rounded-[10px]" />)}</div>
               ) : bookings.length === 0 ? (
                 <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-full bg-[#5B4FE9]/6 flex items-center justify-center mx-auto mb-3">
-                    <CalendarDays size={22} className="text-[#5B4FE9]/30" />
+                  <div className="h-12 w-12 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3">
+                    <CalendarDays size={22} className="text-[#E8573A]/30" />
                   </div>
                   <p className="text-[14px] font-semibold text-primary">No bookings yet</p>
                   <p className="text-[12px] text-muted-foreground mt-1">When students book sessions, they will appear here.</p>
@@ -561,7 +561,7 @@ function AlumniDashboardContent() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.25 }}
-                        className="flex items-center justify-between gap-3 py-2.5 border-b border-[#EBEBEC]/50 dark:border-[#232326]/50 last:border-b-0"
+                        className="flex items-center justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <img src={`https://picsum.photos/seed/${b.studentId}/40/40`}
@@ -593,8 +593,8 @@ function AlumniDashboardContent() {
                     );
                   })}
                   {bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").length > 4 && (
-                    <div className="pt-2 mt-1 border-t border-[#EBEBEC] dark:border-[#232326]">
-                      <Link href="/bookings" className="text-[11px] text-[#5B4FE9] hover:text-[#4A3FD6] transition-colors flex items-center gap-1 justify-center font-medium py-1">
+                    <div className="pt-2 mt-1 border-t border-white/5">
+                      <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
                         View all bookings <ArrowRight size={11} />
                       </Link>
                     </div>

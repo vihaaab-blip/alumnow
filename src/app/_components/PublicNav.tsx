@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/Logo";
 
 const sections = ["hero", "how-it-works"];
 
@@ -24,9 +25,7 @@ export function PublicNav() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActive(entry.target.id);
-          }
+          if (entry.isIntersecting) setActive(entry.target.id);
         }
       },
       { rootMargin: "-80px 0px -50% 0px" }
@@ -49,36 +48,34 @@ export function PublicNav() {
     <header
       className={`fixed inset-x-0 top-0 z-30 transition-[background-color,box-shadow] duration-200 ${
         scrolled
-          ? "bg-cream/95 backdrop-blur-md shadow-sm border-b border-border"
+          ? "bg-[#0D0D0D]/95 backdrop-blur-md shadow-sm border-b border-white/5"
           : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6">
-        <Link href="/" className="text-xl font-bold tracking-tight text-navy">
-          Alum<span className="text-gold">Now</span>
-        </Link>
+        <Logo />
         <nav className="hidden items-center gap-8 text-sm md:flex">
           <button
             onClick={() => jump("how-it-works")}
             className={`${
               active === "how-it-works"
-                ? "text-navy border-b-2 border-gold"
-                : "text-navy/50 hover:text-navy"
+                ? "text-white border-b-2 border-coral"
+                : "text-white/50 hover:text-white"
             }`}
           >
             How it works
           </button>
-          <Link href="/about" className="text-navy/50 hover:text-navy">
+          <Link href="/about" className="text-white/50 hover:text-white">
             About
           </Link>
-          <Link href="/apply" className="text-navy/50 hover:text-navy">
+          <Link href="/apply" className="text-white/50 hover:text-white">
             For alumni
           </Link>
         </nav>
         <div className="hidden items-center gap-4 md:flex">
           <Link
             href="/login"
-            className="text-sm font-semibold text-navy/70 hover:text-navy"
+            className="text-sm font-semibold text-white/70 hover:text-coral transition-colors"
           >
             Log in
           </Link>
@@ -87,7 +84,7 @@ export function PublicNav() {
           </Link>
         </div>
         <button
-          className="rounded-md p-2 text-navy/50 md:hidden"
+          className="rounded-md p-2 text-white/50 md:hidden"
           aria-label="Toggle menu"
           onClick={() => setOpen(!open)}
         >
@@ -95,39 +92,39 @@ export function PublicNav() {
         </button>
       </div>
       {open && (
-        <div className="md:hidden border-t border-border bg-cream/98 backdrop-blur-md px-6 py-4 space-y-3">
+        <div className="md:hidden border-t border-white/5 bg-[#0D0D0D]/98 backdrop-blur-md px-6 py-4 space-y-3">
           <button
             onClick={() => jump("how-it-works")}
-            className="block w-full text-left text-sm text-navy/60 hover:text-navy py-2"
+            className="block w-full text-left text-sm text-white/60 hover:text-white py-2"
           >
             How it works
           </button>
           <Link
             href="/about"
             onClick={() => setOpen(false)}
-            className="block text-sm text-navy/60 hover:text-navy py-2"
+            className="block text-sm text-white/60 hover:text-white py-2"
           >
             About
           </Link>
           <Link
             href="/apply"
             onClick={() => setOpen(false)}
-            className="block text-sm text-navy/60 hover:text-navy py-2"
+            className="block text-sm text-white/60 hover:text-white py-2"
           >
             For alumni
           </Link>
-          <hr className="border-border" />
+          <hr className="border-white/5" />
           <Link
             href="/login"
             onClick={() => setOpen(false)}
-            className="block text-sm font-semibold text-navy/70 py-2"
+            className="block text-sm font-semibold text-white/70 py-2"
           >
             Log in
           </Link>
           <Link
             href="/register"
             onClick={() => setOpen(false)}
-            className="block text-sm font-semibold text-navy py-2"
+            className="block text-sm font-semibold text-white py-2"
           >
             Get started
           </Link>

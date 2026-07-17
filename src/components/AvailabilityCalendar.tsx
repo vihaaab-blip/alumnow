@@ -63,7 +63,7 @@ export function AvailabilityCalendar({
     return (
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-primary">Availability</h2>
-        <div className="overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-x-auto rounded-xl border border-border bg-[#1A1A1A]">
           <div className="grid min-w-[720px] grid-cols-8 text-xs">
             <div className="border-b border-border p-3 font-semibold text-muted-foreground">IST</div>
             {Array.from({ length: 7 }, (_, i) => (
@@ -85,7 +85,7 @@ export function AvailabilityCalendar({
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-bold text-primary">Availability</h2>
-      <div className="overflow-x-auto rounded-xl border border-border bg-white">
+      <div className="overflow-x-auto rounded-xl border border-border bg-[#1A1A1A]">
         <div className="grid min-w-[720px] grid-cols-8 text-xs">
           <div className="border-b border-border p-3 font-semibold text-muted-foreground">IST</div>
           {days.map((day) => (
@@ -139,10 +139,10 @@ export function AvailabilityCalendar({
                       status === "booked"
                         ? "bg-muted text-muted-foreground line-through"
                         : status === "available"
-                          ? "bg-green-50 text-green-700 cursor-pointer hover:bg-green-100"
+                          ? "bg-green-900/30 text-green-400 cursor-pointer hover:bg-green-900/50"
                           : status === "past"
-                            ? "opacity-50 pointer-events-none bg-gray-50 text-gray-400"
-                            : "bg-white"
+                            ? "opacity-50 pointer-events-none bg-white/5 text-white/25"
+                            : "bg-[#1A1A1A]"
                     } ${reduced ? "" : "transition-colors duration-150"}`}
                   >
                     {status === "available" ? "Open" : "\u2014"}

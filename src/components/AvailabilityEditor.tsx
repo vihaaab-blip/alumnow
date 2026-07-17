@@ -108,14 +108,14 @@ export function AvailabilityEditor({ recurringSlots: initialRecurring, oneOffSlo
                           type="time"
                           value={slot.startTime}
                           onChange={(e) => updateRecurring(globalIdx, "startTime", e.target.value)}
-                          className="w-20 rounded-md border border-border bg-white px-2 py-1 text-xs outline-none focus:border-primary"
+                          className="w-20 rounded-md border border-border bg-[#1A1A1A] px-2 py-1 text-xs outline-none focus:border-primary"
                         />
                         <span className="text-xs text-muted-foreground">to</span>
                         <input
                           type="time"
                           value={slot.endTime}
                           onChange={(e) => updateRecurring(globalIdx, "endTime", e.target.value)}
-                          className="w-20 rounded-md border border-border bg-white px-2 py-1 text-xs outline-none focus:border-primary"
+                          className="w-20 rounded-md border border-border bg-[#1A1A1A] px-2 py-1 text-xs outline-none focus:border-primary"
                         />
                         <button
                           type="button"
@@ -184,7 +184,7 @@ export function AvailabilityEditor({ recurringSlots: initialRecurring, oneOffSlo
               type="date"
               value={newOneOff.specificDate}
               onChange={(e) => setNewOneOff({ ...newOneOff, specificDate: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-white px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <div>
@@ -193,7 +193,7 @@ export function AvailabilityEditor({ recurringSlots: initialRecurring, oneOffSlo
               type="time"
               value={newOneOff.startTime}
               onChange={(e) => setNewOneOff({ ...newOneOff, startTime: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-white px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <div>
@@ -202,7 +202,7 @@ export function AvailabilityEditor({ recurringSlots: initialRecurring, oneOffSlo
               type="time"
               value={newOneOff.endTime}
               onChange={(e) => setNewOneOff({ ...newOneOff, endTime: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-white px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
           </div>
           <Button onClick={handleAddOneOff} variant="outline" disabled={saving || !newOneOff.specificDate}>

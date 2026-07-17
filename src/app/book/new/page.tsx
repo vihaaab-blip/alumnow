@@ -40,7 +40,7 @@ type AlumniData = {
 const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const ACCENT = "#5B4FE9";
+const ACCENT = "#E8573A";
 
 /* ───── Calendar Picker ───── */
 function CalendarPicker({
@@ -108,7 +108,7 @@ function CalendarPicker({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -6, scale: 0.97 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className="absolute left-0 top-full z-50 mt-1.5 w-[292px] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg dark:bg-[#131316]"
+      className="absolute left-0 top-full z-50 mt-1.5 w-[292px] overflow-hidden rounded-xl border border-white/10 bg-[#1A1A1A] shadow-lg"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5">
@@ -282,8 +282,8 @@ function BookSessionContent() {
   /* ────── Loading ────── */
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
-        <aside className="hidden w-80 shrink-0 border-r border-border bg-white p-6 lg:block dark:bg-[#0A0A0B]">
+      <div className="flex min-h-screen bg-[#0D0D0D]">
+        <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] p-6 lg:block">
           <Skeleton className="h-14 w-14 rounded-full" />
           <Skeleton className="mt-4 h-5 w-36" />
           <Skeleton className="mt-1 h-4 w-28" />
@@ -320,9 +320,9 @@ function BookSessionContent() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
+    <div className="flex min-h-screen bg-[#0D0D0D]">
       {/* ─── Sidebar ─── */}
-      <aside className="hidden w-80 shrink-0 border-r border-border bg-white lg:flex lg:flex-col dark:bg-[#0A0A0B]">
+      <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] lg:flex lg:flex-col">
         {/* Profile header */}
         <div className="flex items-center gap-3 border-b border-border px-5 py-5">
           <div className="relative shrink-0">
@@ -358,8 +358,8 @@ function BookSessionContent() {
                   onClick={() => { setSelectedOffering(st); setError(""); }}
                   className={`group relative w-full rounded-xl border p-4 text-left transition-all duration-[180ms] ${
                     active
-                      ? "border-[#5B4FE9] bg-[#5B4FE9]/[0.06]"
-                      : "border-border/60 bg-white hover:border-[#5B4FE9]/30 hover:bg-[#5B4FE9]/[0.02] dark:bg-[#131316]"
+                      ? "border-[#E8573A] bg-[#E8573A]/[0.06]"
+                      : "border-white/10 bg-[#1A1A1A] hover:border-[#E8573A]/30 hover:bg-[#E8573A]/[0.02]"
                   }`}
                   style={active ? { borderColor: ACCENT } : {}}
                 >
@@ -378,12 +378,12 @@ function BookSessionContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className={`text-sm font-semibold capitalize leading-snug transition-colors duration-[180ms] ${
-                          active ? "text-[#5B4FE9]" : "text-primary"
+                          active ? "text-[#E8573A]" : "text-primary"
                         }`}>
                           {st.type.replaceAll("_", " ")}
                         </p>
                         <p className={`shrink-0 font-mono text-sm font-semibold tabular-nums transition-colors duration-[180ms] ${
-                          active ? "text-[#5B4FE9]" : "text-primary"
+                          active ? "text-[#E8573A]" : "text-primary"
                         }`}>
                           {priceDisplay(st.pricePaise)}
                         </p>
@@ -427,7 +427,7 @@ function BookSessionContent() {
                             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ACCENT }} />
                           )}
                           <span className={`text-xs font-semibold ${
-                            isActiveDay ? "text-[#5B4FE9]" : "text-primary"
+                            isActiveDay ? "text-[#E8573A]" : "text-primary"
                           }`}>
                             {DAY_NAMES_SHORT[day]}
                           </span>
@@ -438,8 +438,8 @@ function BookSessionContent() {
                               key={i}
                               className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-relaxed ${
                                 isActiveDay
-                                  ? "border-[#5B4FE9]/20 bg-[#5B4FE9]/5 text-[#5B4FE9]"
-                                  : "border-border/60 text-muted-foreground"
+                                  ? "border-[#E8573A]/20 bg-[#E8573A]/5 text-[#E8573A]"
+                                  : "border-white/10 text-muted-foreground"
                               }`}
                             >
                               {s.start}–{s.end}
@@ -494,8 +494,8 @@ function BookSessionContent() {
                     onClick={() => { setSelectedOffering(st); setError(""); }}
                     className={`group relative w-full rounded-xl border p-4 text-left transition-all duration-[180ms] ${
                       active
-                        ? "border-[#5B4FE9] bg-[#5B4FE9]/[0.06]"
-                        : "border-border/60 bg-white hover:border-[#5B4FE9]/30 dark:bg-[#131316]"
+                        ? "border-[#E8573A] bg-[#E8573A]/[0.06]"
+                        : "border-white/10 bg-[#1A1A1A] hover:border-[#E8573A]/30"
                     }`}
                   >
                     {active && (
@@ -512,10 +512,10 @@ function BookSessionContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold capitalize ${active ? "text-[#5B4FE9]" : "text-primary"}`}>
+                          <p className={`text-sm font-semibold capitalize ${active ? "text-[#E8573A]" : "text-primary"}`}>
                             {st.type.replaceAll("_", " ")}
                           </p>
-                          <p className={`shrink-0 font-mono text-sm font-semibold tabular-nums ${active ? "text-[#5B4FE9]" : "text-primary"}`}>
+                          <p className={`shrink-0 font-mono text-sm font-semibold tabular-nums ${active ? "text-[#E8573A]" : "text-primary"}`}>
                             {priceDisplay(st.pricePaise)}
                           </p>
                         </div>
@@ -582,7 +582,7 @@ function BookSessionContent() {
                 </div>
 
                 {/* Divider */}
-                <div className="my-7 border-t border-border/60" />
+                <div className="my-7 border-t border-white/10" />
 
                 {/* Date & time selection */}
                 <div>
@@ -598,7 +598,7 @@ function BookSessionContent() {
                       <button
                         type="button"
                         onClick={() => setCalendarOpen(!calendarOpen)}
-                        className="flex h-11 w-full items-center gap-2 rounded-xl border border-border/60 bg-white px-3.5 text-left text-sm transition-all duration-[180ms] hover:border-[#5B4FE9]/40 dark:bg-[#131316]"
+                        className="flex h-11 w-full items-center gap-2 rounded-xl border border-white/10 bg-[#1A1A1A] px-3.5 text-left text-sm transition-all duration-[180ms] hover:border-[#E8573A]/40"
                       >
                         <CalendarDays size={15} className="shrink-0 text-muted-foreground" />
                         <span className={date ? "text-primary font-medium" : "text-muted-foreground"}>
@@ -621,7 +621,7 @@ function BookSessionContent() {
                     {/* Selected time chip */}
                     <div>
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5">Time</label>
-                      <div className="flex h-11 items-center gap-2 rounded-xl border border-border/60 bg-white px-3.5 text-sm dark:bg-[#131316]">
+                      <div className="flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-[#1A1A1A] px-3.5 text-sm">
                         <Clock size={15} className="shrink-0 text-muted-foreground" />
                         {time ? (
                           <span className="font-medium text-primary">{time} – {(() => {
@@ -674,7 +674,7 @@ function BookSessionContent() {
                                       className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-[180ms] ${
                                         active
                                           ? "text-white border-transparent shadow-sm"
-                                          : "border-border/60 bg-white text-primary hover:border-[#5B4FE9]/40 hover:bg-[#5B4FE9]/[0.03] dark:bg-[#131316]"
+                                          : "border-white/10 bg-[#1A1A1A] text-white hover:border-[#E8573A]/40 hover:bg-[#E8573A]/[0.03]"
                                       }`}
                                       style={active ? { backgroundColor: ACCENT } : {}}
                                     >
@@ -688,7 +688,7 @@ function BookSessionContent() {
                         </div>
                       </>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-5 py-6 text-center">
+                      <div className="rounded-xl border border-dashed border-white/10 bg-muted/20 px-5 py-6 text-center">
                         <p className="text-sm text-muted-foreground">
                           No available slots on this day
                         </p>
@@ -719,7 +719,7 @@ function BookSessionContent() {
                       backgroundColor: submitting ? ACCENT : ACCENT,
                     }}
                     onMouseEnter={(e) => {
-                      if (!submitting) e.currentTarget.style.backgroundColor = "#4A3FD1";
+                      if (!submitting) e.currentTarget.style.backgroundColor = "#D44A2E";
                     }}
                     onMouseLeave={(e) => {
                       if (!submitting) e.currentTarget.style.backgroundColor = ACCENT;
@@ -778,8 +778,8 @@ export default function NewBookingPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B]">
-          <aside className="hidden w-80 shrink-0 border-r border-border bg-white p-6 lg:block dark:bg-[#0A0A0B]">
+        <div className="flex min-h-screen bg-[#0D0D0D]">
+          <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] p-6 lg:block">
             <Skeleton className="h-14 w-14 rounded-full" />
             <Skeleton className="mt-4 h-5 w-36" />
             <Skeleton className="mt-1 h-4 w-28" />

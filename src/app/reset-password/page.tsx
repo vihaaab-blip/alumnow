@@ -36,8 +36,8 @@ export default function ResetPasswordPage({ searchParams }: { searchParams: Prom
   if (done) {
     return (
       <div className="mx-auto flex min-h-[calc(100dvh-128px)] max-w-md flex-col items-center justify-center px-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle className="h-8 w-8 text-green-600" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-900/30">
+          <CheckCircle className="h-8 w-8 text-green-400" />
         </div>
         <h1 className="mt-6 text-3xl font-semibold text-primary">Password reset successful</h1>
         <p className="mt-3 text-muted-foreground">

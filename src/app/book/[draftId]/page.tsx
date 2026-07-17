@@ -81,7 +81,7 @@ export default function BookingPage({
       className="mx-auto max-w-2xl px-6 py-12"
     >
       <div className="mx-auto max-w-xl">
-        <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#5B4FE9" }}>
+        <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#E8573A" }}>
           Secure your session
         </p>
         <h1 className="mt-2 text-3xl font-bold text-primary">
@@ -98,7 +98,7 @@ export default function BookingPage({
                   className={`mx-2 h-px w-10 transition-colors duration-300 ${
                     step > i ? "" : "bg-border"
                   }`}
-                  style={step > i ? { backgroundColor: "#5B4FE9" } : {}}
+                  style={step > i ? { backgroundColor: "#E8573A" } : {}}
                 />
               )}
               <div className="flex items-center gap-2">
@@ -108,11 +108,11 @@ export default function BookingPage({
                       ? "text-white"
                       : step === s.num
                       ? "text-white"
-                      : "text-muted-foreground border border-border"
+                      : "text-muted-foreground border border-white/10"
                   }`}
                   style={
                     step >= s.num
-                      ? { backgroundColor: "#5B4FE9" }
+                      ? { backgroundColor: "#E8573A" }
                       : {}
                   }
                 >
@@ -142,7 +142,7 @@ export default function BookingPage({
                 className="space-y-6"
               >
                 <BookingSummaryCard booking={booking} />
-                <div className="rounded-xl bg-[#5B4FE9]/5 px-4 py-3">
+                <div className="rounded-xl bg-[#E8573A]/5 px-4 py-3">
                   <p className="text-sm text-muted-foreground">
                     By confirming, you agree to attend the session at the scheduled time. Late cancellations may affect your account.
                   </p>

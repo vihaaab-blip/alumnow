@@ -43,14 +43,14 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col slide-panel ${visible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}
+        className={`fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-[#0D0D0D] shadow-2xl flex flex-col slide-panel ${visible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-white transition-all"
+          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#0D0D0D]/90 backdrop-blur-sm shadow-md hover:bg-[#1A1A1A] transition-all"
         >
-          <X size={16} className="text-[var(--color-text)]" />
+          <X size={16} className="text-white" />
         </button>
 
         {/* Scrollable content */}
@@ -58,8 +58,8 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
           {/* Hero image */}
           <div className="relative" style={{ aspectRatio: "16 / 10" }}>
             {imgError ? (
-              <div className="flex h-full items-center justify-center bg-[var(--color-surface)]">
-                <span className="text-5xl font-bold text-[var(--color-text-tertiary)]">
+              <div className="flex h-full items-center justify-center bg-[#1A1A1A]">
+                <span className="text-5xl font-bold text-white/20">>
                   {alumni.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}
                 </span>
               </div>
@@ -79,7 +79,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-[var(--color-border-light)] px-5">
+          <div className="flex border-b border-white/5 px-5">
             {[
               { key: "overview" as const, label: "Overview" },
               { key: "details" as const, label: "Details" },
@@ -89,8 +89,8 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                 onClick={() => setTab(t.key)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${
                   tab === t.key
-                    ? "text-[var(--color-primary)] border-[var(--color-primary)]"
-                    : "text-[var(--color-text-tertiary)] border-transparent hover:text-[var(--color-text-secondary)]"
+                    ? "text-coral border-coral"
+                    : "text-white/25 border-transparent hover:text-white/50"
                 }`}
               >
                 {t.label}
@@ -104,33 +104,33 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
               <>
                 {/* Stats grid */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl bg-[var(--color-surface)] p-4 text-center">
-                    <Clock3 size={16} className="mx-auto text-[var(--color-text-tertiary)] mb-1" />
-                    <p className="text-lg font-bold text-[var(--color-text)]">{responseTime != null ? `${Math.round(responseTime)}h` : "—"}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)]">Response time</p>
+                  <div className="rounded-xl bg-white/5 p-4 text-center">
+                    <Clock3 size={16} className="mx-auto text-white/25 mb-1" />
+                    <p className="text-lg font-bold text-white">{responseTime != null ? `${Math.round(responseTime)}h` : "—"}</p>
+                    <p className="text-[11px] text-white/25">Response time</p>
                   </div>
-                  <div className="rounded-xl bg-[var(--color-surface)] p-4 text-center">
-                    <GraduationCap size={16} className="mx-auto text-[var(--color-text-tertiary)] mb-1" />
-                    <p className="text-lg font-bold text-[var(--color-text)]">{alumni.graduationYearJbcn}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)]">Graduated</p>
+                  <div className="rounded-xl bg-white/5 p-4 text-center">
+                    <GraduationCap size={16} className="mx-auto text-white/25 mb-1" />
+                    <p className="text-lg font-bold text-white">{alumni.graduationYearJbcn}</p>
+                    <p className="text-[11px] text-white/25">Graduated</p>
                   </div>
-                  <div className="rounded-xl bg-[var(--color-surface)] p-4 text-center">
+                  <div className="rounded-xl bg-white/5 p-4 text-center">
                     <Star size={16} className="mx-auto text-amber-400 mb-1" />
-                    <p className="text-lg font-bold text-[var(--color-text)]">{alumni.ratingAvg != null ? alumni.ratingAvg.toFixed(1) : "—"}</p>
-                    <p className="text-[11px] text-[var(--color-text-tertiary)]">Rating</p>
+                    <p className="text-lg font-bold text-white">{alumni.ratingAvg != null ? alumni.ratingAvg.toFixed(1) : "—"}</p>
+                    <p className="text-[11px] text-white/25">Rating</p>
                   </div>
                 </div>
 
                 {/* Bio */}
                 <div>
-                  <h3 className="text-sm font-semibold text-[var(--color-text)] mb-2">About</h3>
-                  <p className={`text-[13px] leading-6 text-[var(--color-text-secondary)] ${!showFullBio && bioLong ? "line-clamp-3" : ""}`}>
+                  <h3 className="text-sm font-semibold text-white mb-2">About</h3>
+                  <p className={`text-[13px] leading-6 text-white/50 ${!showFullBio && bioLong ? "line-clamp-3" : ""}`}>
                     {alumni.bio ?? "No bio provided yet."}
                   </p>
                   {bioLong && (
                     <button
                       onClick={() => setShowFullBio(!showFullBio)}
-                      className="mt-1 text-xs font-medium text-[var(--color-primary)] hover:underline inline-flex items-center gap-0.5"
+                      className="mt-1 text-xs font-medium text-coral hover:underline inline-flex items-center gap-0.5"
                     >
                       {showFullBio ? "Show less" : "More details"} <ChevronDown size={12} className={showFullBio ? "rotate-180" : ""} />
                     </button>
@@ -139,41 +139,41 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
                 {/* Details */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-light)]">
-                    <span className="text-xs text-[var(--color-text-tertiary)]">Country</span>
-                    <span className="text-sm font-medium text-[var(--color-text)]">{alumni.country}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <span className="text-xs text-white/25">Country</span>
+                    <span className="text-sm font-medium text-white">{alumni.country}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-light)]">
-                    <span className="text-xs text-[var(--color-text-tertiary)]">Course</span>
-                    <span className="text-sm font-medium text-[var(--color-text)]">{alumni.course}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <span className="text-xs text-white/25">Course</span>
+                    <span className="text-sm font-medium text-white">{alumni.course}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-light)]">
-                    <span className="text-xs text-[var(--color-text-tertiary)]">QS Tier</span>
-                    <span className="text-sm font-medium text-[var(--color-text)] capitalize">{alumni.qsRankingTier}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <span className="text-xs text-white/25">QS Tier</span>
+                    <span className="text-sm font-medium text-white capitalize">{alumni.qsRankingTier}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-[var(--color-border-light)]">
-                    <span className="text-xs text-[var(--color-text-tertiary)]">Languages</span>
-                    <span className="text-sm font-medium text-[var(--color-text)]">{alumni.languages?.join(", ") || "—"}</span>
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <span className="text-xs text-white/25">Languages</span>
+                    <span className="text-sm font-medium text-white">{alumni.languages?.join(", ") || "—"}</span>
                   </div>
                 </div>
 
                 {/* Session types */}
                 {hasSessions && (
                   <div>
-                    <h3 className="text-sm font-semibold text-[var(--color-text)] mb-3">Available sessions</h3>
+                    <h3 className="text-sm font-semibold text-white mb-3">Available sessions</h3>
                     <div className="space-y-2">
                       {alumni.sessionTypes.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between rounded-xl bg-[var(--color-surface)] p-3">
+                        <div key={s.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
                           <div className="flex items-center gap-2">
-                            {s.type === "group_40" ? <Users size={14} className="text-[var(--color-text-tertiary)]" /> : <Video size={14} className="text-[var(--color-text-tertiary)]" />}
+                            {s.type === "group_40" ? <Users size={14} className="text-white/25" /> : <Video size={14} className="text-white/25" />}
                             <div>
-                              <p className="text-sm font-medium text-[var(--color-text)] capitalize">{s.type.replace("_", " ")}</p>
+                              <p className="text-sm font-medium text-white capitalize">{s.type.replace("_", " ")}</p>
                               {s.descriptionOneLiner && (
-                                <p className="text-[11px] text-[var(--color-text-tertiary)]">{s.descriptionOneLiner}</p>
+                                <p className="text-[11px] text-white/25">{s.descriptionOneLiner}</p>
                               )}
                             </div>
                           </div>
-                          <span className="text-sm font-bold text-[var(--color-text)]">₹{Math.round(s.pricePaise / 100)}</span>
+                          <span className="text-sm font-bold text-white">₹{Math.round(s.pricePaise / 100)}</span>
                         </div>
                       ))}
                     </div>
@@ -184,12 +184,12 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
             {tab === "details" && (
               <div className="space-y-4">
-                <p className="text-sm text-[var(--color-text-secondary)]">
+                <p className="text-sm text-white/50">
                   {alumni.bio ?? "No additional details available."}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {alumni.languages?.map((lang) => (
-                    <span key={lang} className="rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]">
+                    <span key={lang} className="rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/50">
                       {lang}
                     </span>
                   ))}
@@ -200,15 +200,15 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
         </div>
 
         {/* Sticky CTA */}
-        <div className="shrink-0 border-t border-[var(--color-border-light)] bg-white px-5 py-4">
+        <div className="shrink-0 border-t border-white/5 bg-[#0D0D0D] px-5 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               {lowestPrice != null && (
-                <p className="text-xl font-bold text-[var(--color-text)]">₹{Math.round(lowestPrice / 100)}</p>
+                <p className="text-xl font-bold text-white">₹{Math.round(lowestPrice / 100)}</p>
               )}
-              <p className="text-xs text-[var(--color-text-tertiary)]">Starting price</p>
+              <p className="text-xs text-white/25">Starting price</p>
             </div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
+            <div className="flex items-center gap-1 text-xs text-white/50">
               <Star size={11} className="fill-amber-400 text-amber-400" />
               {alumni.ratingAvg != null ? `${alumni.ratingAvg.toFixed(1)} (${alumni.ratingCount})` : "No ratings"}
             </div>

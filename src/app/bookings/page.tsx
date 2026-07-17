@@ -58,7 +58,7 @@ export default function BookingsPage() {
     >
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#5B4FE9" }}>
+          <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#E8573A" }}>
             Your AlumNow
           </p>
           <h1 className="mt-2 text-3xl font-bold text-primary">Bookings</h1>
@@ -79,7 +79,7 @@ export default function BookingsPage() {
             onClick={() => setTab(t.key)}
             className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
               tab === t.key
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-[#1A1A1A] text-primary shadow-sm"
                 : "text-muted-foreground hover:text-primary"
             }`}
           >
@@ -140,7 +140,7 @@ export default function BookingsPage() {
                 {(tab === "upcoming" || tab === "past") && (
                   <>
                     {tab === "upcoming" && (
-                      <div className="flex items-center justify-between rounded-xl border border-border/80 bg-white p-4 dark:bg-[#131316]">
+                      <div className="flex items-center justify-between rounded-xl border border-border/80 bg-[#1A1A1A] p-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock size={15} />
                           <span>
@@ -158,7 +158,7 @@ export default function BookingsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
+                            className="gap-1.5 text-red-600 border-red-900 hover:bg-red-950"
                             onClick={() => handleCancel(booking.id)}
                           >
                             <XCircle size={14} /> Cancel

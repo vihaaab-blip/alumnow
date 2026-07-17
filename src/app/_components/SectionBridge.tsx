@@ -10,7 +10,7 @@ const steps = [
     icon: Compass,
     label: "01",
     title: "Start with context",
-    body: "Find a JBCN alumnus who took the same path — the same university shortlist, the same career fork. Their context is the map you need.",
+    body: "Find an alumnus who took the same path — the same university shortlist, the same career fork. Their context is the map you need.",
   },
   {
     icon: MessageCircle,
@@ -46,64 +46,65 @@ export function SectionBridge() {
     <section
       id="how-it-works"
       aria-label="From search to conversation"
-      className="relative overflow-hidden bg-cream"
+      className="relative overflow-hidden bg-[#0D0D0D]"
     >
+      <div className="absolute inset-x-0 top-0 h-px bg-white/5" />
+
       <div className="relative mx-auto max-w-[1500px] px-6 py-16 sm:px-10 sm:py-24 lg:px-16 lg:py-32">
-        {/* Eyebrow + Heading */}
         <div className="max-w-3xl">
           <p
-            className={`text-[11px] font-semibold uppercase tracking-[0.34em] text-navy/40 transition-all duration-500 ${
+            className={`text-[11px] font-semibold uppercase tracking-[0.34em] text-white/30 transition-all duration-500 ${
               show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
             }`}
           >
             From finding to talking
           </p>
           <h2
-            className={`mt-5 text-4xl leading-[0.95] tracking-[-0.04em] text-navy sm:text-5xl lg:text-6xl font-semibold transition-all duration-500 delay-75 ${
+            className={`mt-5 text-4xl leading-[0.95] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl font-semibold font-heading transition-all duration-500 delay-75 ${
               show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
             }`}
           >
             The search should not end at a page.
-            <span className="text-gold">
+            <span className="text-coral">
               {" "}
               It should open a conversation.
             </span>
           </h2>
           <p
-            className={`mt-5 max-w-2xl text-base leading-7 text-navy/50 sm:text-lg transition-all duration-500 delay-100 ${
+            className={`mt-5 max-w-2xl text-base leading-7 text-white/40 sm:text-lg transition-all duration-500 delay-100 ${
               show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
             }`}
           >
-            Every JBCN graduate carries answers students are still searching
-            for. AlumNow closes that gap with a single, honest call.
+            Every graduate carries answers students are still searching for.
+            AlumNow closes that gap with a single, honest call.
           </p>
         </div>
 
-        {/* How-it-works cards */}
         <div className="mt-14 grid gap-4 lg:mt-20 lg:grid-cols-3">
           {steps.map(({ icon: Icon, label, title, body }, index) => (
             <article
               key={title}
-              className={`rounded-2xl border border-border bg-white p-7 shadow-sm transition-all duration-500 hover:-translate-y-1 ${
+              className={`rounded-2xl border border-white/5 bg-white/[0.03] p-7 transition-all duration-500 hover:-translate-y-1 ${
                 show ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               }`}
               style={{ transitionDelay: `${140 + index * 90}ms` }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-navy/30">{label}</span>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cream text-gold">
+                <span className="font-mono text-xs text-white/20">
+                  {label}
+                </span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-coral">
                   <Icon size={18} />
                 </div>
               </div>
-              <h3 className="mt-11 text-xl font-semibold tracking-[-0.03em] text-navy">
+              <h3 className="mt-11 text-xl font-semibold tracking-[-0.03em] text-white">
                 {title}
               </h3>
-              <p className="mt-3 text-sm leading-6 text-navy/50">{body}</p>
+              <p className="mt-3 text-sm leading-6 text-white/40">{body}</p>
             </article>
           ))}
         </div>
 
-        {/* CTA */}
         <div
           className={`mt-14 flex flex-col sm:flex-row items-start sm:items-center gap-6 transition-all duration-500 delay-[350ms] ${
             show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
@@ -111,11 +112,11 @@ export function SectionBridge() {
         >
           <Link
             href="/browse"
-            className="inline-flex items-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white hover:bg-navy-light transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-colors"
           >
             Find your mentor
           </Link>
-          <span className="text-sm text-navy/30">
+          <span className="text-sm text-white/25">
             No account needed · Book in under 2 minutes
           </span>
         </div>

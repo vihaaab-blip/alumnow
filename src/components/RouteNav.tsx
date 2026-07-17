@@ -6,7 +6,7 @@ import { DockNav } from "./DockNav";
 function DockNavFallback() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4">
-      <div className="w-full max-w-5xl h-[60px] rounded-2xl bg-white/70 backdrop-blur-md border border-border" />
+      <div className="w-full max-w-5xl h-[60px] rounded-2xl bg-[#0D0D0D]/70 backdrop-blur-md border border-white/5" />
     </div>
   );
 }
