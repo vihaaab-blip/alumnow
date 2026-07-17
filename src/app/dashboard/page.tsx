@@ -706,7 +706,7 @@ function DashboardContent() {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.03, duration: 0.25 }}
-                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5/50 last:border-b-0"
+                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">

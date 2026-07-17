@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { forgotPasswordSchema, resetPasswordSchema, loginSchema, signupSchema } from "@/lib/validation";
 
 vi.mock("@/lib/prisma", () => ({

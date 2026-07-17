@@ -134,8 +134,8 @@ function Row({ children }: { children: ReactNode }) {
 }
 
 function KBtn({ className, children, keyCode }: { className?: string; children?: ReactNode; keyCode?: string }) {
-  const ctx = keyCode ? useKeys() : null;
-  const isPressed = keyCode ? ctx!.pressedKeys.has(keyCode) : false;
+  const ctx = useKeys();
+  const isPressed = keyCode != null && ctx.pressedKeys.has(keyCode);
 
   return (
     <button
@@ -143,9 +143,9 @@ function KBtn({ className, children, keyCode }: { className?: string; children?:
       onMouseDown={(e) => e.preventDefault()}
       onClick={() => {
         if (!keyCode) return;
-        ctx!.setPressed(keyCode);
-        ctx!.onKeyClick?.(keyCode);
-        setTimeout(() => ctx!.setReleased(keyCode), 100);
+        ctx.setPressed(keyCode);
+        ctx.onKeyClick?.(keyCode);
+        setTimeout(() => ctx.setReleased(keyCode), 100);
       }}
       className={cn(
         "flex h-9 w-9 items-center justify-center rounded-md bg-neutral-700 text-[9px] text-neutral-200 font-semibold shadow-[0px_1px_2px_0px_rgba(0,0,0,0.3),0px_1px_0px_0px_rgba(255,255,255,0.05)_inset] transition-all duration-75 select-none",

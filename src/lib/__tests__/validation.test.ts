@@ -5,7 +5,6 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   alumniApplicationSchema,
-  alumniProfileSchema,
   studentProfileSchema,
   sessionTypeSchema,
   availabilitySchema,

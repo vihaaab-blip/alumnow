@@ -14,7 +14,7 @@ import {
 import { signup, signupAlumni } from "@/actions/auth.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Logo } from "@/components/Logo";
+
 
 const inputDark =
   "bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-coral/50 focus:ring-coral/10";

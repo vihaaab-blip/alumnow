@@ -59,7 +59,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
           <div className="relative" style={{ aspectRatio: "16 / 10" }}>
             {imgError ? (
               <div className="flex h-full items-center justify-center bg-[#1A1A1A]">
-                <span className="text-5xl font-bold text-white/20">>
+                <span className="text-5xl font-bold text-white/20">
                   {alumni.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}
                 </span>
               </div>

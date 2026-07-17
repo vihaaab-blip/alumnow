@@ -46,10 +46,10 @@ export function SessionPricingCard({
                 setSelectedId(offering.id);
               }
             }}
-            className={`flex items-center justify-between gap-4 rounded-xl border bg-[#1A1A1A] border-white/5 p-4 ${
+            className={`flex items-center justify-between gap-4 rounded-xl bg-[#1A1A1A] p-4 ${
               isSelected
-                ? "border-primary ring-2 ring-primary"
-                : "border-border hover:border-primary/30"
+                ? "border border-primary ring-2 ring-primary"
+                : "border border-white/5 hover:border-primary/30"
             } ${reduced ? "" : "transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 cursor-pointer"}`}
           >
             <div>

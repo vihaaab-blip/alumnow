@@ -40,7 +40,11 @@ function bootstrapSqliteSchema(url: string) {
 function ensureSqliteSchemaCompatibility(db: Database.Database) {
   const alumniColumns = db.prepare("PRAGMA table_info('AlumniProfile')").all() as { name: string }[];
   if (!alumniColumns.some((column) => column.name === "isActive")) {
-    db.exec('ALTER TABLE "AlumniProfile" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true');
+    try {
+      db.exec('ALTER TABLE "AlumniProfile" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true');
+    } catch (e) {
+      if (!(e instanceof Error && e.message.includes("duplicate column name"))) throw e;
+    }
   }
 }
 
