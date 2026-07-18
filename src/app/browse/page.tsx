@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { listAlumni, getFilterOptions, saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
+import { getFilterOptions, saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
 import { getSavedAlumni } from "@/actions/student.actions";
 import { FilterPanel } from "@/components/FilterPanel";
 import { AlumniGrid } from "@/components/AlumniGrid";
@@ -117,7 +117,7 @@ function BrowsePageContent() {
   const [error, setError] = useState("");
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
-  const sortBy = searchParams.get("sortBy") ?? "relevance";
+  const sortBy = (searchParams.get("sortBy") as AlumniFilters["sortBy"]) ?? "relevance";
   const tab = searchParams.get("view") === "saved" ? "saved" : "browse";
   const swipe = searchParams.get("swipe") === "1";
   const spStr = searchParams.toString();
@@ -128,7 +128,14 @@ function BrowsePageContent() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    listAlumni(queryParams)
+    const params = new URLSearchParams(filtersToParams(queryParams));
+    params.set("page", String(queryParams.page ?? 1));
+    params.set("pageSize", String(queryParams.pageSize ?? ITEMS_PER_PAGE));
+    fetch(`/api/alumni?${params.toString()}`, { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load alumni");
+        return response.json();
+      })
       .then((result) => { if (!cancelled) setData(result as any); })
       .catch(() => { if (!cancelled) { setError("Failed to load alumni."); setData({ items: [], total: 0, totalPages: 1 }); } })
       .finally(() => { if (!cancelled) setLoading(false); });
