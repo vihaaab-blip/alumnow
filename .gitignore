@@ -6,3 +6,4 @@ out
 *.db-journal
 .vercel
 .playwright-cli/
+tsconfig.tsbuildinfo
