@@ -51,9 +51,6 @@ function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
     gradYearMin: sp.get("gradYearMin") ? Number(sp.get("gradYearMin")) : undefined,
     gradYearMax: sp.get("gradYearMax") ? Number(sp.get("gradYearMax")) : undefined,
     qsTiers: qsTiers.length > 0 ? qsTiers : undefined,
-    priceMin: sp.get("priceMin") ? Number(sp.get("priceMin")) : undefined,
-    priceMax: sp.get("priceMax") ? Number(sp.get("priceMax")) : undefined,
-    languages: sp.getAll("language").length > 0 ? sp.getAll("language") : undefined,
     minRating: sp.get("minRating") ?? undefined,
     availability: (sp.get("availability") as AlumniFilters["availability"]) ?? undefined,
     sessionType: (sp.get("sessionType") as AlumniFilters["sessionType"]) ?? undefined,
@@ -66,7 +63,6 @@ function filtersToParams(filters: AlumniFilters): string {
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
     if (key === "qsTiers" && Array.isArray(value)) value.forEach((t) => params.append("qsTier", t));
-    else if (key === "languages" && Array.isArray(value)) value.forEach((t) => params.append("language", t));
     else if (typeof value !== "object") params.set(key, String(value));
   });
   return params.toString();
@@ -78,17 +74,13 @@ const activeFilterLabels: Record<string, (v: any) => string> = {
   sessionType: (v: string) => v === "1:1" ? "1-on-1" : "Group",
   studyLevel: (v: string) => v === "undergraduate" ? "Undergrad" : "Postgrad",
   qsTiers: (v: string[]) => v.map((t) => `QS ${t}`).join(", "),
-  languages: (v: string[]) => v.join(", "),
-  minRating: (v: string) => `${v}+ rating`,
-  priceMin: (v: number) => `From ₹${v}`,
-  priceMax: (v: number) => `Up to ₹${v}`,
+  minRating: (v: string) => `${v}+ stars`,
   sortBy: (v) => `Sort: ${v}`,
   country: (v: string) => v,
   university: (v: string) => v,
   course: (v: string) => v,
   gradYearMin: (v: number) => `From ${v}`,
   gradYearMax: (v: number) => `To ${v}`,
-  minRating: (v: string) => `${v}+ stars`,
 };
 
 export default function BrowsePage() {
