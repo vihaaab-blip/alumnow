@@ -280,7 +280,7 @@ function BrowsePageContent() {
           <div>
             <h1 className="text-[28px] font-bold text-white">Marketplace</h1>
             <p className="text-sm text-white/50 mt-0.5">
-              {totalItems > 0 ? `${totalItems} alumni available` : "Find your perfect mentor"}
+              {totalItems > 0 ? `${totalItems} alumni available` : "Browse verified alumni mentors"}
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-white/30">
@@ -308,7 +308,7 @@ function BrowsePageContent() {
 
         {/* Active filter pills */}
         <AnimatePresence>
-          {activeFilters.length > 1 && (
+          {activeFilters.length >= 1 && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-4 flex flex-wrap items-center gap-2">
               <Sparkles size={12} className="text-white/30" />
               {activeFilters.map(([key, val]) => (

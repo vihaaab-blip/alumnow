@@ -46,8 +46,12 @@ function StudentForm({
 }) {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [school, setSchool] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,17 +60,17 @@ function StudentForm({
       setError("Password must be at least 8 characters");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
     setStatus("creating");
     onStatusChange("creating");
-    const name = email
-      .split("@")[0]!
-      .replace(/[^a-zA-Z0-9]/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
     const r = await signup({
-      email, password, fullName: name, phone: "+919876543210",
+      email, password, fullName, phone,
       dateOfBirth: null, currentGrade: "Other",
-      school: "JBCN International School Borivali",
-      confirmPassword: password, tosAccepted: true,
+      school: school || "Not specified",
+      confirmPassword, tosAccepted: true,
     });
     if (r.error) {
       setError(r.error);
@@ -93,13 +97,31 @@ function StudentForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <label className="block text-sm font-semibold text-white/70">
+        Full name
+        <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="Your full name" />
+      </label>
+      <label className="block text-sm font-semibold text-white/70">
         Email
         <Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="you@example.com" />
       </label>
       <label className="block text-sm font-semibold text-white/70">
-        Password
-        <Input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="At least 8 characters" />
+        Phone
+        <Input required value={phone} onChange={(e) => setPhone(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="+919876543210" />
       </label>
+      <label className="block text-sm font-semibold text-white/70">
+        School / College
+        <Input value={school} onChange={(e) => setSchool(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. JBCN International School" />
+      </label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block text-sm font-semibold text-white/70">
+          Password
+          <Input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="At least 8 characters" />
+        </label>
+        <label className="block text-sm font-semibold text-white/70">
+          Confirm
+          <Input required type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`mt-2 ${inputDark}`} placeholder="Re-enter password" />
+        </label>
+      </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
       <Button type="submit" disabled={status !== "idle"} className="w-full" variant="accent">
         {status === "idle" ? "Create account" : "Creating..."}

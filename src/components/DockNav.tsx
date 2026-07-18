@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LogOut, UserRound, Menu, X } from "lucide-react";
@@ -39,7 +40,7 @@ export function DockNav() {
 
         <nav className="hidden md:flex items-center gap-1">
           {links.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
@@ -58,14 +59,14 @@ export function DockNav() {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-            </a>
+            </Link>
           ))}
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
           {session?.user ? (
             <>
-              <a
+              <Link
                 href="/account"
                 className={`text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 ${
                   pathname === "/account"
@@ -75,14 +76,14 @@ export function DockNav() {
               >
                 <UserRound size={14} />
                 {session.user.name ?? "Account"}
-              </a>
+              </Link>
               {(session.user as any).role === "admin" && (
-                <a
+                <Link
                   href="/admin"
                   className="text-sm text-white/50 hover:text-white transition-colors"
                 >
                   Admin
-                </a>
+                </Link>
               )}
               <button
                 onClick={() => signOut({ redirectTo: "/" })}
@@ -93,18 +94,18 @@ export function DockNav() {
             </>
           ) : (
             <>
-              <a
+              <Link
                 href="/login"
                 className="text-sm font-semibold text-white/70 hover:text-coral transition-colors"
               >
                 Log in
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/register"
                 className="text-sm font-semibold text-[#0D0D0D] bg-white px-4 py-2 rounded-lg hover:bg-white/90 transition-colors"
               >
                 Get started
-              </a>
+              </Link>
             </>
           )}
         </div>
@@ -128,7 +129,7 @@ export function DockNav() {
           >
             <div className="px-6 py-3 space-y-1">
               {links.map((link) => (
-                <a
+                <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
@@ -139,13 +140,13 @@ export function DockNav() {
                   }`}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <hr className="my-2 border-white/5" />
 
               {session?.user ? (
                 <>
-                  <a
+                  <Link
                     href="/account"
                     onClick={() => setMobileOpen(false)}
                     className={`px-3 py-2.5 text-sm rounded-lg flex items-center gap-2 ${
@@ -155,15 +156,15 @@ export function DockNav() {
                     }`}
                   >
                     <UserRound size={14} /> {session.user.name ?? "Account"}
-                  </a>
+                  </Link>
                   {(session.user as any).role === "admin" && (
-                    <a
+                    <Link
                       href="/admin"
                       onClick={() => setMobileOpen(false)}
                       className="block px-3 py-2.5 text-sm text-white/50 rounded-lg hover:bg-white/5"
                     >
                       Admin
-                    </a>
+                    </Link>
                   )}
                   <button
                     onClick={() => {
@@ -177,20 +178,20 @@ export function DockNav() {
                 </>
               ) : (
                 <div className="flex gap-2 pt-1">
-                  <a
+                  <Link
                     href="/login"
                     onClick={() => setMobileOpen(false)}
                     className="flex-1 text-center text-sm font-semibold text-white py-2.5 rounded-lg border border-white/10"
                   >
                     Log in
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/register"
                     onClick={() => setMobileOpen(false)}
                     className="flex-1 text-center text-sm font-semibold text-[#0D0D0D] bg-white py-2.5 rounded-lg hover:bg-white/90"
                   >
                     Get started
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>

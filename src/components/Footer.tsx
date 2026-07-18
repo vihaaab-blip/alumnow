@@ -22,7 +22,7 @@ function CtaSection() {
             href="/browse"
             className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white flex items-center gap-2 hover:bg-white/5 transition-all font-body"
           >
-            Find a mentor
+            Find your mentor
             <ArrowUpRight className="h-5 w-5" />
           </Link>
           <Link

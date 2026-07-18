@@ -36,7 +36,7 @@ export default function AboutPage() {
           <div className="max-w-4xl pb-8">
             <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[.2em] text-white/60">
               <span className="h-px w-10 bg-coral" />
-              About alumnow.
+              About AlumNow
             </p>
             <h1 className="mt-6 max-w-5xl text-[clamp(4rem,8vw,8rem)] leading-[.86] tracking-[-.05em] font-semibold font-heading">
               The advice that lives{" "}
@@ -50,7 +50,7 @@ export default function AboutPage() {
             <div className="mt-9">
               <Link href="/browse">
                 <Button variant="accent" size="lg" className="rounded-full">
-                  Meet the network <ArrowRight size={17} />
+                  Find your mentor <ArrowRight size={17} />
                 </Button>
               </Link>
             </div>
@@ -83,6 +83,31 @@ export default function AboutPage() {
                 </Card>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative isolate overflow-hidden bg-[#0D0D0D] px-6 py-24 sm:px-10 lg:px-16">
+        <div className="relative mx-auto max-w-[1400px] text-center">
+          <h2 className="text-4xl leading-[.95] tracking-[-.03em] font-semibold text-white sm:text-5xl font-heading">
+            Ready to find your mentor?
+          </h2>
+          <p className="mt-5 max-w-xl mx-auto text-base leading-7 text-white/40 sm:text-lg">
+            Browse verified alumni, book a session, and get the guidance you need.
+          </p>
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <Link href="/browse">
+              <Button variant="accent" size="lg" className="rounded-full">
+                Find your mentor <ArrowRight size={17} />
+              </Button>
+            </Link>
+            <Link
+              href="/apply"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white hover:bg-white/5 transition-all"
+            >
+              Become a mentor
+            </Link>
           </div>
         </div>
       </section>
