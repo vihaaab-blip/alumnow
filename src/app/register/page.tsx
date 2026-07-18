@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import {
   Check,
   LoaderCircle,
@@ -78,6 +79,13 @@ function StudentForm({
     await new Promise((r) => setTimeout(r, 800));
     setStatus("verified");
     onStatusChange("verified");
+    const sessionResult = await signIn("credentials", { email, password, redirect: false });
+    if (sessionResult?.error) {
+      setError("Account created but sign-in failed. Please log in manually.");
+      setStatus("idle");
+      onStatusChange("idle");
+      return;
+    }
     await new Promise((r) => setTimeout(r, 700));
     window.location.href = "/dashboard";
   };
@@ -143,6 +151,11 @@ function AlumniWizard({
     setStatus("verifying"); onStatusChange("verifying");
     await new Promise((r) => setTimeout(r, 800));
     setStatus("verified"); onStatusChange("verified");
+    const sessionResult = await signIn("credentials", { email: acc.email, password: acc.password, redirect: false });
+    if (sessionResult?.error) {
+      setError("Account created but sign-in failed. Please log in manually.");
+      setStatus("idle"); onStatusChange("idle"); return;
+    }
     await new Promise((r) => setTimeout(r, 700));
     window.location.href = "/alumni/dashboard";
   };

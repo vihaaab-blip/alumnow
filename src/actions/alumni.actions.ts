@@ -3,7 +3,6 @@
 import { headers } from "next/headers";
 import { hash } from "bcrypt-ts";
 import { prisma } from "@/lib/prisma";
-import { signIn } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { alumniApplicationSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
@@ -25,7 +24,6 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
     await tx.alumniProfile.create({ data: { userId: account.id, fullName: parsed.data.fullName, profilePhotoUrl: `https://picsum.photos/seed/${encodeURIComponent(parsed.data.fullName)}/400/400`, universityName: parsed.data.universityName, course: parsed.data.course, country: parsed.data.country, graduationYearJbcn: parsed.data.graduationYearJbcn, bio: parsed.data.bio, languages, verificationStatus: "approved", isVerifiedJbcnAlumnus: true, avgResponseTimeHours: 6, sessionTypes: { create: [{ type: "call_30", pricePaise: 29900, descriptionOneLiner: "A focused 30-minute conversation" }, { type: "call_45", pricePaise: 39900, descriptionOneLiner: "A balanced 45-minute conversation" }, { type: "call_60", pricePaise: 49900, descriptionOneLiner: "A deeper one-hour conversation" }, { type: "group_40", pricePaise: 99900, maxParticipants: 6, descriptionOneLiner: "Learn together in a small group" }] }, availability: { create: [{ dayOfWeek: 1, startTime: "17:00", endTime: "19:00" }, { dayOfWeek: 2, startTime: "17:00", endTime: "19:00" }, { dayOfWeek: 3, startTime: "17:00", endTime: "19:00" }, { dayOfWeek: 5, startTime: "17:00", endTime: "19:00" }, { dayOfWeek: 6, startTime: "10:00", endTime: "13:00" }] } } });
     return account;
   });
-  await signIn("credentials", { email: parsed.data.email, password: parsed.data.password, redirect: false });
   await sendEmail({ to: user.email, subject: "Your AlumNow mentor profile is approved", body: `Welcome ${parsed.data.fullName}. Your profile is live and ready for students to discover.`, eventType: "alumni_application_approved" }, user.id);
   return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }

@@ -22,6 +22,16 @@ export default function LoginPage() {
       setSubmitting(false);
       return;
     }
+    const sessionResult = await signIn("credentials", {
+      email: emailVal,
+      password: passwordVal,
+      redirect: false,
+    });
+    if (sessionResult?.error) {
+      setError("Unable to sign in. Please try again.");
+      setSubmitting(false);
+      return;
+    }
     window.location.href = result.data?.redirectTo ?? "/dashboard";
   };
 
