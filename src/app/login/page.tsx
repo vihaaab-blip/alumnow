@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { login } from "@/actions/auth.actions";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,6 +21,12 @@ export default function LoginPage() {
     setError("");
 
     try {
+      const serverResult = await login({ email, password });
+      if (serverResult.error) {
+        setError(serverResult.error);
+        setSubmitting(false);
+        return;
+      }
       const result = await signIn("credentials", {
         email,
         password,
@@ -28,7 +37,8 @@ export default function LoginPage() {
         setSubmitting(false);
         return;
       }
-      window.location.href = "/browse";
+      router.refresh();
+      window.location.replace(serverResult.data?.redirectTo ?? "/browse");
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);

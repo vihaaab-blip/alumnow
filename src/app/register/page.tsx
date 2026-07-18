@@ -78,8 +78,6 @@ function StudentForm({
       onStatusChange("idle");
       return;
     }
-    setStatus("verified");
-    onStatusChange("verified");
     const result = await signIn("credentials", { email, password, redirect: false });
     if (result?.error) {
       setError("Account created but sign-in failed. Please go to login.");
@@ -87,7 +85,9 @@ function StudentForm({
       onStatusChange("idle");
       return;
     }
-    window.location.href = "/browse";
+    setStatus("verified");
+    onStatusChange("verified");
+    window.location.replace(r.data?.redirectTo ?? "/dashboard");
   };
 
   return (
@@ -167,7 +167,6 @@ function AlumniWizard({
     setError(""); setStatus("creating"); onStatusChange("creating");
     const r = await signupAlumni({ ...acc, ...profile, sessionTypes: sessions, availability: avail });
     if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
-    setStatus("verified"); onStatusChange("verified");
     const result = await signIn("credentials", { email: acc.email, password: acc.password, redirect: false });
     if (result?.error) {
       setError("Account created but sign-in failed. Please go to login.");
@@ -175,7 +174,9 @@ function AlumniWizard({
       onStatusChange("idle");
       return;
     }
-    window.location.href = "/browse";
+    setStatus("verified");
+    onStatusChange("verified");
+    window.location.replace(r.data?.redirectTo ?? "/alumni/dashboard");
   };
 
   const totalSteps = 4;
