@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { login } from "@/actions/auth.actions";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
@@ -13,31 +12,24 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const signInWithRedirect = async (emailVal: string, passwordVal: string) => {
-    setSubmitting(true);
-    setError("");
-    const result = await login({ email: emailVal, password: passwordVal });
-    if (result.error) {
-      setError(result.error);
-      setSubmitting(false);
-      return;
-    }
-    const sessionResult = await signIn("credentials", {
-      email: emailVal,
-      password: passwordVal,
-      redirect: false,
-    });
-    if (sessionResult?.error) {
-      setError("Unable to sign in. Please try again.");
-      setSubmitting(false);
-      return;
-    }
-    window.location.href = result.data?.redirectTo ?? "/dashboard";
-  };
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await signInWithRedirect(email, password);
+    setSubmitting(true);
+    setError("");
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("Invalid email or password. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+
+    window.location.href = "/dashboard";
   }
 
   async function handleGoogleSignIn() {

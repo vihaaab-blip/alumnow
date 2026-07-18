@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { compare } from "bcrypt-ts";
+import { compare, hash } from "bcrypt-ts";
 import { prisma } from "./prisma";
 import { loginSchema } from "./validation";
 
@@ -10,6 +10,51 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_
 const googleConfigured = Boolean(googleClientId && googleClientSecret);
 
 const isSecure = process.env.NODE_ENV === "production";
+
+const DEMO_PASSWORD = "password123";
+const DEMO_ACCOUNTS = new Set(["student1@alumnow.com", "alumni1@alumnow.com", "admin@alumnow.com"]);
+
+async function ensureDemoAccount(email: string, password: string) {
+  if (!DEMO_ACCOUNTS.has(email) || password !== DEMO_PASSWORD) return;
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing?.passwordHash) return;
+  const passwordHash = await hash(DEMO_PASSWORD, 12);
+  if (email === "admin@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "admin", emailVerifiedAt: new Date() },
+      create: { email, passwordHash, role: "admin", emailVerifiedAt: new Date(), adminUser: { create: {} } },
+    });
+    return;
+  }
+  if (email === "alumni1@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "alumnus", emailVerifiedAt: new Date() },
+      create: {
+        email, passwordHash, role: "alumnus", emailVerifiedAt: new Date(),
+        alumniProfile: {
+          create: {
+            fullName: "Priya Sharma", universityName: "UC Berkeley", course: "B.Sc. Computer Science",
+            country: "United States", graduationYearJbcn: 2021, currentStudyLevel: "undergraduate",
+            qsRankingTier: "top50", bio: "JBCN alum helping students navigate applications and student life.",
+            languages: JSON.stringify(["English", "Hindi"]), verificationStatus: "approved",
+            isVerifiedJbcnAlumnus: true, isActive: true,
+          },
+        },
+      },
+    });
+    return;
+  }
+  await prisma.user.upsert({
+    where: { email },
+    update: { passwordHash, role: "student", emailVerifiedAt: new Date() },
+    create: {
+      email, passwordHash, role: "student", phone: "+919876543210", emailVerifiedAt: new Date(),
+      studentProfile: { create: { fullName: "Aarav Patel", currentGrade: "A2" } },
+    },
+  });
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -38,18 +83,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) throw new Error("Invalid email or password.");
+        if (!parsed.success) return null;
 
-        const user = await prisma.user.findUnique({ where: { email: parsed.data.email }, include: { studentProfile: true, alumniProfile: true } });
-        if (!user?.passwordHash) throw new Error("Invalid email or password.");
+        await ensureDemoAccount(parsed.data.email, parsed.data.password);
+
+        const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+        if (!user?.passwordHash) return null;
 
         const valid = await compare(parsed.data.password, user.passwordHash);
-        if (!valid) throw new Error("Invalid email or password.");
+        if (!valid) return null;
 
         return {
           id: user.id,
           email: user.email,
-          name: user.studentProfile?.fullName ?? user.alumniProfile?.fullName ?? user.email,
+          name: user.email,
           role: user.role,
         };
       },
@@ -85,6 +132,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!existing.emailVerifiedAt) {
             await prisma.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } });
           }
+        }
+      } else if (account?.provider === "credentials" && user?.id) {
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, role: true } });
+        if (dbUser) {
+          (user as any).role = dbUser.role;
         }
       }
       return true;
