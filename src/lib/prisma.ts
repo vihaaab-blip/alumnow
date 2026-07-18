@@ -22,18 +22,38 @@ function bootstrapSqliteSchema(url: string) {
   if (!dbPath) return;
 
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new Database(dbPath);
-  try {
-    const hasUserTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'User'").get();
-    if (!hasUserTable) {
-      const migrationPath = path.join(process.cwd(), "prisma", "migrations", "0001_foundation", "migration.sql");
-      const migration = fs.readFileSync(migrationPath, "utf8");
-      db.exec(migration);
+
+  const maxRetries = 5;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const db = new Database(dbPath);
+    db.pragma("journal_mode = WAL");
+    try {
+      const hasUserTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'User'").get();
+      if (!hasUserTable) {
+        const migrationPath = path.join(process.cwd(), "prisma", "migrations", "0001_foundation", "migration.sql");
+        const migration = fs.readFileSync(migrationPath, "utf8");
+        try {
+          db.exec(migration);
+        } catch (e) {
+          if (!(e instanceof Error && e.message.includes("already exists"))) throw e;
+        }
+      }
+      ensureSqliteSchemaCompatibility(db);
+      seedDemoAlumni(db);
+      return;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("SQLITE_BUSY") || msg.includes("locked")) {
+        db.close();
+        const delay = 50 * Math.pow(2, attempt);
+        const start = Date.now();
+        while (Date.now() - start < delay) {}
+        continue;
+      }
+      throw e;
+    } finally {
+      try { db.close(); } catch {}
     }
-    ensureSqliteSchemaCompatibility(db);
-    seedDemoAlumni(db);
-  } finally {
-    db.close();
   }
 }
 

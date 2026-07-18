@@ -65,10 +65,17 @@ export function DockNav() {
         <div className="hidden md:flex items-center gap-2">
           {session?.user ? (
             <>
-              <span className="text-sm text-white/50 flex items-center gap-1.5">
+              <a
+                href="/account"
+                className={`text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 ${
+                  pathname === "/account"
+                    ? "text-coral bg-coral/10"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
+                }`}
+              >
                 <UserRound size={14} />
                 {session.user.name ?? "Account"}
-              </span>
+              </a>
               {(session.user as any).role === "admin" && (
                 <a
                   href="/admin"
@@ -138,9 +145,17 @@ export function DockNav() {
 
               {session?.user ? (
                 <>
-                  <div className="px-3 py-2 text-sm text-white/50 flex items-center gap-2">
+                  <a
+                    href="/account"
+                    onClick={() => setMobileOpen(false)}
+                    className={`px-3 py-2.5 text-sm rounded-lg flex items-center gap-2 ${
+                      pathname === "/account"
+                        ? "text-coral bg-coral/10"
+                        : "text-white/50 hover:bg-white/5"
+                    }`}
+                  >
                     <UserRound size={14} /> {session.user.name ?? "Account"}
-                  </div>
+                  </a>
                   {(session.user as any).role === "admin" && (
                     <a
                       href="/admin"
