@@ -28,7 +28,7 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
   return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }
 
-export type AlumniListFilters = { search?: string; university?: string; country?: string; course?: string; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; availability?: string; sessionType?: string; sortBy?: string; page?: number; pageSize?: number };
+export type AlumniListFilters = { search?: string; university?: string; country?: string; course?: string; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; priceMin?: number; priceMax?: number; languages?: string[]; minRating?: string; availability?: string; sessionType?: string; sortBy?: string; page?: number; pageSize?: number };
 
 const alumniInclude = { sessionTypes: true, availability: true } as const;
 
@@ -67,10 +67,25 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
       where.graduationYearJbcn = gradFilter;
     }
     if (filters.qsTiers?.length) where.qsRankingTier = { in: filters.qsTiers };
+    if (filters.minRating) where.ratingAvg = { gte: Number(filters.minRating) };
+    if (filters.languages?.length) {
+      where.OR = [
+        ...((where.OR as Record<string, unknown>[] | undefined) ?? []),
+        ...filters.languages.map((language) => ({ languages: { contains: language } })),
+      ];
+    }
+    if (filters.priceMin != null || filters.priceMax != null) {
+      const priceFilter: Record<string, number> = {};
+      if (filters.priceMin != null) priceFilter.gte = Math.round(filters.priceMin * 100);
+      if (filters.priceMax != null) priceFilter.lte = Math.round(filters.priceMax * 100);
+      where.sessionTypes = { some: { pricePaise: priceFilter } };
+    }
     if (filters.sessionType === "1:1") {
-      where.sessionTypes = { some: { type: { in: ["call_30", "call_45", "call_60"] } } };
+      const existing = where.sessionTypes as { some?: Record<string, unknown> } | undefined;
+      where.sessionTypes = { some: { ...(existing?.some ?? {}), type: { in: ["call_30", "call_45", "call_60"] } } };
     } else if (filters.sessionType === "group") {
-      where.sessionTypes = { some: { type: "group_40" } };
+      const existing = where.sessionTypes as { some?: Record<string, unknown> } | undefined;
+      where.sessionTypes = { some: { ...(existing?.some ?? {}), type: "group_40" } };
     }
     if (filters.availability === "this_week") {
       where.availability = { some: { dayOfWeek: new Date().getDay() } };

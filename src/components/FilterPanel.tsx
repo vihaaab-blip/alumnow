@@ -326,7 +326,7 @@ export function FilterPanel({
         <FilterSection title="Study Level" icon={<GraduationCap size={14} />}>
           <PillGroup
             options={[
-              { value: undefined as any, label: "All" },
+              { value: "both" as const, label: "All" },
               { value: "undergraduate" as const, label: "Undergrad" },
               { value: "postgraduate" as const, label: "Postgrad" },
             ]}

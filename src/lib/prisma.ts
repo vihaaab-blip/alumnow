@@ -39,6 +39,7 @@ function bootstrapSqliteSchema(url: string) {
         }
       }
       ensureSqliteSchemaCompatibility(db);
+      seedPlatformSettings(db);
       seedDemoAlumni(db);
       return;
     } catch (e: unknown) {
@@ -66,6 +67,14 @@ function ensureSqliteSchemaCompatibility(db: Database.Database) {
       if (!(e instanceof Error && e.message.includes("duplicate column name"))) throw e;
     }
   }
+}
+
+function seedPlatformSettings(db: Database.Database) {
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT OR IGNORE INTO "PlatformSetting" ("key", "value", "updatedAt")
+    VALUES ('upi_id', 'alumnow@upi', ?)
+  `).run(now);
 }
 
 function seedDemoAlumni(db: Database.Database) {

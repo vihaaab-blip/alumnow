@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { AlumniCard } from "./AlumniCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
@@ -28,31 +27,19 @@ export function AlumniGrid({ items, hasMore, loadMore, loading, onSelect }: {
     return () => observerRef.current?.disconnect();
   }, [hasMore, loadMore, loading]);
 
-  const containerVariants = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.06 } },
-  };
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" as const } },
-  };
-
   return (
     <>
       {items.length > 0 && (
-        <motion.div
+        <div
           className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
           key={items.map((i) => i.id).join(",")}
         >
           {items.map((item, idx) => (
-            <motion.div key={item.id} variants={itemVariants}>
+            <div key={item.id}>
               <AlumniCard alumni={item} index={idx} onSelect={onSelect} />
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* Initial loading skeleton (12 cards) */}

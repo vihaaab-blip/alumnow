@@ -369,6 +369,109 @@ function DashboardContent() {
   }
 
   const userName = session.user?.name?.split(" ")[0] || "there";
+  const hasAnyActivity = activeBookings.length > 0;
+
+  if (!hasAnyActivity) {
+    return (
+      <div className="min-h-screen bg-[#0D0D0D] text-white">
+        <div className="mx-auto max-w-[1440px] px-6 py-6">
+          <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[#151517]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(232,87,58,0.20),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(99,102,241,0.16),transparent_30%)]" />
+            <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
+                <img
+                  src={session.user?.image ?? `https://picsum.photos/seed/${session.user?.id}/100/100`}
+                  alt={session.user?.name ?? "Profile"}
+                  className="h-14 w-14 rounded-[14px] border border-white/12 object-cover"
+                />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/35">Student dashboard</p>
+                  <h1 className="mt-1 text-[30px] font-semibold tracking-[-0.03em] text-white">{getGreeting()}, {userName}</h1>
+                  <p className="mt-1 text-sm text-white/50">Your account is ready. Browse mentors, compare filters, and book your first session.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <SearchTrigger onClick={() => setSearchOpen(true)} />
+                <Link href="/browse">
+                  <Button className="h-10 rounded-[10px] bg-[#E8573A] px-4 text-sm font-semibold text-white hover:bg-[#D44A2E]">
+                    <Search size={15} className="mr-2" /> Explore alumni
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Completed", value: "0", detail: "No completed sessions", icon: Award, color: "#16A34A" },
+              { label: "Total hours", value: "0.0h", detail: "No mentoring hours yet", icon: Clock, color: "#3B82F6" },
+              { label: "Rating", value: "—", detail: "No ratings yet", icon: Star, color: "#D97706" },
+              { label: "Upcoming", value: "0", detail: "Clear schedule", icon: TrendingUp, color: "#8B5CF6" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[16px] border border-white/8 bg-[#171719] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[11px]" style={{ backgroundColor: `${item.color}18`, color: item.color }}>
+                    <item.icon size={17} />
+                  </div>
+                  <span className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-white/45">Base</span>
+                </div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/35">{item.label}</p>
+                <p className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-white">{item.value}</p>
+                <p className="mt-3 text-xs text-white/42">{item.detail}</p>
+              </div>
+            ))}
+          </section>
+
+          <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+            <div className="rounded-[18px] border border-white/8 bg-[#171719] p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/35">Getting started</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">Fast path to your first booking</h2>
+                </div>
+                <Sparkles size={18} className="text-[#E8573A]" />
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {[
+                  { title: "Browse", body: "Search by university, course, country, rating, language, and price.", icon: Search },
+                  { title: "Compare", body: "Open profiles without losing your filters or place in the grid.", icon: GraduationCap },
+                  { title: "Book", body: "Pick a slot, review the UPI QR, and submit the reference.", icon: CalendarDays },
+                ].map((step, index) => (
+                  <div key={step.title} className="rounded-[14px] border border-white/8 bg-white/[0.025] p-4">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#E8573A]/12 text-[#E8573A]">
+                        <step.icon size={16} />
+                      </div>
+                      <span className="text-xs font-semibold text-white/25">0{index + 1}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white">{step.title}</h3>
+                    <p className="mt-2 text-xs leading-5 text-white/42">{step.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[18px] border border-white/8 bg-[#171719] p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/35">Sessions</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white">No bookings yet</h2>
+                </div>
+                <Link href="/browse" className="rounded-[10px] border border-white/10 px-3 py-2 text-xs font-semibold text-white/65 hover:bg-white/5 hover:text-white">
+                  Browse
+                </Link>
+              </div>
+              <div className="flex min-h-[190px] flex-col items-center justify-center rounded-[14px] border border-dashed border-white/10 bg-white/[0.02] text-center">
+                <CalendarDays size={28} className="text-white/20" />
+                <p className="mt-3 text-sm font-semibold text-white">Your schedule is clear</p>
+                <p className="mt-1 max-w-[300px] text-xs leading-5 text-white/40">Booked sessions and payment status will show here after your first UPI booking.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+        <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} value="" onChange={(v) => { router.push(`/browse${v ? `?search=${encodeURIComponent(v)}` : ""}`); }} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
