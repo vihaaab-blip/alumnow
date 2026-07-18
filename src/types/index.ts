@@ -142,9 +142,6 @@ export interface AlumniFilters {
   gradYearMin?: number;
   gradYearMax?: number;
   qsTiers?: string[];
-  priceMin?: number;
-  priceMax?: number;
-  languages?: string[];
   minRating?: string;
   availability?: "this_week" | "this_month" | "any";
   sessionType?: "1:1" | "group" | "both";

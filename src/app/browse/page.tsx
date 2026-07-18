@@ -19,10 +19,6 @@ const ITEMS_PER_PAGE = 18;
 
 const categoryTabs = [
   { label: "All", filters: {} as Record<string, unknown> },
-  { label: "Top QS", filters: { qsTiers: ["top10", "top20"] } as Record<string, unknown> },
-  { label: "1-on-1", filters: { sessionType: "1:1" } as Record<string, unknown> },
-  { label: "Group", filters: { sessionType: "group" } as Record<string, unknown> },
-  { label: "This Week", filters: { availability: "this_week" } as Record<string, unknown> },
 ];
 
 function activeCategoryLabel(sp: URLSearchParams): string {
@@ -87,6 +83,12 @@ const activeFilterLabels: Record<string, (v: any) => string> = {
   priceMin: (v: number) => `From ₹${v}`,
   priceMax: (v: number) => `Up to ₹${v}`,
   sortBy: (v) => `Sort: ${v}`,
+  country: (v: string) => v,
+  university: (v: string) => v,
+  course: (v: string) => v,
+  gradYearMin: (v: number) => `From ${v}`,
+  gradYearMax: (v: number) => `To ${v}`,
+  minRating: (v: string) => `${v}+ stars`,
 };
 
 export default function BrowsePage() {

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { SlidersHorizontal, X, ChevronDown, ChevronUp, Book, Globe, Languages, Star, BookOpen, Award, DollarSign, Calendar, GraduationCap, Video, Clock } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, Book, Globe, Star, BookOpen, Award, Calendar, GraduationCap, Video, Clock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { AlumniFilters } from "@/types";
 
@@ -22,15 +22,6 @@ const qsTierOptions = [
   { value: "top100", label: "Top 100" },
   { value: "top200", label: "Top 200" },
   { value: "unranked", label: "Unranked" },
-];
-
-const languageOptions = [
-  { value: "English", label: "English" },
-  { value: "Hindi", label: "Hindi" },
-  { value: "Spanish", label: "Spanish" },
-  { value: "French", label: "French" },
-  { value: "German", label: "German" },
-  { value: "Mandarin", label: "Mandarin" },
 ];
 
 const ratingOptions = [
@@ -208,8 +199,6 @@ export function FilterPanel({
     filters.gradYearMin || filters.gradYearMax ? "grad" : null,
     filters.qsTiers?.length ? `qs-${filters.qsTiers.length}` : null,
     (filters.availability && filters.availability !== "any") ? filters.availability : null,
-    filters.priceMin || filters.priceMax ? "price" : null,
-    filters.languages?.length ? `lang-${filters.languages.length}` : null,
     filters.minRating ? "rating" : null,
   ].filter(Boolean).length;
 
@@ -276,11 +265,6 @@ export function FilterPanel({
           </div>
         </FilterSection>
 
-        {/* Language */}
-        <FilterSection title="Language" count={filters.languages?.length} icon={<Languages size={14} />}>
-          <ChipGroup options={languageOptions} selected={filters.languages} onChange={(vals) => onChange({ languages: vals.length > 0 ? vals : undefined })} />
-        </FilterSection>
-
         {/* Minimum Rating */}
         <FilterSection title="Minimum Rating" count={filters.minRating ? 1 : 0} icon={<Star size={14} />}>
           <PillGroup options={ratingOptions} selected={filters.minRating ?? ""} onChange={(v) => onChange({ minRating: v || undefined })} />
@@ -300,16 +284,6 @@ export function FilterPanel({
         {/* QS Ranking */}
         <FilterSection title="QS Ranking" count={filters.qsTiers?.length} icon={<Award size={14} />}>
           <ChipGroup options={qsTierOptions} selected={filters.qsTiers} onChange={(vals) => onChange({ qsTiers: vals.length > 0 ? vals : undefined })} />
-        </FilterSection>
-
-        {/* Price Range */}
-        <FilterSection title="Price Range" count={filters.priceMin || filters.priceMax ? 1 : 0} icon={<DollarSign size={14} />}>
-          <DualRangeSlider
-            min={0}
-            max={10000}
-            value={filters.priceMin != null || filters.priceMax != null ? [filters.priceMin ?? 0, filters.priceMax ?? 10000] : undefined}
-            onChange={(val) => onChange({ priceMin: val?.[0], priceMax: val?.[1] })}
-          />
         </FilterSection>
 
         {/* Graduation Year */}
