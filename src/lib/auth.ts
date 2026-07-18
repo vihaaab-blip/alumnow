@@ -14,6 +14,14 @@ const isSecure = process.env.NODE_ENV === "production";
 const DEMO_PASSWORD = "password123";
 const DEMO_ACCOUNTS = new Set(["student1@alumnow.com", "alumni1@alumnow.com", "admin@alumnow.com"]);
 
+function profileNameFromEmail(email: string) {
+  return email
+    .split("@")[0]!
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim() || email;
+}
+
 async function ensureDemoAccount(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!DEMO_ACCOUNTS.has(normalizedEmail) || password !== DEMO_PASSWORD) return;
@@ -81,6 +89,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        createIfMissing: { label: "Create account", type: "text" },
+        fullName: { label: "Full name", type: "text" },
+        phone: { label: "Phone", type: "text" },
+        school: { label: "School", type: "text" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
@@ -89,13 +101,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         await ensureDemoAccount(email, parsed.data.password);
 
-        const user = await prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
           where: { email },
           include: {
             studentProfile: { select: { fullName: true } },
             alumniProfile: { select: { fullName: true } },
           },
         });
+        if (!user && credentials?.createIfMissing === "student") {
+          const passwordHash = await hash(parsed.data.password, 12);
+          user = await prisma.user.create({
+            data: {
+              email,
+              passwordHash,
+              phone: String(credentials.phone ?? "") || null,
+              role: "student",
+              emailVerifiedAt: new Date(),
+              studentProfile: {
+                create: {
+                  fullName: String(credentials.fullName ?? "").trim() || profileNameFromEmail(email),
+                  currentGrade: "Other",
+                  school: String(credentials.school ?? "").trim() || "Not specified",
+                },
+              },
+            },
+            include: {
+              studentProfile: { select: { fullName: true } },
+              alumniProfile: { select: { fullName: true } },
+            },
+          });
+        }
         if (!user?.passwordHash) return null;
 
         const valid = await compare(parsed.data.password, user.passwordHash);

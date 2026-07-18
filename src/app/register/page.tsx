@@ -78,7 +78,15 @@ function StudentForm({
       onStatusChange("idle");
       return;
     }
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const result = await signIn("credentials", {
+      email,
+      password,
+      createIfMissing: "student",
+      fullName,
+      phone,
+      school: school || "Not specified",
+      redirect: false,
+    });
     if (result?.error) {
       setError("Account created but sign-in failed. Please go to login.");
       setStatus("idle");

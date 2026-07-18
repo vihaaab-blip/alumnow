@@ -6,7 +6,6 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { login } from "@/actions/auth.actions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,15 +20,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const serverResult = await login({ email, password });
-      if (serverResult.error) {
-        setError(serverResult.error);
-        setSubmitting(false);
-        return;
-      }
       const result = await signIn("credentials", {
         email,
         password,
+        createIfMissing: "student",
         redirect: false,
       });
       if (result?.error) {
@@ -38,7 +32,7 @@ export default function LoginPage() {
         return;
       }
       router.refresh();
-      window.location.replace(serverResult.data?.redirectTo ?? "/browse");
+      window.location.replace("/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
