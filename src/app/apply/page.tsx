@@ -1,13 +1,191 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Check, LoaderCircle } from "lucide-react";
 import { applyAsAlumni } from "@/actions/alumni.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Label } from "@/components/ui/Label";
-type Form = { fullName:string; email:string; phone:string; password:string; confirmPassword:string; universityName:string; course:string; graduationYearJbcn:string; country:string; bio:string; languages:string; currentStudyLevel:string; linkedinUrl:string; tosAccepted:boolean };
-const initial:Form={fullName:"",email:"",phone:"",password:"",confirmPassword:"",universityName:"",course:"",graduationYearJbcn:"",country:"India",bio:"",languages:"English, Hindi",currentStudyLevel:"undergraduate",linkedinUrl:"",tosAccepted:false};
-export default function ApplyPage(){const router=useRouter();const [data,setData]=useState(initial);const [error,setError]=useState("");const [errors,setErrors]=useState<Record<string,string[]>>({});const [status,setStatus]=useState<"idle"|"creating"|"verifying"|"approved">("idle");const update=(key:keyof Form,value:string|boolean)=>setData((current)=>({...current,[key]:value}));async function submit(event:React.FormEvent){event.preventDefault();setError("");setErrors({});if(data.password!==data.confirmPassword){setErrors({confirmPassword:["Passwords don't match"]});return;}if(!data.tosAccepted){setError("You must accept the Terms of Service");return;}setStatus("creating");const result=await applyAsAlumni(data);if(!result.success){setError(result.error??"Please check your details.");setStatus("idle");return;}await new Promise((resolve)=>setTimeout(resolve,800));setStatus("verifying");await new Promise((resolve)=>setTimeout(resolve,1200));setStatus("approved");const sessionResult=await signIn("credentials",{email:data.email,password:data.password,redirect:false});if(sessionResult?.error){setError("Account created but sign-in failed. Please log in manually.");setStatus("idle");return;}await new Promise((resolve)=>setTimeout(resolve,600));router.push(result.data?.redirectTo??"/alumni/dashboard");}if(status!=="idle")return <div className="mx-auto flex min-h-[calc(100dvh-128px)] max-w-md flex-col items-center justify-center px-6 text-center"><div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/20 text-primary">{status==="approved"?<Check size={30}/>:<LoaderCircle className="animate-spin" size={28}/>}</div><h1 className="mt-6 text-3xl font-semibold text-primary">{status==="creating"?"Creating your profile...":status==="verifying"?"Verifying your JBCN alumni status...":"Profile approved!"}</h1><p className="mt-3 text-muted-foreground">{status==="approved"?"Your profile is ready for students to discover.":"This will only take a moment."}</p></div>;return <div className="mx-auto max-w-3xl px-6 py-14"><p className="text-sm font-semibold uppercase tracking-widest text-accent">For alumni</p><h1 className="mt-3 max-w-xl text-4xl font-semibold text-primary">Your experience could be the answer someone is looking for.</h1><p className="mt-3 max-w-xl leading-7 text-muted-foreground">Share the route you took, the things you learned, and the choices you would explain differently now.</p><form onSubmit={submit} className="mt-10 grid gap-5 sm:grid-cols-2"><label className="block text-sm font-semibold sm:col-span-2">Full name<Input required value={data.fullName} onChange={(e)=>update("fullName",e.target.value)} className="mt-2"/>{errors.fullName&&<p className="mt-1 text-xs text-destructive">{errors.fullName[0]}</p>}</label><label className="block text-sm font-semibold">Email<Input required type="email" value={data.email} onChange={(e)=>update("email",e.target.value)} className="mt-2"/>{errors.email&&<p className="mt-1 text-xs text-destructive">{errors.email[0]}</p>}</label><label className="block text-sm font-semibold">Phone (+91)<Input required placeholder="+919876543210" value={data.phone} onChange={(e)=>update("phone",e.target.value)} className="mt-2"/>{errors.phone&&<p className="mt-1 text-xs text-destructive">{errors.phone[0]}</p>}</label><label className="block text-sm font-semibold">University<Input required value={data.universityName} onChange={(e)=>update("universityName",e.target.value)} className="mt-2"/>{errors.universityName&&<p className="mt-1 text-xs text-destructive">{errors.universityName[0]}</p>}</label><label className="block text-sm font-semibold">Course<Input required value={data.course} onChange={(e)=>update("course",e.target.value)} className="mt-2"/>{errors.course&&<p className="mt-1 text-xs text-destructive">{errors.course[0]}</p>}</label><label className="block text-sm font-semibold">Graduation year<Input required type="number" min={2015} max={2026} value={data.graduationYearJbcn} onChange={(e)=>update("graduationYearJbcn",e.target.value)} className="mt-2"/>{errors.graduationYearJbcn&&<p className="mt-1 text-xs text-destructive">{errors.graduationYearJbcn[0]}</p>}</label><label className="block text-sm font-semibold">Country<Input required value={data.country} onChange={(e)=>update("country",e.target.value)} className="mt-2"/>{errors.country&&<p className="mt-1 text-xs text-destructive">{errors.country[0]}</p>}</label><label className="block text-sm font-semibold">Current study level<select value={data.currentStudyLevel} onChange={(e)=>update("currentStudyLevel",e.target.value)} className="mt-2 w-full rounded-[6px] border border-border bg-[#1A1A1A] px-3 py-2.5 text-sm"><option value="undergraduate">Undergraduate</option><option value="postgraduate">Postgraduate</option><option value="other">Other</option></select></label><label className="block text-sm font-semibold sm:col-span-2">LinkedIn URL (optional)<Input type="url" placeholder="https://linkedin.com/in/yourprofile" value={data.linkedinUrl} onChange={(e)=>update("linkedinUrl",e.target.value)} className="mt-2"/>{errors.linkedinUrl&&<p className="mt-1 text-xs text-destructive">{errors.linkedinUrl[0]}</p>}</label><label className="block text-sm font-semibold sm:col-span-2">Bio<textarea value={data.bio} onChange={(e)=>update("bio",e.target.value)} className="mt-2 w-full rounded-[6px] border border-border bg-[#1A1A1A] px-3 py-2.5 text-sm min-h-[100px]"/><p className="mt-1 text-xs text-muted-foreground">Optional. Share a bit about your experience.</p>{errors.bio&&<p className="mt-1 text-xs text-destructive">{errors.bio[0]}</p>}</label><label className="block text-sm font-semibold sm:col-span-2">Languages<Input required value={data.languages} onChange={(e)=>update("languages",e.target.value)} className="mt-2"/>{errors.languages&&<p className="mt-1 text-xs text-destructive">{errors.languages[0]}</p>}</label><label className="block text-sm font-semibold">Password<Input required minLength={8} type="password" value={data.password} onChange={(e)=>update("password",e.target.value)} className="mt-2"/>{errors.password&&<p className="mt-1 text-xs text-destructive">{errors.password[0]}</p>}</label><label className="block text-sm font-semibold">Confirm password<Input required type="password" value={data.confirmPassword} onChange={(e)=>update("confirmPassword",e.target.value)} className="mt-2"/>{errors.confirmPassword&&<p className="mt-1 text-xs text-destructive">{errors.confirmPassword[0]}</p>}</label><div className="flex items-start gap-3 sm:col-span-2"><Checkbox id="apply-tos" checked={data.tosAccepted} onCheckedChange={(checked)=>update("tosAccepted",checked===true)}/><Label htmlFor="apply-tos" className="text-sm font-normal text-muted-foreground">I accept the <a href="/terms" className="font-semibold text-primary hover:underline">Terms of Service</a> and <a href="/privacy" className="font-semibold text-primary hover:underline">Privacy Policy</a></Label></div>{error&&<p className="text-sm text-destructive sm:col-span-2">{error}</p>}<Button disabled={!data.tosAccepted||status!=="idle"} className="sm:col-span-2">{status==="idle"?"Submit application":"Creating your profile..."}</Button></form></div>}
+
+type Form = {
+  fullName: string; email: string; phone: string; password: string;
+  confirmPassword: string; universityName: string; course: string;
+  graduationYearJbcn: string; country: string; bio: string;
+  languages: string; currentStudyLevel: string; linkedinUrl: string;
+  tosAccepted: boolean;
+};
+
+const initial: Form = {
+  fullName: "", email: "", phone: "", password: "", confirmPassword: "",
+  universityName: "", course: "", graduationYearJbcn: "", country: "India",
+  bio: "", languages: "English, Hindi", currentStudyLevel: "undergraduate",
+  linkedinUrl: "", tosAccepted: false,
+};
+
+const inputDark =
+  "bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-coral/50 focus:ring-coral/10";
+
+export default function ApplyPage() {
+  const [data, setData] = useState(initial);
+  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [status, setStatus] = useState<"idle" | "creating" | "verified">("idle");
+
+  const update = (key: keyof Form, value: string | boolean) =>
+    setData((current) => ({ ...current, [key]: value }));
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setErrors({});
+    if (data.password !== data.confirmPassword) {
+      setErrors({ confirmPassword: ["Passwords don't match"] });
+      return;
+    }
+    if (data.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+    if (!data.tosAccepted) {
+      setError("You must accept the Terms of Service");
+      return;
+    }
+    setStatus("creating");
+    const result = await applyAsAlumni(data);
+    if (!result.success) {
+      setError(result.error ?? "Please check your details.");
+      setStatus("idle");
+      return;
+    }
+    setStatus("verified");
+    await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      callbackUrl: "/browse",
+    });
+  }
+
+  if (status !== "idle") {
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-[#0D0D0D]">
+        <div className="relative z-10 mx-auto flex min-h-screen max-w-md items-center justify-center px-6 text-center">
+          <div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
+              {status === "verified" ? (
+                <Check size={30} className="text-white" />
+              ) : (
+                <LoaderCircle className="animate-spin text-coral" size={28} />
+              )}
+            </div>
+            <h1 className="mt-6 text-3xl font-semibold text-white font-heading">
+              {status === "creating"
+                ? "Creating your profile..."
+                : "Profile approved!"}
+            </h1>
+            <p className="mt-3 text-white/40">
+              {status === "verified"
+                ? "Redirecting you to the marketplace..."
+                : "This will only take a moment."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[#0D0D0D]">
+      <div className="relative mx-auto max-w-xl px-6 py-14">
+        <div className="rounded-2xl border border-white/10 bg-[#1A1A1A] shadow-lg p-8 sm:p-10">
+          <p className="text-sm font-semibold uppercase tracking-widest text-white/40">
+            Apply as mentor
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold text-white font-heading">
+            Become an alumni mentor
+          </h1>
+          <p className="mt-2 text-sm text-white/40">
+            Help students make informed decisions about their future.
+          </p>
+
+          <form onSubmit={submit} className="mt-8 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-white/70">
+                Full name
+                <Input required value={data.fullName} onChange={(e) => update("fullName", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="Your full name" />
+              </label>
+              <label className="block text-sm font-semibold text-white/70">
+                Email
+                <Input required type="email" value={data.email} onChange={(e) => update("email", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="you@example.com" />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-white/70">
+                Phone
+                <Input required value={data.phone} onChange={(e) => update("phone", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="+919876543210" />
+              </label>
+              <label className="block text-sm font-semibold text-white/70">
+                University
+                <Input required value={data.universityName} onChange={(e) => update("universityName", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. UC Berkeley" />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-white/70">
+                Course
+                <Input required value={data.course} onChange={(e) => update("course", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. B.Sc. Computer Science" />
+              </label>
+              <label className="block text-sm font-semibold text-white/70">
+                Graduation year
+                <Input required type="number" min={2000} max={2030} value={data.graduationYearJbcn} onChange={(e) => update("graduationYearJbcn", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. 2023" />
+              </label>
+            </div>
+            <label className="block text-sm font-semibold text-white/70">
+              Country
+              <Input required value={data.country} onChange={(e) => update("country", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. United States" />
+            </label>
+            <label className="block text-sm font-semibold text-white/70">
+              Bio
+              <textarea
+                value={data.bio}
+                onChange={(e) => update("bio", e.target.value)}
+                rows={3}
+                className={`mt-2 w-full resize-none ${inputDark} rounded-[10px] px-3 py-2.5 text-sm outline-none`}
+                placeholder="Tell students about your experience..."
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-white/70">
+                Password
+                <Input required minLength={8} type="password" value={data.password} onChange={(e) => update("password", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="At least 8 characters" />
+              </label>
+              <label className="block text-sm font-semibold text-white/70">
+                Confirm password
+                <Input required type="password" value={data.confirmPassword} onChange={(e) => update("confirmPassword", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="Re-enter password" />
+              </label>
+            </div>
+            {errors.confirmPassword && <p className="text-sm text-red-400">{errors.confirmPassword[0]}</p>}
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={data.tosAccepted}
+                onCheckedChange={(checked) => update("tosAccepted", Boolean(checked))}
+                className="mt-0.5 border-white/20 data-[state=checked]:bg-coral data-[state=checked]:border-coral"
+              />
+              <span className="text-sm text-white/40">
+                I agree to the{" "}
+                <a href="/terms" className="text-white/60 hover:text-white underline underline-offset-2">Terms of Service</a>{" "}
+                and{" "}
+                <a href="/privacy" className="text-white/60 hover:text-white underline underline-offset-2">Privacy Policy</a>
+              </span>
+            </label>
+
+            {error && <p className="text-sm text-red-400">{error}</p>}
+
+            <Button type="submit" disabled={status !== "idle"} className="w-full" variant="accent">
+              {status === "idle" ? "Submit application" : "Submitting..."}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

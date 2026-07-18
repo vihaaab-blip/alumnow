@@ -78,20 +78,9 @@ function StudentForm({
       onStatusChange("idle");
       return;
     }
-    setStatus("verifying");
-    onStatusChange("verifying");
-    await new Promise((r) => setTimeout(r, 800));
     setStatus("verified");
     onStatusChange("verified");
-    const sessionResult = await signIn("credentials", { email, password, redirect: false });
-    if (sessionResult?.error) {
-      setError("Account created but sign-in failed. Please log in manually.");
-      setStatus("idle");
-      onStatusChange("idle");
-      return;
-    }
-    await new Promise((r) => setTimeout(r, 700));
-    window.location.href = "/dashboard";
+    await signIn("credentials", { email, password, callbackUrl: "/browse" });
   };
 
   return (
@@ -167,19 +156,12 @@ function AlumniWizard({
 
   const handleSubmit = async () => {
     if (acc.password !== acc.confirmPassword) { setError("Passwords don't match"); return; }
+    if (acc.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setError(""); setStatus("creating"); onStatusChange("creating");
     const r = await signupAlumni({ ...acc, ...profile, sessionTypes: sessions, availability: avail });
     if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
-    setStatus("verifying"); onStatusChange("verifying");
-    await new Promise((r) => setTimeout(r, 800));
     setStatus("verified"); onStatusChange("verified");
-    const sessionResult = await signIn("credentials", { email: acc.email, password: acc.password, redirect: false });
-    if (sessionResult?.error) {
-      setError("Account created but sign-in failed. Please log in manually.");
-      setStatus("idle"); onStatusChange("idle"); return;
-    }
-    await new Promise((r) => setTimeout(r, 700));
-    window.location.href = "/alumni/dashboard";
+    await signIn("credentials", { email: acc.email, password: acc.password, callbackUrl: "/browse" });
   };
 
   const totalSteps = 4;
@@ -347,7 +329,7 @@ export default function RegisterPage() {
             {status === "verified" ? <Check size={30} className="text-white" /> : <LoaderCircle className="animate-spin text-coral" size={28} />}
           </div>
           <h1 className="mt-6 text-2xl font-semibold text-white font-heading">
-            {status === "creating" ? "Creating your account..." : status === "verifying" ? "Verifying your email..." : "Email verified!"}
+            {status === "creating" ? "Creating your account..." : "Account created!"}
           </h1>
           <p className="mt-2 text-white/40">{status === "verified" ? "Redirecting you..." : "This will only take a moment."}</p>
         </div>

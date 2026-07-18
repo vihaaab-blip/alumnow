@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Compass, MessageCircle, Sparkles } from "lucide-react";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
-import Link from "next/link";
 
 const steps = [
   {
@@ -103,22 +102,6 @@ export function SectionBridge() {
               <p className="mt-3 text-sm leading-6 text-white/40">{body}</p>
             </article>
           ))}
-        </div>
-
-        <div
-          className={`mt-14 flex flex-col sm:flex-row items-start sm:items-center gap-6 transition-all duration-500 delay-[350ms] ${
-            show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
-        >
-          <Link
-            href="/browse"
-            className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-colors"
-          >
-            Find your mentor
-          </Link>
-          <span className="text-sm text-white/25">
-            No account needed · Book in under 2 minutes
-          </span>
         </div>
       </div>
     </section>

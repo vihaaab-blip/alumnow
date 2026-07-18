@@ -17,24 +17,21 @@ export default function LoginPage() {
     setSubmitting(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      setError("Invalid email or password. Please try again.");
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        callbackUrl: "/browse",
+      });
+    } catch {
+      setError("Something went wrong. Please try again.");
       setSubmitting(false);
-      return;
     }
-
-    window.location.href = "/dashboard";
   }
 
   async function handleGoogleSignIn() {
     try {
-      await signIn("google", { redirectTo: "/dashboard" });
+      await signIn("google", { callbackUrl: "/browse" });
     } catch {
       setError(
         "Google Sign-In requires OAuth credentials. Add AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET to your .env file."
