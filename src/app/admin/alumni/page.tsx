@@ -8,20 +8,42 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "@/components/ui/Toaster";
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/Dialog";
-import type { AdminAlumniItem, PaginatedResult } from "@/types";
+import type { PaginatedResult } from "@/types";
+
+type AdminAlumniExtended = {
+  id: string;
+  fullName: string;
+  profilePhotoUrl: string | null;
+  universityName: string;
+  course: string;
+  country: string;
+  graduationYearJbcn: number;
+  currentStudyLevel: string;
+  bio: string | null;
+  languages: string;
+  linkedinUrl: string | null;
+  verificationStatus: string;
+  isVerifiedJbcnAlumnus: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  user: { email: string; phone: string | null };
+  sessionTypes: { id: string; type: string; pricePaise: number; maxParticipants: number; descriptionOneLiner: string | null }[];
+  availability: { id: string; dayOfWeek: number | null; startTime: string; endTime: string }[];
+};
 
 export default function AdminAlumniPage() {
-  const [data, setData] = useState<PaginatedResult<AdminAlumniItem> | null>(null);
+  const [data, setData] = useState<PaginatedResult<AdminAlumniExtended> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("PENDING");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
-  const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" | "approve" | "reject" } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", bio: "", pricePaise: "" });
   const [loading, setLoading] = useState(false);
+  const [detailItem, setDetailItem] = useState<AdminAlumniExtended | null>(null);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -48,7 +70,7 @@ export default function AdminAlumniPage() {
     setPage(1);
   }, [debouncedSearch, statusFilter]);
 
-  const startEdit = (item: AdminAlumniItem) => {
+  const startEdit = (item: AdminAlumniExtended) => {
     setEditingId(item.id);
     setEditValues({
       fullName: item.fullName,
@@ -99,19 +121,31 @@ export default function AdminAlumniPage() {
     }
   };
 
-  const handleApproveReject = async (item: AdminAlumniItem) => {
-    const next = item.verificationStatus === "approved" ? "rejected" : "approved";
+  const handleApprove = async (id: string) => {
     try {
-      await updateAlumniProfile(item.id, {
-        verificationStatus: next,
-        isVerifiedJbcnAlumnus: next === "approved",
-      });
-      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === item.id ? { ...row, verificationStatus: next } as any : row) } : prev);
-      toast({ title: next === "approved" ? "Alumni approved" : "Alumni rejected", variant: "success" });
+      await updateAlumniProfile(id, { verificationStatus: "approved", isVerifiedJbcnAlumnus: true });
+      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as any : row) } : prev);
+      toast({ title: "Alumni approved — now visible on marketplace", variant: "success" });
+      setDetailItem(null);
     } catch {
-      toast({ title: "Failed to update verification status", variant: "error" });
+      toast({ title: "Failed to approve alumni", variant: "error" });
     }
+    setConfirmAction(null);
   };
+
+  const handleReject = async (id: string) => {
+    try {
+      await updateAlumniProfile(id, { verificationStatus: "rejected", isVerifiedJbcnAlumnus: false });
+      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as any : row) } : prev);
+      toast({ title: "Alumni rejected — will not appear on marketplace", variant: "success" });
+      setDetailItem(null);
+    } catch {
+      toast({ title: "Failed to reject alumni", variant: "error" });
+    }
+    setConfirmAction(null);
+  };
+
+  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div>
@@ -169,13 +203,14 @@ export default function AdminAlumniPage() {
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[1000px] text-left text-sm">
           <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="p-4">Alumnus</th>
               <th>University</th>
+              <th>Course</th>
+              <th>Country</th>
               <th>Verification</th>
-              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -193,6 +228,7 @@ export default function AdminAlumniPage() {
                     <p className="font-semibold text-primary">{item.fullName}</p>
                   )}
                   <p className="text-xs text-muted-foreground">{item.user.email}</p>
+                  {item.user.phone && <p className="text-xs text-muted-foreground">{item.user.phone}</p>}
                 </td>
                 <td>
                   {editingId === item.id ? (
@@ -204,39 +240,52 @@ export default function AdminAlumniPage() {
                     <span>{item.universityName}</span>
                   )}
                 </td>
+                <td>{item.course}</td>
+                <td>{item.country}</td>
                 <td>
                   <Badge tone={item.verificationStatus === "approved" ? "success" : item.verificationStatus === "rejected" ? "danger" : "neutral"}>
                     {item.verificationStatus}
                   </Badge>
                 </td>
                 <td>
-                  <Badge tone={item.isActive ? "success" : "danger"}>
-                    {item.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </td>
-                <td>
                   <div className="flex gap-2">
-                    {editingId === item.id ? (
+                    {item.verificationStatus === "pending" ? (
                       <>
-                        <Button size="sm" onClick={() => saveEdit(item.id)}>Save</Button>
-                        <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+                        <Button size="sm" onClick={() => setConfirmAction({ id: item.id, action: "approve" })}>
+                          Accept
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "reject" })}>
+                          Deny
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>
+                          Details
+                        </Button>
                       </>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Edit</Button>
+                      <>
+                        {editingId === item.id ? (
+                          <>
+                            <Button size="sm" onClick={() => saveEdit(item.id)}>Save</Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+                          </>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Edit</Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>
+                          Details
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "toggle" })}>
+                          {item.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                      </>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => handleApproveReject(item)}>
-                      {item.verificationStatus === "approved" ? "Reject" : "Approve"}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "toggle" })}>
-                      {item.isActive ? "Deactivate" : "Activate"}
-                    </Button>
                   </div>
                 </td>
               </tr>
             ))}
             {(!data || data.items.length === 0) && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
+                <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
                   {loading ? "Loading..." : "No alumni found."}
                 </td>
               </tr>
@@ -259,8 +308,139 @@ export default function AdminAlumniPage() {
         </div>
       )}
 
+      {/* Detail Dialog */}
+      <DialogRoot open={!!detailItem} onOpenChange={(open) => { if (!open) setDetailItem(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detailItem?.fullName}</DialogTitle>
+            <DialogDescription>Full profile details for review</DialogDescription>
+          </DialogHeader>
+          {detailItem && (
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Email</p>
+                  <p className="mt-1">{detailItem.user.email}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Phone</p>
+                  <p className="mt-1">{detailItem.user.phone || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">University</p>
+                  <p className="mt-1">{detailItem.universityName}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Course</p>
+                  <p className="mt-1">{detailItem.course}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Graduation Year</p>
+                  <p className="mt-1">{detailItem.graduationYearJbcn}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Country</p>
+                  <p className="mt-1">{detailItem.country}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Study Level</p>
+                  <p className="mt-1">{detailItem.currentStudyLevel}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Status</p>
+                  <Badge tone={detailItem.verificationStatus === "approved" ? "success" : detailItem.verificationStatus === "rejected" ? "danger" : "neutral"}>
+                    {detailItem.verificationStatus}
+                  </Badge>
+                </div>
+              </div>
+              {detailItem.bio && (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Bio</p>
+                  <p className="mt-1 text-sm">{detailItem.bio}</p>
+                </div>
+              )}
+              {detailItem.languages && (() => {
+                try {
+                  const langs = JSON.parse(detailItem.languages);
+                  if (langs.length > 0) return (
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase tracking-wider">Languages</p>
+                      <p className="mt-1">{langs.join(", ")}</p>
+                    </div>
+                  );
+                } catch { /* ignore */ }
+                return null;
+              })()}
+              {detailItem.linkedinUrl && (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">LinkedIn</p>
+                  <a href={detailItem.linkedinUrl} target="_blank" rel="noopener noreferrer" className="mt-1 text-primary hover:underline">{detailItem.linkedinUrl}</a>
+                </div>
+              )}
+              {detailItem.sessionTypes.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Session Types</p>
+                  <div className="mt-2 space-y-1">
+                    {detailItem.sessionTypes.map((st) => (
+                      <div key={st.id} className="flex items-center justify-between text-sm">
+                        <span>{st.type.replace("_", " ")} — {st.descriptionOneLiner || "No description"}</span>
+                        <span className="font-medium">₹{(st.pricePaise / 100).toFixed(0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detailItem.availability.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wider">Availability</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {detailItem.availability.map((a) => (
+                      <span key={a.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 py-1 text-xs">
+                        {a.dayOfWeek != null ? DAY_NAMES[a.dayOfWeek] : "Specific"} {a.startTime}–{a.endTime}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detailItem.verificationStatus === "pending" && (
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  <Button onClick={() => setConfirmAction({ id: detailItem.id, action: "approve" })}>
+                    Accept — Approve Profile
+                  </Button>
+                  <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })}>
+                    Deny — Reject Profile
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </DialogRoot>
+
+      {/* Confirm Approve */}
       <ConfirmDialog
-        open={!!confirmAction}
+        open={confirmAction?.action === "approve"}
+        onOpenChange={() => setConfirmAction(null)}
+        onConfirm={() => confirmAction && handleApprove(confirmAction.id)}
+        title="Approve this alumni?"
+        description="They will appear on the public marketplace and students can book sessions with them."
+        confirmLabel="Approve"
+      />
+
+      {/* Confirm Reject */}
+      <ConfirmDialog
+        open={confirmAction?.action === "reject"}
+        onOpenChange={() => setConfirmAction(null)}
+        onConfirm={() => confirmAction && handleReject(confirmAction.id)}
+        title="Reject this alumni?"
+        description="They will not appear on the marketplace. This action can be reversed later."
+        confirmLabel="Reject"
+        variant="destructive"
+      />
+
+      {/* Confirm Toggle Active */}
+      <ConfirmDialog
+        open={confirmAction?.action === "toggle"}
         onOpenChange={() => setConfirmAction(null)}
         onConfirm={() => confirmAction && handleToggleActive(confirmAction.id)}
         title="Toggle alumni status"

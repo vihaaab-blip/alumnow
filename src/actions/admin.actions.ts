@@ -42,7 +42,11 @@ export async function getAllAlumni(opts?: {
   const [items, total] = await Promise.all([
     prisma.alumniProfile.findMany({
       where,
-      include: { user: { select: { email: true } }, sessionTypes: true },
+      include: {
+        user: { select: { email: true, phone: true } },
+        sessionTypes: true,
+        availability: true,
+      },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,

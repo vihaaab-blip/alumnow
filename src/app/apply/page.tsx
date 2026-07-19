@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { Check, LoaderCircle } from "lucide-react";
 import { applyAsAlumni } from "@/actions/alumni.actions";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +28,7 @@ export default function ApplyPage() {
   const [data, setData] = useState(initial);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [status, setStatus] = useState<"idle" | "creating" | "verified">("idle");
+  const [status, setStatus] = useState<"idle" | "creating" | "submitted">("idle");
 
   const update = (key: keyof Form, value: string | boolean) =>
     setData((current) => ({ ...current, [key]: value }));
@@ -57,18 +56,7 @@ export default function ApplyPage() {
       setStatus("idle");
       return;
     }
-    setStatus("verified");
-    const signInResult = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
-    if (signInResult?.error) {
-      setError("Profile approved but sign-in failed. Please go to login.");
-      setStatus("idle");
-      return;
-    }
-    window.location.href = "/browse";
+    setStatus("submitted");
   }
 
   if (status !== "idle") {
@@ -77,7 +65,7 @@ export default function ApplyPage() {
         <div className="relative z-10 mx-auto flex min-h-screen max-w-md items-center justify-center px-6 text-center">
           <div>
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
-              {status === "verified" ? (
+              {status === "submitted" ? (
                 <Check size={30} className="text-white" />
               ) : (
                 <LoaderCircle className="animate-spin text-coral" size={28} />
@@ -85,14 +73,22 @@ export default function ApplyPage() {
             </div>
             <h1 className="mt-6 text-3xl font-semibold text-white font-heading">
               {status === "creating"
-                ? "Creating your profile..."
-                : "Profile approved!"}
+                ? "Submitting your application..."
+                : "Application submitted!"}
             </h1>
             <p className="mt-3 text-white/40">
-              {status === "verified"
-                ? "Redirecting you to the marketplace..."
+              {status === "submitted"
+                ? "Your mentor application is pending review. You will be notified once it is approved."
                 : "This will only take a moment."}
             </p>
+            {status === "submitted" && (
+              <button
+                onClick={() => { window.location.href = "/login"; }}
+                className="mt-6 rounded-xl bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all"
+              >
+                Go to Login
+              </button>
+            )}
           </div>
         </div>
       </div>
