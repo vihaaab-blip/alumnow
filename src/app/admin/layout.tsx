@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminGuard } from "@/components/AdminGuard";
+import { Logo } from "@/components/Logo";
 import { LayoutDashboard, GraduationCap, CalendarDays, Users, Star, Settings } from "lucide-react";
 
 const navItems = [
@@ -18,9 +19,9 @@ function SidebarNav() {
   return (
     <aside className="hidden w-[280px] flex-shrink-0 bg-primary text-white md:flex md:flex-col">
       <div className="flex h-16 items-center px-6 border-b border-white/10">
-        <Link href="/admin" className="text-xl font-bold tracking-tight">
-          Alum<span className="text-accent">Now</span>
-          <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">Admin</span>
+        <Link href="/admin" className="flex items-center gap-2">
+          <Logo className="text-xl" />
+          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">Admin</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-1 p-4">

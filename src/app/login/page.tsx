@@ -23,11 +23,10 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        createIfMissing: "student",
         redirect: false,
       });
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("No account found with this email. Please sign up first.");
         setSubmitting(false);
         return;
       }

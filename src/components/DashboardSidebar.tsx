@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { Logo } from "./Logo";
 import {
   LayoutDashboard, Search, BookOpen, Star, User, Settings,
   LogOut, ChevronRight, GraduationCap
@@ -44,9 +45,7 @@ export function DashboardSidebar() {
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
           <GraduationCap size={20} className="text-white" />
         </div>
-        <span className="text-lg font-bold text-white tracking-tight">
-          Alum<span className="text-white/50">Now</span>
-        </span>
+        <Logo className="text-lg" />
       </div>
 
       {/* Nav sections */}

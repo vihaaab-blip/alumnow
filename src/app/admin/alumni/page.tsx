@@ -31,14 +31,57 @@ type AdminAlumniExtended = {
   availability: { id: string; dayOfWeek: number | null; startTime: string; endTime: string }[];
 };
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
+  item: AdminAlumniExtended;
+  onApprove: () => void;
+  onReject: () => void;
+  onViewDetails: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4 min-w-0">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10">
+            {item.profilePhotoUrl ? (
+              <img src={item.profilePhotoUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-white/30 text-lg font-bold">
+                {item.fullName.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-white truncate">{item.fullName}</p>
+            <p className="text-xs text-white/40 truncate">{item.user.email}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.universityName}</span>
+              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.course}</span>
+              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.country}</span>
+              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">Class of {item.graduationYearJbcn}</span>
+            </div>
+            {item.bio && (
+              <p className="mt-2 text-xs text-white/30 line-clamp-2">{item.bio}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" onClick={onViewDetails} variant="outline">Details</Button>
+          <Button size="sm" onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white">Accept</Button>
+          <Button size="sm" variant="outline" onClick={onReject} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminAlumniPage() {
   const [data, setData] = useState<PaginatedResult<AdminAlumniExtended> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" | "approve" | "reject" } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", bio: "", pricePaise: "" });
@@ -57,68 +100,18 @@ export default function AdminAlumniPage() {
     }
   }, [debouncedSearch, statusFilter]);
 
-  useEffect(() => {
-    load(page);
-  }, [page, load]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, statusFilter]);
-
-  const startEdit = (item: AdminAlumniExtended) => {
-    setEditingId(item.id);
-    setEditValues({
-      fullName: item.fullName,
-      bio: item.bio ?? "",
-      universityName: item.universityName,
-      course: item.course,
-    });
-  };
-
-  const saveEdit = async (id: string) => {
-    try {
-      await updateAlumniProfile(id, editValues);
-      setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, ...editValues } as any : i) } : prev);
-      setEditingId(null);
-      toast({ title: "Alumni updated", variant: "success" });
-    } catch {
-      toast({ title: "Failed to update alumni", variant: "error" });
-    }
-  };
-
-  const handleToggleActive = async (id: string) => {
-    const item = data?.items.find((i) => i.id === id);
-    if (!item) return;
-    try {
-      await toggleAlumniActive(id, !item.isActive);
-      setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as any : i) } : prev);
-      toast({ title: item.isActive ? "Alumni deactivated" : "Alumni activated", variant: "success" });
-    } catch {
-      toast({ title: "Failed to update alumni", variant: "error" });
-    }
-    setConfirmAction(null);
-  };
+  useEffect(() => { load(page); }, [page, load]);
+  useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter]);
 
   const handleCreate = async () => {
     try {
-      await createAlumniProfile({
-        fullName: createForm.fullName,
-        email: createForm.email,
-        bio: createForm.bio || undefined,
-        pricePaise: createForm.pricePaise ? Number(createForm.pricePaise) * 100 : undefined,
-      });
+      await createAlumniProfile({ fullName: createForm.fullName, email: createForm.email, bio: createForm.bio || undefined, pricePaise: createForm.pricePaise ? Number(createForm.pricePaise) * 100 : undefined });
       toast({ title: "Alumni created", variant: "success" });
       setCreateOpen(false);
       setCreateForm({ fullName: "", email: "", bio: "", pricePaise: "" });
       load(page);
-    } catch {
-      toast({ title: "Failed to create alumni", variant: "error" });
-    }
+    } catch { toast({ title: "Failed to create alumni", variant: "error" }); }
   };
 
   const handleApprove = async (id: string) => {
@@ -127,9 +120,7 @@ export default function AdminAlumniPage() {
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as any : row) } : prev);
       toast({ title: "Alumni approved — now visible on marketplace", variant: "success" });
       setDetailItem(null);
-    } catch {
-      toast({ title: "Failed to approve alumni", variant: "error" });
-    }
+    } catch { toast({ title: "Failed to approve", variant: "error" }); }
     setConfirmAction(null);
   };
 
@@ -139,21 +130,33 @@ export default function AdminAlumniPage() {
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as any : row) } : prev);
       toast({ title: "Alumni rejected — will not appear on marketplace", variant: "success" });
       setDetailItem(null);
-    } catch {
-      toast({ title: "Failed to reject alumni", variant: "error" });
-    }
+    } catch { toast({ title: "Failed to reject", variant: "error" }); }
     setConfirmAction(null);
   };
 
-  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const handleToggleActive = async (id: string) => {
+    const item = data?.items.find((i) => i.id === id);
+    if (!item) return;
+    try {
+      await toggleAlumniActive(id, !item.isActive);
+      setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as any : i) } : prev);
+      toast({ title: item.isActive ? "Alumni deactivated" : "Alumni activated", variant: "success" });
+    } catch { toast({ title: "Failed to update", variant: "error" }); }
+    setConfirmAction(null);
+  };
+
+  const pendingItems = data?.items.filter((i) => i.verificationStatus === "pending") ?? [];
+  const otherItems = data?.items.filter((i) => i.verificationStatus !== "pending") ?? [];
 
   return (
     <div>
       <Breadcrumbs items={[{ label: "Alumni" }]} />
+
+      {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-primary">Alumni directory</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Review verification and visibility for every mentor.</p>
+          <h1 className="text-3xl font-semibold text-primary">Alumni Reviews</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Review, approve, or reject mentor applications.</p>
         </div>
         <DialogRoot open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -183,127 +186,111 @@ export default function AdminAlumniPage() {
         </DialogRoot>
       </div>
 
+      {/* Filters */}
       <div className="mt-6 flex items-center gap-3">
-        <Input
-          placeholder="Search by name or bio..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-        >
-          <option value="ALL">All statuses</option>
-          <option value="APPROVED">Approved</option>
-          <option value="PENDING">Pending</option>
-          <option value="REJECTED">Rejected</option>
-        </select>
+        <Input placeholder="Search by name or bio..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+        <div className="flex gap-1 rounded-xl bg-white/5 p-1 border border-white/10">
+          {["PENDING", "ALL", "APPROVED", "REJECTED"].map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                statusFilter === s ? "bg-primary text-white" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {s === "PENDING" ? "Pending" : s === "ALL" ? "All" : s === "APPROVED" ? "Approved" : "Rejected"}
+              {s === "PENDING" && data && (
+                <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">
+                  {data.items.filter((i) => i.verificationStatus === "pending").length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
-        <table className="w-full min-w-[1000px] text-left text-sm">
-          <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="p-4">Alumnus</th>
-              <th>University</th>
-              <th>Course</th>
-              <th>Country</th>
-              <th>Verification</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.items.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-0">
-                <td className="p-4">
-                  {editingId === item.id ? (
-                    <Input
-                      value={editValues.fullName}
-                      onChange={(e) => setEditValues((v) => ({ ...v, fullName: e.target.value }))}
-                      className="mb-1"
-                    />
-                  ) : (
+      {loading && <p className="mt-4 text-sm text-muted-foreground">Loading...</p>}
+
+      {/* Pending review cards */}
+      {statusFilter === "PENDING" && pendingItems.length > 0 && (
+        <div className="mt-6 space-y-3">
+          <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wider">Pending Review ({pendingItems.length})</h2>
+          {pendingItems.map((item) => (
+            <PendingReviewCard
+              key={item.id}
+              item={item}
+              onApprove={() => setConfirmAction({ id: item.id, action: "approve" })}
+              onReject={() => setConfirmAction({ id: item.id, action: "reject" })}
+              onViewDetails={() => setDetailItem(item)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Other items table */}
+      {otherItems.length > 0 && (
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="p-4">Alumnus</th>
+                <th>University</th>
+                <th>Course</th>
+                <th>Country</th>
+                <th>Verification</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {otherItems.map((item) => (
+                <tr key={item.id} className="border-b border-border last:border-0 hover:bg-white/[0.02] transition-colors">
+                  <td className="p-4">
                     <p className="font-semibold text-primary">{item.fullName}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">{item.user.email}</p>
-                  {item.user.phone && <p className="text-xs text-muted-foreground">{item.user.phone}</p>}
-                </td>
-                <td>
-                  {editingId === item.id ? (
-                    <Input
-                      value={editValues.universityName}
-                      onChange={(e) => setEditValues((v) => ({ ...v, universityName: e.target.value }))}
-                    />
-                  ) : (
-                    <span>{item.universityName}</span>
-                  )}
-                </td>
-                <td>{item.course}</td>
-                <td>{item.country}</td>
-                <td>
-                  <Badge tone={item.verificationStatus === "approved" ? "success" : item.verificationStatus === "rejected" ? "danger" : "neutral"}>
-                    {item.verificationStatus}
-                  </Badge>
-                </td>
-                <td>
-                  <div className="flex gap-2">
-                    {item.verificationStatus === "pending" ? (
-                      <>
-                        <Button size="sm" onClick={() => setConfirmAction({ id: item.id, action: "approve" })}>
-                          Accept
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "reject" })}>
-                          Deny
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>
-                          Details
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        {editingId === item.id ? (
-                          <>
-                            <Button size="sm" onClick={() => saveEdit(item.id)}>Save</Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
-                          </>
-                        ) : (
-                          <Button size="sm" variant="outline" onClick={() => startEdit(item)}>Edit</Button>
-                        )}
-                        <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>
-                          Details
-                        </Button>
+                    <p className="text-xs text-muted-foreground">{item.user.email}</p>
+                    {item.user.phone && <p className="text-xs text-muted-foreground">{item.user.phone}</p>}
+                  </td>
+                  <td>{item.universityName}</td>
+                  <td>{item.course}</td>
+                  <td>{item.country}</td>
+                  <td>
+                    <Badge tone={item.verificationStatus === "approved" ? "success" : item.verificationStatus === "rejected" ? "danger" : "neutral"}>
+                      {item.verificationStatus}
+                    </Badge>
+                  </td>
+                  <td>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>Details</Button>
+                      {item.verificationStatus === "approved" && (
                         <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "toggle" })}>
                           {item.isActive ? "Deactivate" : "Activate"}
                         </Button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {(!data || data.items.length === 0) && (
-              <tr>
-                <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
-                  {loading ? "Loading..." : "No alumni found."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {/* Empty state */}
+      {!loading && data && data.items.length === 0 && (
+        <div className="mt-12 text-center">
+          <p className="text-lg text-white/30">No alumni found</p>
+          <p className="mt-1 text-sm text-white/20">
+            {statusFilter === "PENDING" ? "No pending applications to review." : "Try adjusting your filters."}
+          </p>
+        </div>
+      )}
+
+      {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <span>Page {data.page} of {data.totalPages}</span>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-              Previous
-            </Button>
-            <Button size="sm" variant="outline" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
+            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
+            <Button size="sm" variant="outline" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         </div>
       )}
@@ -371,12 +358,6 @@ export default function AdminAlumniPage() {
                 } catch { /* ignore */ }
                 return null;
               })()}
-              {detailItem.linkedinUrl && (
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider">LinkedIn</p>
-                  <a href={detailItem.linkedinUrl} target="_blank" rel="noopener noreferrer" className="mt-1 text-primary hover:underline">{detailItem.linkedinUrl}</a>
-                </div>
-              )}
               {detailItem.sessionTypes.length > 0 && (
                 <div>
                   <p className="text-muted-foreground text-xs uppercase tracking-wider">Session Types</p>
@@ -404,12 +385,8 @@ export default function AdminAlumniPage() {
               )}
               {detailItem.verificationStatus === "pending" && (
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={() => setConfirmAction({ id: detailItem.id, action: "approve" })}>
-                    Accept — Approve Profile
-                  </Button>
-                  <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })}>
-                    Deny — Reject Profile
-                  </Button>
+                  <Button onClick={() => setConfirmAction({ id: detailItem.id, action: "approve" })} className="bg-green-600 hover:bg-green-700 text-white">Accept — Approve Profile</Button>
+                  <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny — Reject Profile</Button>
                 </div>
               )}
             </div>
@@ -417,37 +394,10 @@ export default function AdminAlumniPage() {
         </DialogContent>
       </DialogRoot>
 
-      {/* Confirm Approve */}
-      <ConfirmDialog
-        open={confirmAction?.action === "approve"}
-        onOpenChange={() => setConfirmAction(null)}
-        onConfirm={() => confirmAction && handleApprove(confirmAction.id)}
-        title="Approve this alumni?"
-        description="They will appear on the public marketplace and students can book sessions with them."
-        confirmLabel="Approve"
-      />
-
-      {/* Confirm Reject */}
-      <ConfirmDialog
-        open={confirmAction?.action === "reject"}
-        onOpenChange={() => setConfirmAction(null)}
-        onConfirm={() => confirmAction && handleReject(confirmAction.id)}
-        title="Reject this alumni?"
-        description="They will not appear on the marketplace. This action can be reversed later."
-        confirmLabel="Reject"
-        variant="destructive"
-      />
-
-      {/* Confirm Toggle Active */}
-      <ConfirmDialog
-        open={confirmAction?.action === "toggle"}
-        onOpenChange={() => setConfirmAction(null)}
-        onConfirm={() => confirmAction && handleToggleActive(confirmAction.id)}
-        title="Toggle alumni status"
-        description="Are you sure you want to change this alumni's active status?"
-        confirmLabel="Confirm"
-        variant="destructive"
-      />
+      {/* Confirmations */}
+      <ConfirmDialog open={confirmAction?.action === "approve"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleApprove(confirmAction.id)} title="Approve this alumni?" description="They will appear on the public marketplace and students can book sessions with them." confirmLabel="Approve" />
+      <ConfirmDialog open={confirmAction?.action === "reject"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleReject(confirmAction.id)} title="Reject this alumni?" description="They will not appear on the marketplace. This action can be reversed later." confirmLabel="Reject" variant="destructive" />
+      <ConfirmDialog open={confirmAction?.action === "toggle"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleToggleActive(confirmAction.id)} title="Toggle alumni status" description="Are you sure you want to change this alumni's active status?" confirmLabel="Confirm" variant="destructive" />
     </div>
   );
 }

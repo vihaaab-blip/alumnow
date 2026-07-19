@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-widest text-accent">Operations</p>
           <h1 className="mt-2 text-3xl font-semibold text-primary">Admin Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">A live view of the AlumNow platform.</p>
+          <p className="mt-2 text-muted-foreground">A live view of the alumnow. platform.</p>
         </div>
         <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">Admin only</span>
       </div>

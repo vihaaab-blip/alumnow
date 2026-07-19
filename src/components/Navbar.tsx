@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, LogOut, UserRound, Shield, ArrowRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
+import { Logo } from "./Logo";
 
 /**
  * Liquid-glass navbar.
@@ -87,8 +88,8 @@ export function Navbar() {
         {/* hairline rim light border */}
         <div className="liquid-glass-edge" aria-hidden="true" />
 
-        <Link href="/" className={`relative z-10 text-lg font-bold tracking-tight ${scrolled ? "text-primary" : "text-white"}`}>
-          Alum<span className={scrolled ? "text-accent" : "text-white/80"}>Now</span>
+        <Link href="/" className="relative z-10">
+          <Logo className="text-lg" />
         </Link>
 
         <nav className="relative z-10 hidden md:flex items-center gap-1">
