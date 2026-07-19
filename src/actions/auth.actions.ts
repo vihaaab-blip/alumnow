@@ -11,76 +11,6 @@ import { headers } from "next/headers";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ApiResponse } from "@/types";
 
-const DEMO_PASSWORD = "password123";
-const DEMO_ACCOUNTS = new Set(["student1@alumnow.com", "alumni1@alumnow.com", "admin@alumnow.com"]);
-
-async function ensureDemoAccount(email: string, password: string) {
-  if (!DEMO_ACCOUNTS.has(email) || password !== DEMO_PASSWORD) return;
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing?.passwordHash) return;
-
-  const passwordHash = await hash(DEMO_PASSWORD, 12);
-
-  if (email === "admin@alumnow.com") {
-    await prisma.user.upsert({
-      where: { email },
-      update: { passwordHash, role: "admin", emailVerifiedAt: new Date() },
-      create: {
-        email,
-        passwordHash,
-        role: "admin",
-        emailVerifiedAt: new Date(),
-        adminUser: { create: {} },
-      },
-    });
-    return;
-  }
-
-  if (email === "alumni1@alumnow.com") {
-    await prisma.user.upsert({
-      where: { email },
-      update: { passwordHash, role: "alumnus", emailVerifiedAt: new Date() },
-      create: {
-        email,
-        passwordHash,
-        role: "alumnus",
-        emailVerifiedAt: new Date(),
-        alumniProfile: {
-          create: {
-            fullName: "Priya Sharma",
-            universityName: "UC Berkeley",
-            course: "B.Sc. Computer Science",
-            country: "United States",
-            graduationYearJbcn: 2021,
-            currentStudyLevel: "undergraduate",
-            qsRankingTier: "top50",
-            bio: "JBCN alum helping students navigate applications and student life.",
-            languages: JSON.stringify(["English", "Hindi"]),
-            verificationStatus: "approved",
-            isVerifiedJbcnAlumnus: true,
-            isActive: true,
-          },
-        },
-      },
-    });
-    return;
-  }
-
-  await prisma.user.upsert({
-    where: { email },
-    update: { passwordHash, role: "student", emailVerifiedAt: new Date() },
-    create: {
-      email,
-      passwordHash,
-      role: "student",
-      phone: "+919876543210",
-      emailVerifiedAt: new Date(),
-      studentProfile: { create: { fullName: "Aarav Patel", currentGrade: "A2" } },
-    },
-  });
-}
-
 export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
   try { const parsed = signupSchema.parse(input); const email = parsed.email.trim().toLowerCase(); const existing = await prisma.user.findUnique({ where: { email } }); if (existing) return { success: false, error: "An account with this email already exists." }; const passwordHash = await hash(parsed.password, 12); await prisma.user.create({ data: { email, passwordHash, phone: parsed.phone, role: "student", emailVerifiedAt: new Date(), studentProfile: { create: { fullName: parsed.fullName, dateOfBirth: parsed.dateOfBirth instanceof Date ? parsed.dateOfBirth : null, currentGrade: parsed.currentGrade, school: parsed.school } } } }); return { success: true, data: { redirectTo: "/dashboard" } }; } catch (error) { if (error instanceof Error && "flatten" in error) return { success: false, error: "Please check your details." }; return { success: false, error: "Something went wrong. Please try again." }; }
 }
@@ -89,7 +19,6 @@ export async function login(input: { email: string; password: string }): Promise
   try {
     const parsed = loginSchema.parse(input);
     const email = parsed.email.trim().toLowerCase();
-    await ensureDemoAccount(email, parsed.password);
     const user = await prisma.user.findUnique({ where: { email }, select: { role: true, passwordHash: true } });
     if (!user?.passwordHash) return { success: false, error: "Invalid email or password." };
     const valid = await compare(parsed.password, user.passwordHash);

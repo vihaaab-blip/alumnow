@@ -2,9 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Star, Clock3, GraduationCap, ChevronDown, Video, Users, MapPin, Award, ShieldCheck } from "lucide-react";
-import { ReviewCard } from "./reviews/ReviewCard";
 import type { AlumniCardData } from "@/types";
-import type { Review } from "./reviews/ReviewCard";
 
 interface DetailPanelProps {
   alumni: AlumniCardData | null;
@@ -271,26 +269,6 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
             {/* Reviews tab */}
             {tab === "reviews" && (() => {
-              // Derive mock reviews from rating data until real review API exists
-              const placeholderReviews: Review[] = alumni.ratingCount > 0 ? [
-                {
-                  id: "r1",
-                  rating: Math.min(5, Math.round(alumni.ratingAvg ?? 4)),
-                  comment: "Really insightful — helped me understand exactly what to expect from the application process. Highly recommend.",
-                  sessionType: alumni.sessionTypes[0]?.type ?? "call_45",
-                  reviewerName: "JBCN Student",
-                  timeAgo: "2 weeks ago",
-                },
-                {
-                  id: "r2",
-                  rating: Math.min(5, Math.round((alumni.ratingAvg ?? 4) - 0.3)),
-                  comment: "Gave me practical tips I couldn't find anywhere else. Very patient and clear with explanations.",
-                  sessionType: alumni.sessionTypes[0]?.type ?? "call_30",
-                  reviewerName: "JBCN Student",
-                  timeAgo: "1 month ago",
-                },
-              ] : [];
-
               return (
                 <div className="space-y-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-white/25">
@@ -312,15 +290,9 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                     Reviews are revealed simultaneously once both parties submit or 72 hours pass — preventing bias.
                   </div>
 
-                  {placeholderReviews.length > 0 ? (
-                    placeholderReviews.map((r, i) => (
-                      <ReviewCard key={r.id} review={r} index={i} />
-                    ))
-                  ) : (
-                    <p className="text-[13px] text-white/25 py-8 text-center">
-                      No reviews yet — be the first to book a session.
-                    </p>
-                  )}
+                  <p className="text-[13px] text-white/25 py-8 text-center">
+                    No reviews yet — be the first to book a session.
+                  </p>
                 </div>
               );
             })()}
