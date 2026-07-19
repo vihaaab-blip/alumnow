@@ -4,6 +4,7 @@ import { SessionProvider } from "./SessionProvider";
 import { RouteNav } from "@/components/RouteNav";
 import { RouteFooter } from "@/components/RouteFooter";
 import { Toaster } from "@/components/ui/Toaster";
+import { ToastProvider } from "@/components/ToastProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import "./globals.css";
 
@@ -44,12 +45,14 @@ export default function RootLayout({
       >
         <SessionProvider>
           <QueryProvider>
-            <div className="flex min-h-[100dvh] flex-col">
-              <RouteNav />
-              <main className="flex-1">{children}</main>
-              <RouteFooter />
-            </div>
-            <Toaster />
+            <ToastProvider>
+              <div className="flex min-h-[100dvh] flex-col">
+                <RouteNav />
+                <main className="flex-1">{children}</main>
+                <RouteFooter />
+              </div>
+              <Toaster />
+            </ToastProvider>
           </QueryProvider>
         </SessionProvider>
       </body>

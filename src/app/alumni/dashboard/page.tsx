@@ -12,6 +12,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Sidebar } from "@/components/Sidebar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
+import { GoalProgress } from "@/components/GoalProgress";
+import { computeStreak } from "@/lib/streak";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Label,
@@ -157,6 +159,16 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
+function StreakBadge({ weeks }: { weeks: number }) {
+  if (weeks === 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--accent)]">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5L11 5.5L8.5 8L9 11.5L6 9.5L3 11.5L3.5 8L1 5.5L4.5 4.5L6 1Z" fill="currentColor"/></svg>
+      {weeks}-week streak
+    </span>
+  );
+}
+
 export default function AlumniDashboardPage() {
   return (
     <ErrorBoundary>
@@ -268,7 +280,7 @@ function AlumniDashboardContent() {
     return (
       <div className="min-h-screen bg-[#0D0D0D]">
         <Sidebar />
-      <div className="ml-[240px] min-h-screen">
+      <div className="md:ml-[240px] min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-[16px]" />)}
           </div>
@@ -282,7 +294,7 @@ function AlumniDashboardContent() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
       <Sidebar />
-      <div className="ml-[240px] min-h-screen">
+      <div className="md:ml-[240px] min-h-screen">
         <div className="p-6 max-w-[1400px]">
 
           {/* ─── Hero ─── */}
@@ -313,6 +325,9 @@ function AlumniDashboardContent() {
                     ? `You have ${upcomingCount} upcoming session${upcomingCount !== 1 ? "s" : ""}`
                     : "Your mentoring dashboard — manage sessions, earnings & more"}
                 </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <StreakBadge weeks={computeStreak(bookings).current} />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Link href="/alumni/profile">
@@ -458,6 +473,11 @@ function AlumniDashboardContent() {
 
           {/* ─── Bottom Row: Quick Actions + Earnings + Bookings ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
+
+            {/* Goal Progress */}
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3">
+              <GoalProgress current={sessionsData[sessionsData.length - 1]?.sessions ?? 0} target={10} />
+            </motion.div>
 
             {/* Quick actions */}
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">

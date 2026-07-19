@@ -1,26 +1,29 @@
-import { Card } from "@/components/ui/Card";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Sparkline } from "./Sparkline";
 
-export function AdminStatCard({ label, value, detail, change, changeType }: {
-  label: string
-  value: string | number
-  detail?: string
-  change?: string
-  changeType?: "increase" | "decrease"
+export function AdminStatCard({ label, value, change, changeType, icon: Icon, color = "#E8573A", sparkData = [] }: {
+  label: string; value: string | number; change?: string; changeType?: "increase" | "decrease";
+  icon: any; color?: string; sparkData?: number[];
 }) {
   return (
-    <Card className="border-l-4 border-l-accent p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <div className="mt-3 flex items-baseline gap-2">
-        <p className="font-mono text-3xl font-semibold text-primary">{value}</p>
+    <div className="relative overflow-hidden rounded-[16px] bg-white border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-xs)]">
+      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: color }} />
+      <div className="flex items-center justify-between mb-3">
+        <div className="h-9 w-9 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: `${color}14` }}>
+          <Icon size={16} style={{ color }} />
+        </div>
         {change && (
-          <span className={`flex items-center gap-0.5 text-xs font-semibold ${changeType === "increase" ? "text-green-600" : "text-red-600"}`}>
-            {changeType === "increase" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
+            changeType === "increase" ? "bg-[var(--success)]/10 text-[var(--success)]" : "bg-[var(--danger)]/10 text-[var(--danger)]"
+          }`}>
             {change}
           </span>
         )}
       </div>
-      {detail && <p className="mt-2 text-xs text-muted-foreground">{detail}</p>}
-    </Card>
+      <p className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em]">{label}</p>
+      <div className="flex items-end justify-between mt-1.5">
+        <p className="font-mono text-[28px] font-bold text-[var(--text-primary)] tracking-[-0.02em]">{value}</p>
+        {sparkData.length > 0 && <Sparkline data={sparkData} color={color} />}
+      </div>
+    </div>
   );
 }

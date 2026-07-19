@@ -3,6 +3,11 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CountUp } from "@/components/CountUp";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
+import { ActivityHeatmap } from "@/components/ActivityHeatmap";
+import { exportBookingsCsv } from "@/lib/exportCsv";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -13,8 +18,8 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import {
   CalendarDays, ArrowRight, Star, GraduationCap,
-  Clock, Award, Sparkles, Search, TrendingUp,
-  Download, Filter, ChevronDown,
+  Clock, Award, Sparkles,   Search, TrendingUp,
+  Download, ChevronDown,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -99,14 +104,21 @@ function generateRatingDist(bookings: any[]) {
 
 /* ─── Mini Sparkline ─── */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const w = 72; const h = 24;
+  const w = 72, h = 24;
   const max = Math.max(...data, 1);
   const pts = data.length < 2
     ? `0,${h - ((data[0] ?? 0) / max) * h}`
     : data.map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * h}`).join(" ");
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0">
-      <polyline fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" points={pts} style={{ filter: `drop-shadow(0 0 3px ${color}40)` }} />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={pts}
+      />
     </svg>
   );
 }
@@ -115,7 +127,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function TrendPill({ value, positive }: { value: string; positive: boolean }) {
   return (
     <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
-      positive ? "bg-[#16A34A]/10 text-[#16A34A]" : "bg-[#DC2626]/10 text-[#DC2626]"
+      positive ? "bg-[var(--success)]/10 text-[var(--success)]" : "bg-[var(--danger)]/10 text-[var(--danger)]"
     }`}>
       <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={positive ? "" : "rotate-180"}>
         <path d="M4 1L7 6H1L4 1Z" fill="currentColor" />
@@ -129,12 +141,12 @@ function TrendPill({ value, positive }: { value: string; positive: boolean }) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#1A1A1A] border border-white/5 rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-      <p className="text-[11px] font-semibold text-white/40 mb-1.5">{label}</p>
+    <div className="bg-white border border-[var(--border-medium)] rounded-[10px] px-3 py-2.5 shadow-[var(--shadow-lg)]">
+      <p className="text-[11px] font-semibold text-[var(--text-tertiary)] mb-1.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: p.color }}>
           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-          {p.name}: <span className="tabular-nums">{p.value}{p.name === "Hours" || p.name === "Last week" ? "h" : ""}</span>
+          {p.name}: <span className="tabular-nums text-[var(--text-primary)]">{p.value}{p.name === "Hours" || p.name === "Last week" ? "h" : ""}</span>
         </p>
       ))}
     </div>
@@ -189,6 +201,9 @@ function DashboardContent() {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [searchOpen, setSearchOpen] = useState(false);
   const [showInsight, setShowInsight] = useState(true);
+  const [rangeDays, setRangeDays] = useState(30);
+
+  useKeyboardShortcuts(() => setSearchOpen(true));
 
   useEffect(() => {
     if (session?.user?.role === "alumnus") setDashboardMode("alumnus");
@@ -201,7 +216,8 @@ function DashboardContent() {
     getAlumniBookings().then(setAlumniBookings).catch(() => setAlumniBookings([])).finally(() => setLoading(false));
   }, [status, router]);
 
-  const activeBookings = dashboardMode === "student" ? bookings : alumniBookings;
+  const activeBookings = (dashboardMode === "student" ? bookings : alumniBookings)
+    .filter((b) => new Date(b.scheduledStartAt).getTime() >= Date.now() - rangeDays * 86400000);
   const now = Date.now();
   const filtered = activeBookings.filter((b) =>
     tab === "upcoming"
@@ -344,7 +360,7 @@ function DashboardContent() {
   /* ──── Loading ──── */
   if (status === "loading" || !session) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D]">
+      <div className="min-h-screen bg-[var(--bg-page)]">
         <div className="ml-0 min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -373,27 +389,27 @@ function DashboardContent() {
 
   if (!hasAnyActivity) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D] text-white">
+      <div className="min-h-screen bg-[var(--bg-page)]">
         <div className="mx-auto max-w-[1440px] px-6 py-6">
-          <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[#151517]">
+          <section className="relative overflow-hidden rounded-[18px] border border-[var(--border-subtle)] bg-white shadow-[var(--shadow-sm)]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(232,87,58,0.20),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(99,102,241,0.16),transparent_30%)]" />
             <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <img
                   src={session.user?.image ?? `https://picsum.photos/seed/${session.user?.id}/100/100`}
                   alt={session.user?.name ?? "Profile"}
-                  className="h-14 w-14 rounded-[14px] border border-white/12 object-cover"
+                  className="h-14 w-14 rounded-[14px] border border-[var(--border-subtle)] object-cover"
                 />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/35">Student dashboard</p>
-                  <h1 className="mt-1 text-[30px] font-semibold tracking-[-0.03em] text-white">{getGreeting()}, {userName}</h1>
-                  <p className="mt-1 text-sm text-white/50">Your account is ready. Browse mentors, compare filters, and book your first session.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Student dashboard</p>
+                  <h1 className="mt-1 text-[30px] font-semibold tracking-[-0.03em] text-[var(--text-primary)]">{getGreeting()}, {userName}</h1>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">Your account is ready. Browse mentors, compare filters, and book your first session.</p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <SearchTrigger onClick={() => setSearchOpen(true)} />
                 <Link href="/browse">
-                  <Button className="h-10 rounded-[10px] bg-[#E8573A] px-4 text-sm font-semibold text-white hover:bg-[#D44A2E]">
+                  <Button className="h-10 rounded-[10px] bg-[var(--accent)] px-4 text-sm font-semibold text-white hover:bg-[var(--accent-hover)]">
                     <Search size={15} className="mr-2" /> Explore alumni
                   </Button>
                 </Link>
@@ -474,7 +490,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
+    <div className="min-h-screen bg-[var(--bg-page)] transition-colors duration-150">
       <div className="ml-0 min-h-screen">
         <div className="p-6 max-w-[1400px]">
           {/* ─── Hero Banner ─── */}
@@ -482,37 +498,46 @@ function DashboardContent() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.2, 0, 0.1, 1] }}
-            className="relative overflow-hidden rounded-[16px] bg-[#0F0F10] p-6 mb-6"
+            className="relative overflow-hidden rounded-[20px] bg-white border border-[var(--border-subtle)] p-7 mb-6 shadow-[var(--shadow-sm)]"
           >
-            <div className="absolute inset-0 aurora-mesh" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
-            <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#E8573A]/10 blur-3xl pointer-events-none" />
-            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#3B82F6]/8 blur-3xl pointer-events-none" />
-            <div className="relative flex items-center gap-4">
-              <div className="relative">
+            <div className="absolute inset-0 aurora-mesh-light" />
+            <div className="relative flex items-center gap-5">
+              <div className="relative shrink-0">
                 <img
                   src={session.user?.image ?? `https://picsum.photos/seed/${session.user?.id}/100/100`}
                   alt={session.user?.name ?? "Profile"}
-                  className="h-[52px] w-[52px] rounded-[12px] border-2 border-white/[0.12] object-cover shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+                  className="h-14 w-14 rounded-[14px] border-2 border-white object-cover shadow-[var(--shadow-md)]"
                 />
-                <span className="absolute -bottom-0.5 -right-0.5 w-[13px] h-[13px] rounded-full bg-[#16A34A] border-[2.5px] border-[#0F0F10] shadow-[0_0_6px_rgba(22,163,74,0.5)]" />
+                <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[var(--success)] border-[2.5px] border-white shadow-sm" />
               </div>
-              <div className="flex-1">
-                <h1 className="text-[24px] font-bold text-white tracking-[-0.02em]">{getGreeting()}, {userName}</h1>
-                <p className="text-[13px] text-white/50 mt-0.5">
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--accent)]">
+                  Student dashboard
+                </p>
+                <h1 className="mt-1 text-[26px] font-bold text-[var(--text-primary)] tracking-[-0.02em]">
+                  {getGreeting()}, {userName}
+                </h1>
+                <p className="mt-0.5 text-[13px] text-[var(--text-secondary)]">
                   {realUpcomingCount > 0
                     ? `${realUpcomingCount} upcoming session${realUpcomingCount !== 1 ? "s" : ""}`
-                    : dashboardMode === "student"
-                      ? "Ready to connect with alumni mentors?"
-                      : "Ready for your upcoming mentoring sessions?"}
+                    : "Ready to connect with alumni mentors?"}
                 </p>
               </div>
               {session.user?.role === "alumnus" && (
-                <div className="flex bg-white/10 p-0.5 rounded-[10px] mr-2">
-                  <button onClick={() => setDashboardMode("alumnus")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "alumnus" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Alumni view</button>
-                  <button onClick={() => setDashboardMode("student")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "student" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Student view</button>
+                <div className="flex bg-[var(--bg-card-sunken)] border border-[var(--border-subtle)] p-1 rounded-[12px] mr-1">
+                  {(["alumnus", "student"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setDashboardMode(mode)}
+                      className={`px-3.5 py-1.5 text-xs font-semibold rounded-[9px] transition-all duration-150 focus-ring ${
+                        dashboardMode === mode
+                          ? "bg-white text-[var(--text-primary)] shadow-[var(--shadow-xs)]"
+                          : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                      }`}
+                    >
+                      {mode === "alumnus" ? "Alumni view" : "Student view"}
+                    </button>
+                  ))}
                 </div>
               )}
               <SearchTrigger onClick={() => setSearchOpen(true)} />
@@ -522,12 +547,12 @@ function DashboardContent() {
           {/* ─── Insight Callout ─── */}
           {showInsight && (
             <motion.div variants={FADE_UP} initial="hidden" animate="show" className="mb-5">
-              <div className="rounded-[12px] border border-[#E8573A]/15 bg-gradient-to-r from-[#E8573A]/5 to-transparent px-5 py-3.5 flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
+              <div className="rounded-[12px] border border-[var(--accent)]/15 bg-gradient-to-r from-[var(--accent-soft)] to-transparent px-5 py-3.5 flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[var(--accent-soft)]">
                   <Sparkles size={15} style={{ color: ACCENT }} />
                 </div>
-                <p className="text-[13px] text-primary font-medium">{insight}</p>
-                <button type="button" onClick={() => setShowInsight(false)} className="ml-auto shrink-0 rounded-[8px] p-1.5 text-muted-foreground hover:bg-muted transition-colors">
+                <p className="text-[13px] text-[var(--text-primary)] font-medium">{insight}</p>
+                <button type="button" onClick={() => setShowInsight(false)} className="ml-auto shrink-0 rounded-[8px] p-1.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] transition-colors">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 10L10 4M10 4H5M10 4V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </div>
@@ -536,12 +561,14 @@ function DashboardContent() {
 
           {/* ─── Top Bar Controls ─── */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-primary">Analytics overview</h2>
+            <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Analytics overview</h2>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
-                <Filter size={13} /> Last 30 days <ChevronDown size={12} />
-              </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <DateRangeFilter onChange={(days) => setRangeDays(days)} />
+              <button
+                type="button"
+                onClick={() => exportBookingsCsv(filtered)}
+                className="rounded-[10px] border border-[var(--border-subtle)] bg-white px-3 h-8 text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-1.5 focus-ring"
+              >
                 <Download size={13} /> Export
               </button>
             </div>
@@ -550,27 +577,43 @@ function DashboardContent() {
           {/* ─── Stat Cards ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
-              <motion.div key={s.label} variants={FADE_UP}
-                whileHover={{ scale: 1.02, y: -2 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5 flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow duration-200"
+              <motion.div
+                key={s.label}
+                variants={FADE_UP}
+                whileHover={{ y: -3 }}
+                transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                className="group relative overflow-hidden rounded-[18px] bg-white border border-[var(--border-subtle)] p-5 flex flex-col shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`h-9 w-9 rounded-[10px] ${s.bg} flex items-center justify-center shrink-0`} style={s.color ? { backgroundColor: `${s.color}14` } : {}}>
-                    <s.icon size={16} style={{ color: s.color }} />
+                {/* Signature: color-coded top rule, thickens on hover */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[3px] transition-all duration-200 group-hover:h-[4px]"
+                  style={{ backgroundColor: s.color }}
+                />
+                {/* Radial tint per card */}
+                <div
+                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl pointer-events-none opacity-[0.07] group-hover:opacity-[0.12] transition-opacity"
+                  style={{ backgroundColor: s.color }}
+                />
+                <div className="flex items-start justify-between mb-3 relative z-10">
+                  <div
+                    className="h-10 w-10 rounded-[12px] flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${s.color}14` }}
+                  >
+                    <s.icon size={17} style={{ color: s.color }} />
                   </div>
                   <TrendPill value={s.trend.value} positive={s.trend.positive} />
                 </div>
-                <p className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-1">{s.label}</p>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-[40px] font-bold text-white tabular-nums leading-none tracking-[-0.03em]"
-                    style={s.label === "Rating" && s.value === "—" ? { color: "#9A9AA2", fontSize: 32 } : {}}>
-                    {s.value}
+                <p className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em] mb-1 relative z-10">
+                  {s.label}
+                </p>
+                <div className="flex items-baseline gap-1 relative z-10">
+                  <p className="text-[36px] font-bold text-[var(--text-primary)] tabular-nums leading-none tracking-[-0.03em]">
+                    {s.label === "Rating" && s.value === "\u2014" ? s.value : <CountUp value={parseFloat(s.value) || 0} decimals={s.value.includes(".") ? 1 : 0} />}
                   </p>
-                  {s.unit && <span className="text-white/40 text-[16px] font-semibold ml-0.5">{s.unit}</span>}
+                  {s.unit && <span className="text-[var(--text-tertiary)] text-[15px] font-semibold ml-0.5">{s.unit}</span>}
                 </div>
-                <div className="flex items-center justify-between mt-2.5">
-                  <span className="text-[11px] text-white/40">{s.detail}</span>
+                <div className="flex items-center justify-between mt-3 relative z-10">
+                  <span className="text-[11px] text-[var(--text-secondary)]">{s.detail}</span>
                   <Sparkline data={s.sparkData} color={s.color} />
                 </div>
               </motion.div>
@@ -580,10 +623,18 @@ function DashboardContent() {
           {/* ─── Charts Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
             {/* Weekly Hours */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div
+              variants={FADE_UP}
+              className="col-span-12 sm:col-span-7 rounded-[18px] bg-white border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-xs)]"
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Weekly hours</h3>
-                <button type="button" className="flex items-center gap-1 text-[10px] font-medium text-white/40 hover:text-primary transition-colors">
+                <h3 className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em]">
+                  Weekly hours
+                </h3>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors focus-ring rounded-md px-1"
+                >
                   This week <ChevronDown size={11} />
                 </button>
               </div>
@@ -592,31 +643,18 @@ function DashboardContent() {
                   <AreaChart data={weeklyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }} {...CHART_ANIM}>
                     <defs>
                       <linearGradient id="hoursGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={ACCENT} stopOpacity={0.25} />
-                        <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+                        <stop offset="0%" stopColor="#E8573A" stopOpacity={0.18} />
+                        <stop offset="100%" stopColor="#E8573A" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "#9A9AA2" }} axisLine={false} tickLine={false} domain={[0, 'dataMax + 1']} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.1)", strokeDasharray: "3 3" }} />
-                    <Area type="monotone" dataKey="hours" stroke={ACCENT} strokeWidth={2.5} fill="url(#hoursGrad)" name="Hours" dot={false} activeDot={{ r: 6, fill: ACCENT, stroke: "#fff", strokeWidth: 2.5 }} />
-                    <Area type="monotone" data={lastWeekData} dataKey="hours" stroke="#9A9AA2" strokeWidth={1.5} strokeDasharray="4 3" fill="none" name="Last week" dot={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,20,26,0.06)" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9B9BA5" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "#9B9BA5" }} axisLine={false} tickLine={false} domain={[0, "dataMax + 1"]} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(20,20,26,0.10)", strokeDasharray: "3 3" }} />
+                    <Area type="monotone" dataKey="hours" stroke="#E8573A" strokeWidth={2.5} fill="url(#hoursGrad)" name="Hours" dot={false} activeDot={{ r: 5, fill: "#E8573A", stroke: "#fff", strokeWidth: 2 }} />
+                    <Area type="monotone" data={lastWeekData} dataKey="hours" stroke="#C4C4CC" strokeWidth={1.5} strokeDasharray="4 3" fill="none" name="Last week" dot={false} />
                   </AreaChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
-                    <span>Mentoring hours</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-white/40">
-                    <span className="w-2 h-2 rounded-full bg-[#9A9AA2]" />
-                    <span>Last week</span>
-                  </div>
-                </div>
-                <span className="text-[11px] font-semibold text-primary tabular-nums">Total: {chartTotalHours.toFixed(1)}h</span>
               </div>
             </motion.div>
 
@@ -666,14 +704,23 @@ function DashboardContent() {
 
           {/* ─── Bottom Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
-            {/* Recent Mentors / Students */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            {/* Activity Heatmap */}
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[18px] bg-white border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-xs)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">
+                <h3 className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em]">Activity, last 16 weeks</h3>
+                <span className="text-[11px] text-[var(--text-secondary)]">{chartTotalCompleted} sessions</span>
+              </div>
+              <ActivityHeatmap bookings={activeBookings} />
+            </motion.div>
+
+            {/* Recent Mentors / Students */}
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[18px] bg-white border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-xs)]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em]">
                   {dashboardMode === "student" ? "Recent mentors" : "Recent students"}
                 </h3>
                 {dashboardMode === "student" && (
-                  <Link href="/browse" className="text-[11px] font-medium text-[#E8573A] hover:text-[#D44A2E] transition-colors">View all</Link>
+                  <Link href="/browse" className="text-[11px] font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">View all</Link>
                 )}
               </div>
               {dashboardMode === "student" ? (
@@ -682,14 +729,14 @@ function DashboardContent() {
                     <motion.div
                       animate={{ y: [0, -6, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
+                      className="h-14 w-14 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mx-auto mb-3"
                     >
-                      <GraduationCap size={24} className="text-[#E8573A]/30" />
+                      <GraduationCap size={24} className="text-[var(--accent)]/30" />
                     </motion.div>
-                    <p className="text-[14px] font-semibold text-white">Your mentor journey starts here</p>
-                    <p className="text-[12px] text-white/40 mt-1 mb-4">Browse alumni to find the perfect mentor.</p>
+                    <p className="text-[14px] font-semibold text-[var(--text-primary)]">Your mentor journey starts here</p>
+                    <p className="text-[12px] text-[var(--text-secondary)] mt-1 mb-4">Browse alumni to find the perfect mentor.</p>
                     <Link href="/browse">
-                      <Button className="bg-[#E8573A] text-white hover:bg-[#D44A2E] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
+                      <Button className="bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
                         <Search size={14} className="mr-1.5" /> Find a mentor
                       </Button>
                     </Link>
@@ -699,15 +746,15 @@ function DashboardContent() {
                     {recentMentors.map((b) => {
                       const statusInfo = formatBadge(b.status);
                       return (
-                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
+                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[var(--bg-hover)] transition-colors duration-150 cursor-pointer group">
                           <div className="relative shrink-0">
                             <img src={b.alumni?.user?.image ?? b.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${b.alumniId}/80/80`}
                               alt={b.alumni?.fullName || "Mentor"} className="h-9 w-9 rounded-full object-cover" />
                             <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-white truncate">{b.alumni?.fullName || b.alumni?.user?.name || "Mentor"}</p>
-                            <p className="text-[11px] text-white/40">{b.alumni?.universityName || "University"}</p>
+                            <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{b.alumni?.fullName || b.alumni?.user?.name || "Mentor"}</p>
+                            <p className="text-[11px] text-[var(--text-secondary)]">{b.alumni?.universityName || "University"}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
                             {statusInfo.icon && <statusInfo.icon size={10} />}
@@ -724,27 +771,27 @@ function DashboardContent() {
                     <motion.div
                       animate={{ y: [0, -6, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
+                      className="h-14 w-14 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mx-auto mb-3"
                     >
-                      <GraduationCap size={24} className="text-[#E8573A]/30" />
+                      <GraduationCap size={24} className="text-[var(--accent)]/30" />
                     </motion.div>
-                    <p className="text-[14px] font-semibold text-white">Your mentoring starts here</p>
-                    <p className="text-[12px] text-white/40 mt-1">Students will appear here once they book a session.</p>
+                    <p className="text-[14px] font-semibold text-[var(--text-primary)]">Your mentoring starts here</p>
+                    <p className="text-[12px] text-[var(--text-secondary)] mt-1">Students will appear here once they book a session.</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     {recentStudents.map((b) => {
                       const statusInfo = formatBadge(b.status);
                       return (
-                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
+                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-[var(--bg-hover)] transition-colors duration-150 cursor-pointer group">
                           <div className="relative shrink-0">
                             <img src={b.student?.image ?? `https://picsum.photos/seed/${b.studentId}/80/80`}
                               alt={b.student?.studentProfile?.fullName || "Student"} className="h-9 w-9 rounded-full object-cover" />
                             <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-white truncate">{b.student?.studentProfile?.fullName || b.student?.name || "Student"}</p>
-                            <p className="text-[11px] text-white/40">{b.student?.email || "Student"}</p>
+                            <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{b.student?.studentProfile?.fullName || b.student?.name || "Student"}</p>
+                            <p className="text-[11px] text-[var(--text-secondary)]">{b.student?.email || "Student"}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
                             {statusInfo.icon && <statusInfo.icon size={10} />}
@@ -759,14 +806,14 @@ function DashboardContent() {
             </motion.div>
 
             {/* Sessions + Rating */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[18px] bg-white border border-[var(--border-subtle)] p-5 shadow-[var(--shadow-xs)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions</h3>
-                <div className="flex gap-0.5 bg-white/[0.04] rounded-[10px] p-0.5">
+                <h3 className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em]">Sessions</h3>
+                <div className="flex gap-0.5 bg-[var(--bg-card-sunken)] rounded-[10px] p-0.5">
                   <button onClick={() => setTab("upcoming")}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "upcoming" ? "bg-[#232326] text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-white/40 hover:text-white"}`}>Upcoming</button>
+                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "upcoming" ? "bg-white text-[var(--text-primary)] shadow-[var(--shadow-xs)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>Upcoming</button>
                   <button onClick={() => setTab("past")}
-                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "past" ? "bg-[#232326] text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-white/40 hover:text-white"}`}>Past</button>
+                    className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "past" ? "bg-white text-[var(--text-primary)] shadow-[var(--shadow-xs)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>Past</button>
                 </div>
               </div>
               <div className="grid grid-cols-12 gap-4">
@@ -779,21 +826,21 @@ function DashboardContent() {
                       <motion.div
                         animate={{ y: [0, -6, 0] }}
                         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                        className="h-12 w-12 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
+                        className="h-12 w-12 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mx-auto mb-3"
                       >
-                        <CalendarDays size={22} className="text-[#E8573A]/30" />
+                        <CalendarDays size={22} className="text-[var(--accent)]/30" />
                       </motion.div>
-                      <p className="text-[14px] font-semibold text-white">
+                      <p className="text-[14px] font-semibold text-[var(--text-primary)]">
                         {tab === "upcoming" ? "No upcoming sessions" : "No past sessions"}
                       </p>
-                      <p className="text-[12px] text-white/40 mt-1">
+                      <p className="text-[12px] text-[var(--text-secondary)] mt-1">
                         {tab === "upcoming"
                           ? (dashboardMode === "student" ? "Book a session with a mentor to get started." : "Your upcoming scheduled sessions will appear here.")
                           : "Your completed sessions will appear here."}
                       </p>
                       {tab === "upcoming" && dashboardMode === "student" && (
                         <Link href="/browse">
-                          <Button className="mt-4 bg-[#E8573A] text-white hover:bg-[#D44A2E] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
+                          <Button className="mt-4 bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
                             <Sparkles size={14} className="mr-1.5" /> Browse mentors
                           </Button>
                         </Link>
@@ -809,7 +856,7 @@ function DashboardContent() {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.03, duration: 0.25 }}
-                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0"
+                            className="flex items-start justify-between gap-3 py-2.5 border-b border-[var(--border-subtle)] last:border-b-0"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">
@@ -821,10 +868,10 @@ function DashboardContent() {
                                 <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(booking.status), opacity: 0.5 }} />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[13px] font-semibold text-white truncate">
+                                <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">
                                   {dashboardMode === "student" ? (booking.alumni?.fullName || "Mentor") : (booking.student?.studentProfile?.fullName || "Student")}
                                 </p>
-                                <p className="text-[11px] text-white/40">
+                                <p className="text-[11px] text-[var(--text-secondary)]">
                                   {new Date(booking.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                   {" · "}
                                   {new Date(booking.scheduledStartAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
@@ -835,9 +882,9 @@ function DashboardContent() {
                               {tab === "upcoming" && (
                                 <>
                                   <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-mono tabular-nums ${
-                                    isUrgent ? "border-[#D97706]/20 bg-[#D97706]/5 text-[#D97706]" : "border-border/60 bg-muted/40 text-muted-foreground"
+                                    isUrgent ? "border-[var(--warning)]/20 bg-[var(--warning)]/5 text-[var(--warning)]" : "border-[var(--border-subtle)] bg-[var(--bg-card-sunken)] text-[var(--text-tertiary)]"
                                   }`}>
-                                    {isUrgent && <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] animate-pulse" />}
+                                    {isUrgent && <span className="h-1.5 w-1.5 rounded-full bg-[var(--warning)] animate-pulse" />}
                                     <CountdownTimer target={booking.scheduledStartAt} />
                                   </span>
                                   {booking.meetLink && (
@@ -867,8 +914,8 @@ function DashboardContent() {
                     </div>
                   )}
                   {!loading && filtered.length > 6 && (
-                    <div className="pt-2 mt-1 border-t border-white/5">
-                      <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
+                    <div className="pt-2 mt-1 border-t border-[var(--border-subtle)]">
+                      <Link href="/bookings" className="text-[11px] text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors flex items-center gap-1 justify-center font-medium py-1">
                         View all {filtered.length} sessions <ArrowRight size={11} />
                       </Link>
                     </div>
@@ -876,8 +923,8 @@ function DashboardContent() {
                 </div>
 
                 {/* Rating donut */}
-                <div className="col-span-5 pl-4 border-l border-white/5">
-                  <h4 className="text-[10px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
+                <div className="col-span-5 pl-4 border-l border-[var(--border-subtle)]">
+                  <h4 className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
                   <div className="h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -887,13 +934,12 @@ function DashboardContent() {
                           {ratingData.map((entry, i) => (
                             <Cell key={i} fill={entry.color}
                               className="transition-all duration-150 hover:opacity-80"
-                              style={{ filter: "drop-shadow(0 0 4px rgba(0,0,0,0.05))" }}
                             />
                           ))}
-                          <Label value={`${chartAvgRating > 0 ? chartAvgRating.toFixed(1) : "—"}`}
+                          <Label value={`${chartAvgRating > 0 ? chartAvgRating.toFixed(1) : "\u2014"}`}
                             position="center"
                             className="text-[22px] font-bold tabular-nums"
-                            fill="#FFFFFF"
+                            fill="#14141A"
                             style={{ fontSize: 22, fontWeight: 700, dominantBaseline: "central" }}
                           />
                         </Pie>
@@ -908,17 +954,17 @@ function DashboardContent() {
                       return (
                         <div key={r.rating} className="flex items-center gap-2 text-[10px]">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                          <span className="text-white/40 w-[20px]">{r.rating}</span>
-                          <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <span className="text-[var(--text-tertiary)] w-[20px]">{r.rating}</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-[var(--bg-card-sunken)] overflow-hidden">
                             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: r.color }} />
                           </div>
-                          <span className="text-white font-medium tabular-nums w-[24px] text-right">{pct}%</span>
+                          <span className="text-[var(--text-primary)] font-medium tabular-nums w-[24px] text-right">{pct}%</span>
                         </div>
                       );
                     })}
                   </div>
                   {chartTotalRatings === 0 && (
-                    <p className="mt-3 text-[11px] text-center text-muted-foreground">No ratings yet</p>
+                    <p className="mt-3 text-[11px] text-center text-[var(--text-tertiary)]">No ratings yet</p>
                   )}
                 </div>
               </div>

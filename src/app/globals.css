@@ -4,57 +4,40 @@
 
 @layer base {
   :root {
-    --color-primary: #ffffff;
-    --color-primary-light: #ffffff;
-    --color-primary-dark: #0d0d0d;
-    --color-accent: #e8573a;
-    --color-accent-dark: #d14a2e;
+    /* Surface */
+    --bg-page: #F7F7FB;
+    --bg-card: #FFFFFF;
+    --bg-card-sunken: #FAFAFC;
+    --bg-hover: rgba(20, 20, 26, 0.03);
 
-    --color-bg: #0d0d0d;
-    --color-surface: #1a1a1a;
-    --color-white: #ffffff;
-    --color-border: #2a2a2a;
-    --color-border-light: #222222;
-    --color-text: #ffffff;
-    --color-text-secondary: #a3a3a3;
-    --color-text-tertiary: #6b6b6b;
+    /* Text */
+    --text-primary: #14141A;
+    --text-secondary: #6B6B76;
+    --text-tertiary: #9B9BA5;
 
-    --color-success: #16a34a;
-    --color-success-tint: #052e16;
-    --color-warning: #d97706;
-    --color-warning-tint: #451a03;
-    --color-error: #dc2626;
-    --color-error-tint: #450a0a;
-    --color-info: #2563eb;
-    --color-info-tint: #172554;
+    /* Border */
+    --border-subtle: rgba(20, 20, 26, 0.06);
+    --border-medium: rgba(20, 20, 26, 0.10);
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 5%;
-    --accent: 10 78% 57%;
-    --accent-foreground: 0 0% 100%;
-    --background: 0 0% 5%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 55%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 10 78% 57%;
+    /* Brand */
+    --accent: #E8573A;
+    --accent-hover: #D44A2E;
+    --accent-soft: rgba(232, 87, 58, 0.08);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4),
-      0 1px 3px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5),
-      0 2px 4px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
-    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5),
-      0 2px 4px rgba(0, 0, 0, 0.4);
+    /* Semantic */
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --info: #3B82F6;
+    --purple: #8B5CF6;
+    --pink: #EC4899;
+
+    /* Elevation */
+    --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.04);
+    --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.10), 0 4px 8px rgba(16, 24, 40, 0.04);
+    --shadow-focus: 0 0 0 3px rgba(232, 87, 58, 0.15);
 
     --radius: 0.625rem;
     --radius-xs: 6px;
@@ -83,9 +66,6 @@
     --text-2xl: 20px;
     --text-3xl: 32px;
     --text-4xl: 40px;
-
-    --color-bg-card: #1a1a1a;
-    --color-bg-hover: #222222;
 
     --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     --duration-fast: 150ms;
@@ -172,26 +152,6 @@
 
   .animate-rise {
     animation: rise 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.04) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
   }
 
   .card-elevation {
@@ -374,6 +334,40 @@
   .slide-panel-exit-active {
     transform: translateX(100%);
     opacity: 0;
+  }
+
+  /* ── Light ambient wash ────────────────────────────────── */
+  .aurora-mesh-light {
+    background:
+      radial-gradient(circle at 15% 0%, rgba(232, 87, 58, 0.05), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.04), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(139, 92, 246, 0.03), transparent 50%);
+  }
+
+  /* ── Interactive card lift ─────────────────────────────── */
+  .card-interactive {
+    transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ── Focus ring (accessible, visible on light bg) ──────── */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  /* ── Shimmer animation ─────────────────────────────────── */
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  /* ── Slide in animation ────────────────────────────────── */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
