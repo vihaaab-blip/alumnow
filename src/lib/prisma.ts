@@ -14,14 +14,17 @@ function isTursoUrl(url: string): boolean {
 }
 
 function createPrismaClient() {
-  const rawUrl = configuredDatabaseUrl ?? (process.env.VERCEL ? "file:/tmp/alumnow.db" : "file:./prisma/dev.db");
+  const rawUrl = configuredDatabaseUrl ?? "file:./prisma/dev.db";
+  const databaseUrl = process.env.VERCEL && rawUrl.startsWith("file:")
+    ? "file:/tmp/alumnow.db"
+    : rawUrl;
 
-  if (isTursoUrl(rawUrl)) {
-    const adapter = new PrismaLibSql({ url: rawUrl });
+  if (isTursoUrl(databaseUrl)) {
+    const adapter = new PrismaLibSql({ url: databaseUrl });
     return new PrismaClient({ adapter });
   }
 
-  return createLocalSqliteClient(rawUrl);
+  return createLocalSqliteClient(databaseUrl);
 }
 
 function createLocalSqliteClient(url: string) {
