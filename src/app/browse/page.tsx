@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { AlumniDetailPanel } from "@/components/AlumniDetailPanel";
 import type { AlumniCardData, AlumniFilters } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, LayoutGrid, Heart, Sparkles, ArrowUpDown, ChevronDown } from "lucide-react";
+import { X, LayoutGrid, Heart, Sparkles, ArrowUpDown, ChevronDown, Clock } from "lucide-react";
 import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -38,6 +38,7 @@ const sortOptions = [
   { value: "relevance", label: "Relevance" },
   { value: "rating", label: "Rating" },
   { value: "newest", label: "Newest" },
+  { value: "fastest_response", label: "Fastest response" },
 ];
 
 function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
@@ -55,6 +56,7 @@ function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
     availability: (sp.get("availability") as AlumniFilters["availability"]) ?? undefined,
     sessionType: (sp.get("sessionType") as AlumniFilters["sessionType"]) ?? undefined,
     sortBy: (sp.get("sortBy") as AlumniFilters["sortBy"]) ?? undefined,
+    topMentorOnly: sp.get("topMentorOnly") === "true" ? true : undefined,
   };
 }
 
@@ -109,6 +111,8 @@ function BrowsePageContent() {
   const [loading, setLoading] = useState(true);
   const [savedLoading, setSavedLoading] = useState(false);
   const [error, setError] = useState("");
+  const [recentlyViewed, setRecentlyViewed] = useState<AlumniCardData[]>([]);
+  const [pendingBooking, setPendingBooking] = useState<{ id: string; alumniName: string } | null>(null);
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
   const sortBy = (searchParams.get("sortBy") as AlumniFilters["sortBy"]) ?? "relevance";
@@ -182,7 +186,15 @@ function BrowsePageContent() {
 
   const handleSelect = useCallback((id: string) => {
     const alum = items.find((a) => a.id === id) ?? savedItems.find((a) => a.id === id);
-    if (alum) setSelectedAlumni(alum);
+    if (alum) {
+      setSelectedAlumni(alum);
+      // Persist to recently-viewed
+      setRecentlyViewed((prev) => {
+        const next = [alum, ...prev.filter((a) => a.id !== alum.id)].slice(0, 5);
+        try { localStorage.setItem("alumnow-recently-viewed", JSON.stringify(next)); } catch { /* ignore */ }
+        return next;
+      });
+    }
   }, [items, savedItems]);
 
   useEffect(() => {
@@ -191,42 +203,64 @@ function BrowsePageContent() {
     return () => { sessionStorage.setItem("browse-scroll-y", String(window.scrollY)); };
   }, []);
 
+  // Load recently viewed from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("alumnow-recently-viewed");
+      if (raw) setRecentlyViewed(JSON.parse(raw) as AlumniCardData[]);
+    } catch { /* ignore */ }
+  }, []);
+
+  // Check for pending/incomplete booking (P2.3)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("alumnow-pending-booking");
+      if (raw) setPendingBooking(JSON.parse(raw) as { id: string; alumniName: string });
+    } catch { /* ignore */ }
+  }, []);
+
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
 
   const activeCat = activeCategoryLabel(searchParams);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white">
+    <div className="min-h-screen text-white">
 
       {/* Sub-nav bar */}
-      <div className="sticky top-0 z-20 border-b border-white/6 bg-[#0D0D0D]/88 pt-16 shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+      <div className="sticky top-0 z-20 border-b border-white/[0.05] bg-[#0d0d0d]/90 pt-16 shadow-[0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl">
         <div className="max-w-[1600px] mx-auto px-6 h-12 flex items-center gap-4">
           {/* Category pills */}
-          <div className="hidden md:flex items-center gap-0.5">
-            {categoryTabs.map((tab) => (
-              <button
-                key={tab.label}
-                onClick={() => {
-                  const p = new URLSearchParams();
-                  const s = searchParams.get("search");
-                  if (s) p.set("search", s);
-                  Object.entries(tab.filters).forEach(([k, v]) => {
-                    if (k === "qsTiers" && Array.isArray(v)) v.forEach((item) => p.append("qsTier", String(item)));
-                    else if (Array.isArray(v)) v.forEach((item) => p.append(k, String(item)));
-                    else p.set(k, String(v));
-                  });
-                  const qs = p.toString();
-                  router.replace(`/browse${qs ? `?${qs}` : ""}`, { scroll: false });
-                }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                  activeCat === tab.label
-                    ? "bg-[#E8573A] text-white shadow-[0_8px_24px_rgba(232,87,58,0.24)]"
-                    : "text-white/42 hover:text-white hover:bg-white/[0.06]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="hidden md:flex items-center gap-1">
+            {categoryTabs.map((cat) => {
+              const active = activeCat === cat.label;
+              return (
+                <button
+                  key={cat.label}
+                  onClick={() => {
+                    const p = new URLSearchParams();
+                    const s = searchParams.get("search");
+                    if (s) p.set("search", s);
+                    Object.entries(cat.filters).forEach(([k, v]) => {
+                      if (k === "qsTiers" && Array.isArray(v)) v.forEach((item) => p.append("qsTier", String(item)));
+                      else if (Array.isArray(v)) v.forEach((item) => p.append(k, String(item)));
+                      else p.set(k, String(v));
+                    });
+                    const qs = p.toString();
+                    router.replace(`/browse${qs ? `?${qs}` : ""}`, { scroll: false });
+                  }}
+                  className={`category-pill ${active ? "active" : ""}`}
+                  style={active ? {
+                    background: "linear-gradient(135deg, #f06040, #e8573a)",
+                    boxShadow: "0 0 0 1px rgba(232,87,58,0.3), 0 4px 16px rgba(232,87,58,0.2)",
+                    color: "#fff",
+                    borderRadius: "9999px",
+                  } : undefined}
+                >
+                  {!active && <span className="category-pill-bg" aria-hidden />}
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Spacer */}
@@ -236,15 +270,17 @@ function BrowsePageContent() {
           <SearchTrigger onClick={() => setSearchOpen(true)} />
 
           {/* Browse / Saved toggle */}
-          <div className="flex items-center rounded-xl bg-white/[0.06] p-0.5">
+          <div className="flex items-center rounded-full p-0.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <button
               onClick={() => {
                 const p = new URLSearchParams(filtersToParams(filters));
                 p.delete("view");
                 router.replace(`/browse?${p.toString()}`, { scroll: false });
               }}
-              className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all ${
-                  tab === "browse" ? "bg-[#232326] text-white shadow-sm" : "text-white/35 hover:text-white"
+              className={`px-3 py-1 text-[12px] font-medium rounded-full transition-all ${
+                  tab === "browse"
+                    ? "bg-white/10 text-white border border-white/12 shadow-sm"
+                    : "text-white/35 hover:text-white/65"
               }`}
             >
               Browse
@@ -255,13 +291,17 @@ function BrowsePageContent() {
                 p.set("view", "saved");
                 router.replace(`/browse?${p.toString()}`, { scroll: false });
               }}
-              className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all inline-flex items-center gap-1 ${
-                  tab === "saved" ? "bg-[#232326] text-white shadow-sm" : "text-white/35 hover:text-white"
+              className={`px-3 py-1 text-[12px] font-medium rounded-full transition-all inline-flex items-center gap-1.5 ${
+                  tab === "saved"
+                    ? "bg-white/10 text-white border border-white/12 shadow-sm"
+                    : "text-white/35 hover:text-white/65"
               }`}
             >
               <Heart size={11} />
               Saved
-              {savedItems.length ? <span className="text-[10px] opacity-60">({savedItems.length})</span> : null}
+              {savedItems.length > 0 && (
+                <span className="text-[10px] tabular-nums" style={{ color: "rgba(232,87,58,0.8)" }}>{savedItems.length}</span>
+              )}
             </button>
           </div>
 
@@ -288,9 +328,11 @@ function BrowsePageContent() {
         {/* Header row */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-white">Marketplace</h1>
-            <p className="text-sm text-white/45 mt-0.5">
-              {totalItems > 0 ? `${totalItems} alumni available` : "Browse verified alumni mentors"}
+            <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-white leading-none">Marketplace</h1>
+            <p className="text-[13px] text-white/35 mt-1">
+              {totalItems > 0 ? (
+                <><span className="text-white/65 font-medium tabular-nums">{totalItems}</span> verified alumni</>)
+                : "Browse verified alumni mentors"}
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-white/35">
@@ -336,7 +378,7 @@ function BrowsePageContent() {
         <div className="flex gap-6">
           {/* Filter sidebar */}
           {tab === "browse" && (
-            <div className="w-[240px] shrink-0">
+            <div className="w-[240px] shrink-0 filter-sidebar rounded-xl overflow-hidden self-start sticky top-[100px]">
               <FilterPanel
                 filters={filters}
                 options={{
@@ -353,6 +395,46 @@ function BrowsePageContent() {
 
           {/* Content area */}
           <div className="flex-1 min-w-0">
+            {/* Continue where you left off banner */}
+            {pendingBooking && tab === "browse" && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mb-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+                style={{
+                  background: "linear-gradient(90deg, rgba(232,87,58,0.08) 0%, rgba(232,87,58,0.03) 100%)",
+                  border: "1px solid rgba(232,87,58,0.2)",
+                }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Clock size={14} className="text-[#e8573a] shrink-0" />
+                  <p className="text-[13px] text-white/65">
+                    You have an incomplete booking with{" "}
+                    <span className="font-semibold text-white">{pendingBooking.alumniName}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => router.push(`/book/${pendingBooking.id}`)}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all hover:opacity-90"
+                    style={{ background: "linear-gradient(135deg, #f06040, #e8573a, #d14a2e)" }}
+                  >
+                    Continue →
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPendingBooking(null);
+                      try { localStorage.removeItem("alumnow-pending-booking"); } catch { /* ignore */ }
+                    }}
+                    className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {error && (
               <div className="rounded-2xl border border-dashed border-red-300 bg-red-50 px-6 py-12 text-center" role="alert">
                 <h2 className="text-lg font-semibold text-red-700">Something went wrong</h2>
@@ -394,7 +476,49 @@ function BrowsePageContent() {
                 <AlumniGrid items={savedItems} hasMore={false} loadMore={() => {}} loading={false} onSelect={handleSelect} />
               )
             ) : !error && tab === "browse" ? (
-              <AlumniGrid items={items} hasMore={hasMore} loadMore={loadMore} loading={loading} onSelect={handleSelect} />
+              <>
+                {/* Recently viewed rail */}
+                {recentlyViewed.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-white/25 mb-3">
+                      Recently viewed
+                    </p>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                      {recentlyViewed.map((alum) => (
+                        <button
+                          key={alum.id}
+                          onClick={() => handleSelect(alum.id)}
+                          className="flex-shrink-0 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-all hover:scale-[1.02]"
+                          style={{
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(255,255,255,0.07)",
+                            minWidth: "180px",
+                          }}
+                        >
+                          <img
+                            src={alum.profilePhotoUrl ?? `https://picsum.photos/seed/${alum.id}/80/80`}
+                            alt={alum.fullName}
+                            className="h-8 w-8 rounded-full object-cover border border-white/10 flex-shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-medium text-white/80 truncate">{alum.fullName}</p>
+                            <p className="text-[11px] text-white/30 truncate">{alum.universityName}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <AlumniGrid
+                  items={items}
+                  hasMore={hasMore}
+                  loadMore={loadMore}
+                  loading={loading}
+                  onSelect={handleSelect}
+                  activeFilters={filters as unknown as Record<string, unknown>}
+                  onRemoveFilter={removeFilter}
+                />
+              </>
             ) : null}
           </div>
         </div>

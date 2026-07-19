@@ -29,13 +29,22 @@ const statusConfig: Record<string, { label: string; tone: "accent" | "success" |
   no_show: { label: "No show", tone: "neutral" },
 };
 
+const PLATFORM_FEE_RATE = 0.10; // 10%
+
 export function BookingSummaryCard({ booking }: { booking: BookingData }) {
   const amount = booking.payment?.amountPaise;
-  const statusInfo = statusConfig[booking.status ?? ""] ?? { label: booking.status ?? "", tone: "neutral" as const };
+  const sessionFee = amount ?? null;
+  const platformFee = sessionFee != null ? Math.round(sessionFee * PLATFORM_FEE_RATE) : null;
+  const total = sessionFee != null && platformFee != null ? sessionFee + platformFee : null;
+
+  const statusInfo =
+    statusConfig[booking.status ?? ""] ?? { label: booking.status ?? "", tone: "neutral" as const };
   const startDate = new Date(booking.scheduledStartAt);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
     <Card className="overflow-hidden border border-border/80 p-0">
+      {/* ── Alumni header ── */}
       <div className="flex items-start gap-4 bg-gradient-to-r from-primary/5 to-transparent p-5 pb-4">
         <img
           src={
@@ -57,6 +66,8 @@ export function BookingSummaryCard({ booking }: { booking: BookingData }) {
           </div>
         </div>
       </div>
+
+      {/* ── Date / time / session ── */}
       <div className="grid grid-cols-2 gap-4 border-t border-border/60 px-5 py-4 text-sm">
         <div className="flex items-center gap-2">
           <CalendarDays size={15} className="text-muted-foreground shrink-0" />
@@ -76,14 +87,43 @@ export function BookingSummaryCard({ booking }: { booking: BookingData }) {
             {booking.sessionType.type.replaceAll("_", " ")}
           </span>
         </div>
-        <div className="flex items-center gap-2 justify-end">
-          <span className="font-mono font-semibold text-primary">
-            {amount != null
-              ? `\u20B9${(amount / 100).toLocaleString("en-IN")}`
-              : "—"}
-          </span>
-        </div>
       </div>
+
+      {/* ── Timezone caption ── */}
+      <p className="px-5 pb-3 text-xs text-muted-foreground">
+        Times shown in {tz}
+      </p>
+
+      {/* ── Itemised pricing ── */}
+      {sessionFee != null && (
+        <div className="border-t border-border/60 px-5 py-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Session fee</span>
+            <span className="font-medium text-primary">
+              ₹{(sessionFee / 100).toLocaleString("en-IN")}
+            </span>
+          </div>
+          {platformFee != null && platformFee > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Platform fee (10%)</span>
+              <span className="font-medium text-primary">
+                ₹{(platformFee / 100).toLocaleString("en-IN")}
+              </span>
+            </div>
+          )}
+          <div
+            className="flex items-center justify-between pt-2 text-sm"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <span className="font-semibold text-primary">Total</span>
+            <span className="font-mono font-bold text-primary">
+              ₹{((total ?? sessionFee) / 100).toLocaleString("en-IN")}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Meet link ── */}
       {booking.meetLink && (
         <div className="border-t border-border/60 px-5 py-3">
           <a

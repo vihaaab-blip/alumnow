@@ -203,7 +203,7 @@ export function FilterPanel({
   ].filter(Boolean).length;
 
   const content = (
-    <div className="rounded-2xl border border-white/5 bg-[#1A1A1A] overflow-hidden">
+    <div className="overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-white/5">
         <div className="flex items-center justify-between">
@@ -223,6 +223,37 @@ export function FilterPanel({
 
       {/* Filter sections */}
       <div className="px-5">
+        {/* Top Mentor Filter — highest-intent filter */}
+        <FilterSection title="Top Mentor" defaultOpen={true} icon={<Award size={14} className="text-[#e8573a]" />}>
+          <button
+            onClick={() => onChange({ topMentorOnly: filters.topMentorOnly ? undefined : true })}
+            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
+              filters.topMentorOnly
+                ? "text-white"
+                : "text-white/40 hover:text-white/60"
+            }`}
+            style={{
+              background: filters.topMentorOnly
+                ? "linear-gradient(90deg, rgba(232,87,58,0.15) 0%, rgba(232,87,58,0.06) 100%)"
+                : "rgba(255,255,255,0.03)",
+              border: `1px solid ${filters.topMentorOnly ? "rgba(232,87,58,0.3)" : "rgba(255,255,255,0.06)"}`,
+            }}
+          >
+            <span
+              className="inline-flex items-center justify-center h-5 w-5 rounded-full shrink-0"
+              style={{
+                background: filters.topMentorOnly
+                  ? "linear-gradient(90deg, #FF7A57 0%, #E8573A 100%)"
+                  : "rgba(255,255,255,0.08)",
+              }}
+            >
+              <Award size={10} className="text-white" />
+            </span>
+            Top Mentor only
+            <span className="ml-auto text-[10px] text-white/20">90%+ response · 4.8★ · 10+ sessions</span>
+          </button>
+        </FilterSection>
+
         {/* University */}
         <FilterSection title="University" count={filters.university ? 1 : 0} icon={<Book size={14} />}>
           <input

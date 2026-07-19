@@ -386,4 +386,127 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* ── Premium depth system ───────────────────────────────── */
+  .app-background {
+    background-color: #0d0d0d;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(232, 87, 58, 0.045) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(232, 87, 58, 0.03) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: cover, cover, 256px 256px;
+  }
+
+  /* ── Coral accent with depth ────────────────────────────── */
+  .btn-coral {
+    background: linear-gradient(135deg, #f06040 0%, #e8573a 50%, #d14a2e 100%);
+    box-shadow: 0 0 0 1px rgba(232, 87, 58, 0.3), 0 4px 16px rgba(232, 87, 58, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: box-shadow 200ms ease, transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-coral:hover {
+    box-shadow: 0 0 0 1px rgba(232, 87, 58, 0.4), 0 8px 24px rgba(232, 87, 58, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+  .btn-coral:active {
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(232, 87, 58, 0.3), 0 2px 8px rgba(232, 87, 58, 0.2);
+  }
+
+  /* ── Frosted glass card ─────────────────────────────────── */
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  /* ── Alumni card depth ──────────────────────────────────── */
+  .alumni-card {
+    background: linear-gradient(180deg, #1d1d1d 0%, #161616 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03) inset;
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 220ms ease;
+  }
+  .alumni-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05) inset;
+  }
+
+  /* ── Image duotone overlay ──────────────────────────────── */
+  .img-duotone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(232, 87, 58, 0.12) 0%, rgba(13,13,13,0.05) 100%);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  /* ── Font utilities ─────────────────────────────────────── */
+  .font-display {
+    font-family: var(--font-fraunces, "Georgia"), serif;
+    font-optical-sizing: auto;
+  }
+
+  /* ── Coral glow text ────────────────────────────────────── */
+  .text-glow-coral {
+    text-shadow: 0 0 24px rgba(232, 87, 58, 0.4);
+  }
+
+  /* ── Segmented pill nav ─────────────────────────────────── */
+  .category-pill {
+    position: relative;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: color 200ms ease;
+    white-space: nowrap;
+    color: rgba(255,255,255,0.4);
+  }
+  .category-pill:hover {
+    color: rgba(255,255,255,0.75);
+  }
+  .category-pill.active {
+    color: #fff;
+  }
+  .category-pill-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  }
+
+  /* ── Stat chip ──────────────────────────────────────────── */
+  .stat-chip {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  /* ── Filter sidebar ─────────────────────────────────────── */
+  .filter-sidebar {
+    background: linear-gradient(180deg, #181818 0%, #141414 100%);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+  }
+
+  /* ── Price badge coral ──────────────────────────────────── */
+  .price-badge {
+    background: linear-gradient(135deg, rgba(232,87,58,0.15) 0%, rgba(232,87,58,0.08) 100%);
+    border: 1px solid rgba(232,87,58,0.2);
+    color: #f0744e;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
 }

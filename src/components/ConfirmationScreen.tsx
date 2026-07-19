@@ -1,10 +1,7 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle, Calendar, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Calendar, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatDateForCalendar } from "@/lib/utils";
 
 type Props = {
@@ -25,109 +22,189 @@ type Props = {
 
 export function ConfirmationScreen({ booking }: Props) {
   const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => router.push("/bookings"), 4000);
-    return () => clearTimeout(timer);
-  }, [router]);
-
   const startDate = new Date(booking.scheduledStartAt);
   const endDate = new Date(booking.scheduledEndAt);
-  const duration = Math.round(
-    (endDate.getTime() - startDate.getTime()) / 60000,
-  );
+  const duration = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("Session with " + booking.alumni.fullName)}&dates=${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}&details=${encodeURIComponent("AlumNow session with " + booking.alumni.fullName)}`;
 
   return (
     <div className="space-y-6 text-center">
+      {/* ── SVG draw-in checkmark ── */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
+        initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-900/30"
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="mx-auto w-20 h-20"
       >
-        <CheckCircle size={48} className="text-green-400" />
+        <svg viewBox="0 0 52 52" className="w-full h-full">
+          <circle
+            cx="26"
+            cy="26"
+            r="25"
+            fill="none"
+            stroke="rgba(34,197,94,0.25)"
+            strokeWidth="1.5"
+          />
+          <motion.circle
+            cx="26"
+            cy="26"
+            r="25"
+            fill="none"
+            stroke="#22c55e"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            style={{ rotate: -90, transformOrigin: "center" }}
+          />
+          <motion.path
+            fill="none"
+            stroke="#22c55e"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 27l7 7 15-15"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut", delay: 0.5 }}
+          />
+        </svg>
       </motion.div>
-      <div>
-        <h2 className="text-2xl font-bold text-primary">Session booked!</h2>
-        <p className="mt-1 text-muted-foreground">You&apos;re all set for your conversation.</p>
-      </div>
 
-      <Card className="overflow-hidden border border-border/80 p-0 text-left">
-        <div className="flex items-center gap-4 bg-gradient-to-r from-accent/5 to-transparent p-5">
+      {/* ── Heading ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.4 }}
+      >
+        <h2 className="text-2xl font-bold text-white">Session booked!</h2>
+        <p className="mt-1 text-white/50">You&apos;re all set for your conversation.</p>
+      </motion.div>
+
+      {/* ── Detail card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.85, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        className="overflow-hidden rounded-2xl text-left"
+        style={{
+          background: "linear-gradient(180deg, #1d1d1d 0%, #161616 100%)",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        {/* Alumni row */}
+        <div
+          className="flex items-center gap-4 px-5 py-4"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+        >
           <img
             src={
               booking.alumni.profilePhotoUrl ??
               `https://picsum.photos/seed/${booking.alumni.id}/100/100`
             }
             alt={booking.alumni.fullName}
-            className="h-12 w-12 rounded-full border-2 border-white object-cover shadow-sm"
+            className="h-11 w-11 rounded-full object-cover border border-white/10"
           />
           <div>
-            <p className="font-semibold text-primary">{booking.alumni.fullName}</p>
-            <p className="text-sm text-muted-foreground">{booking.alumni.universityName}</p>
+            <p className="font-semibold text-white">{booking.alumni.fullName}</p>
+            <p className="text-[12px] text-white/40">{booking.alumni.universityName}</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 border-t border-border/60 px-5 py-4 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Date</p>
-            <p className="mt-0.5 font-semibold text-primary">
-              {startDate.toLocaleDateString("en-IN", {
+
+        {/* Date / Time / Duration / Session grid */}
+        <div className="grid grid-cols-2 gap-0">
+          {[
+            {
+              label: "Date",
+              value: startDate.toLocaleDateString("en-IN", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
-              })}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Time</p>
-            <p className="mt-0.5 font-semibold text-primary">
-              {startDate.toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              {" — "}
-              {endDate.toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Duration</p>
-            <p className="mt-0.5 font-semibold text-primary">{duration} min</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Session</p>
-            <p className="mt-0.5 font-semibold text-primary capitalize">
-              {booking.sessionType.type.replaceAll("_", " ")}
-            </p>
-          </div>
+              }),
+            },
+            {
+              label: "Time",
+              value: `${startDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} — ${endDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`,
+            },
+            {
+              label: "Duration",
+              value: `${duration} min`,
+            },
+            {
+              label: "Session",
+              value: booking.sessionType.type.replaceAll("_", " "),
+            },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              className="px-5 py-3.5"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+            >
+              <p className="text-[11px] text-white/25">{label}</p>
+              <p className="mt-0.5 text-[13px] font-semibold text-white capitalize">{value}</p>
+            </div>
+          ))}
         </div>
-        <div className="border-t border-border/60 px-5 py-3 text-sm text-muted-foreground">
-          Meet link:{" "}
-          {booking.meetLink ?? (
-            <span className="italic">Link will appear 10 minutes before session</span>
-          )}
-        </div>
-      </Card>
 
-      <div className="flex flex-col gap-3">
+        {/* Timezone caption */}
+        <p
+          className="px-5 py-2.5 text-[11px] text-white/25 text-center"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+        >
+          Times shown in {tz}
+        </p>
+
+        {/* Meet link */}
+        {booking.meetLink && (
+          <div
+            className="px-5 py-3 text-[12px] text-white/40"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+          >
+            Meet link:{" "}
+            <a href={booking.meetLink} className="text-[#e8573a] hover:underline">
+              {booking.meetLink}
+            </a>
+          </div>
+        )}
+        {!booking.meetLink && (
+          <p
+            className="px-5 py-3 text-[12px] italic text-white/25"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+          >
+            Meet link will appear 10 minutes before your session
+          </p>
+        )}
+      </motion.div>
+
+      {/* ── CTAs ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.05, duration: 0.4 }}
+        className="flex flex-col gap-3"
+      >
         <a href={calendarUrl} target="_blank" rel="noreferrer">
-          <Button variant="outline" className="w-full gap-2">
-            <Calendar size={16} />
+          <button
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-medium text-white/70 transition-all hover:text-white"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <Calendar size={15} />
             Add to Google Calendar
-          </Button>
+          </button>
         </a>
-        <Button
-          variant="accent"
-          className="w-full gap-2"
+        <button
+          className="btn-coral w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold text-white"
           onClick={() => router.push("/bookings")}
         >
           View my bookings
-          <ArrowRight size={16} />
-        </Button>
-      </div>
+          <ArrowRight size={15} />
+        </button>
+      </motion.div>
     </div>
   );
 }

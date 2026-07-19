@@ -1,18 +1,18 @@
 "use client";
-import { Suspense, useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, ChevronRight, ChevronDown,
-  Video, Users, CalendarDays, Clock, Check, Loader2,
+  ChevronLeft, ChevronRight,
+  Video, Users, Clock, Check, Loader2, ShieldCheck,
+  Award,
 } from "lucide-react";
 import { createBookingDraft } from "@/actions/booking.actions";
 import { getAlumniById } from "@/actions/alumni.actions";
-import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getDurationMinutes } from "@/lib/utils";
 
-/* ───── Types ───── */
+/* ─────────────── Types ─────────────── */
 type SessionType = {
   id: string;
   type: string;
@@ -22,7 +22,7 @@ type SessionType = {
 };
 type Availability = {
   id: string;
-  dayOfWeek: number;
+  dayOfWeek: number; // 0 = Sun … 6 = Sat
   startTime: string;
   endTime: string;
 };
@@ -37,47 +37,98 @@ type AlumniData = {
   availability: Availability[];
 };
 
-const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const DAY_NAMES_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const ACCENT = "#E8573A";
+type Step = "session" | "datetime" | "confirm";
 
-/* ───── Calendar Picker ───── */
-function CalendarPicker({
-  value,
-  onChange,
-  minDate,
-  onClose,
+/* ─────────────── Constants ─────────────── */
+const MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+const DAY_NAMES_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const CORAL = "#E8573A";
+const CORAL_GRADIENT = "linear-gradient(135deg, #f06040 0%, #E8573A 60%, #d14a2e 100%)";
+const CORAL_GLOW = "0 0 18px rgba(232,87,58,0.35)";
+
+/** Round pricePaise to nearest ₹10, display without decimals */
+function formatPrice(paise: number): string {
+  const rupees = paise / 100;
+  const rounded = Math.round(rupees / 10) * 10;
+  return `₹${rounded.toLocaleString("en-IN")}`;
+}
+function roundedRupees(paise: number): number {
+  return Math.round(paise / 100 / 10) * 10;
+}
+
+/* ─────────────── Step Progress Bar ─────────────── */
+function StepBar({ step }: { step: Step }) {
+  const steps: { key: Step; label: string }[] = [
+    { key: "session", label: "Session type" },
+    { key: "datetime", label: "Date & time" },
+    { key: "confirm", label: "Confirm" },
+  ];
+  const idx = steps.findIndex((s) => s.key === step);
+
+  return (
+    <div className="flex items-center gap-0 mb-10">
+      {steps.map((s, i) => (
+        <div key={s.key} className="flex items-center" style={{ flex: i < steps.length - 1 ? "1" : "none" }}>
+          {/* Circle */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300"
+              style={
+                i < idx
+                  ? { background: "#22c55e", color: "#fff" }
+                  : i === idx
+                  ? { background: CORAL_GRADIENT, color: "#fff", boxShadow: CORAL_GLOW }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)" }
+              }
+            >
+              {i < idx ? <Check size={12} strokeWidth={3} /> : i + 1}
+            </div>
+            <span
+              className="text-[13px] font-medium whitespace-nowrap"
+              style={{ color: i <= idx ? "#fff" : "rgba(255,255,255,0.28)" }}
+            >
+              {s.label}
+            </span>
+          </div>
+          {/* Connector */}
+          {i < steps.length - 1 && (
+            <div className="flex-1 h-px mx-3" style={{ background: "rgba(255,255,255,0.07)" }}>
+              <motion.div
+                className="h-full"
+                style={{ background: CORAL_GRADIENT, transformOrigin: "left" }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: i < idx ? 1 : 0 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────── Availability Calendar ─────────────── */
+/**
+ * Key principle: only days that actually have slots render as interactive.
+ * Everything else is visually absent — not grey-disabled, just near-invisible —
+ * so the eye is drawn only to what's bookable (Calendly / Cal.com pattern).
+ */
+function AvailabilityCalendar({
+  availableDays, // set of JS day-of-week numbers (0-6) with slots
+  selectedDate,
+  onSelectDate,
 }: {
-  value: string;
-  onChange: (d: string) => void;
-  minDate: string;
-  onClose: () => void;
+  availableDays: Set<number>;
+  selectedDate: string | null;
+  onSelectDate: (iso: string) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [viewMonth, setViewMonth] = useState(() => {
-    const d = value ? new Date(value + "T12:00") : new Date();
-    return d.getMonth();
-  });
-  const [viewYear, setViewYear] = useState(() => {
-    const d = value ? new Date(value + "T12:00") : new Date();
-    return d.getFullYear();
-  });
-  const min = useMemo(() => new Date(minDate + "T12:00"), [minDate]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
-
-  const days = useMemo(() => {
-    const first = new Date(viewYear, viewMonth, 1).getDay();
-    const total = new Date(viewYear, viewMonth + 1, 0).getDate();
-    return { first, total };
-  }, [viewMonth, viewYear]);
+  const today = useMemo(() => new Date(), []);
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
 
   const prevMonth = useCallback(() => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -89,149 +140,150 @@ function CalendarPicker({
     else setViewMonth((m) => m + 1);
   }, [viewMonth]);
 
-  const canGoPrev = useMemo(() => {
-    const firstOfMonth = new Date(viewYear, viewMonth, 1);
-    return firstOfMonth >= new Date(min.getFullYear(), min.getMonth(), 1);
-  }, [viewYear, viewMonth, min]);
+  // Can't go back before today's month
+  const canGoPrev = !(viewYear === today.getFullYear() && viewMonth === today.getMonth());
 
-  const selectDay = useCallback((day: number) => {
-    const m = String(viewMonth + 1).padStart(2, "0");
-    const d = String(day).padStart(2, "0");
-    onChange(`${viewYear}-${m}-${d}`);
-    onClose();
-  }, [viewMonth, viewYear, onChange, onClose]);
+  // Build the day grid: [null for blanks, Date for real days]
+  const cells = useMemo(() => {
+    const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+    // Shift so Monday=0
+    const blanks = (firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    return [
+      ...Array.from({ length: blanks }, () => null),
+      ...Array.from({ length: daysInMonth }, (_, i) => new Date(viewYear, viewMonth, i + 1)),
+    ];
+  }, [viewYear, viewMonth]);
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: -6, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -6, scale: 0.97 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-      className="absolute left-0 top-full z-50 mt-1.5 w-[292px] overflow-hidden rounded-xl border border-white/10 bg-[#1A1A1A] shadow-lg"
+    <div
+      className="rounded-2xl p-6"
+      style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.06)" }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5">
-        <button
-          type="button"
-          onClick={prevMonth}
-          disabled={!canGoPrev}
-          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <span className="text-sm font-semibold text-primary">
-          {MONTH_NAMES[viewMonth]} {viewYear}
-        </span>
-        <button
-          type="button"
-          onClick={nextMonth}
-          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-        >
-          <ChevronRight size={16} />
-        </button>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-[15px] font-semibold text-white">Select a date</h3>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={prevMonth}
+            disabled={!canGoPrev}
+            className="p-1.5 rounded-lg transition-colors disabled:opacity-20 disabled:pointer-events-none"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-[13px] font-medium text-white/60 w-28 text-center">
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </span>
+          <button
+            onClick={nextMonth}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "rgba(255,255,255,0.4)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "")}
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 gap-0 px-4 pb-1">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-          <div key={d} className="py-1 text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <div key={d} className="text-center text-[11px] font-medium text-white/20 pb-1.5">
             {d}
           </div>
         ))}
       </div>
 
-      {/* Day grid */}
-      <div className="grid grid-cols-7 gap-0 px-4 pb-4">
-        {Array.from({ length: days.first === 0 ? 6 : days.first - 1 }).map((_, i) => (
-          <div key={`empty-${i}`} />
-        ))}
-        {Array.from({ length: days.total }, (_, i) => i + 1).map((day) => {
-          const m = String(viewMonth + 1).padStart(2, "0");
-          const d = String(day).padStart(2, "0");
-          const dateStr = `${viewYear}-${m}-${d}`;
-          const isPast = new Date(viewYear, viewMonth, day) < min;
-          const isSelected = value === dateStr;
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => {
+          if (!day) return <div key={`b-${i}`} />;
+
+          const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+          const jsDay = day.getDay();
+          const isPast = day < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const isAvailable = !isPast && availableDays.has(jsDay);
+          const isSelected = selectedDate === iso;
+
           return (
             <button
-              key={day}
-              type="button"
-              disabled={isPast}
-              onClick={() => selectDay(day)}
-              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-all duration-[180ms] ${
-                isSelected
-                  ? "text-white font-semibold"
-                  : isPast
-                  ? "text-muted-foreground/30 cursor-not-allowed"
-                  : "text-primary hover:bg-muted"
-              }`}
-              style={isSelected ? { backgroundColor: ACCENT } : {}}
+              key={iso}
+              disabled={!isAvailable}
+              onClick={() => onSelectDate(iso)}
+              className="relative flex flex-col items-center justify-center aspect-square rounded-xl text-[13px] font-medium transition-all duration-200"
+              style={{
+                color: isSelected
+                  ? "#fff"
+                  : isAvailable
+                  ? "rgba(255,255,255,0.75)"
+                  : "rgba(255,255,255,0.10)", // near-invisible unavailable days
+                background: isSelected ? CORAL_GRADIENT : "transparent",
+                boxShadow: isSelected ? CORAL_GLOW : "none",
+                cursor: isAvailable ? "pointer" : "default",
+                transform: isAvailable && !isSelected ? undefined : undefined,
+              }}
+              onMouseEnter={(e) => {
+                if (isAvailable && !isSelected) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.transform = "scale(1.08)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isAvailable && !isSelected) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.transform = "";
+                }
+              }}
             >
-              {day}
+              {day.getDate()}
+              {/* Coral dot — only on available, unselected days */}
+              {isAvailable && !isSelected && (
+                <span
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 block w-1 h-1 rounded-full"
+                  style={{ background: CORAL }}
+                />
+              )}
             </button>
           );
         })}
       </div>
-    </motion.div>
+
+      {/* Legend */}
+      <p className="mt-5 flex items-center gap-1.5 text-[11px] text-white/25">
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: CORAL }} />
+        Days with a dot have open slots · other dates have no availability
+      </p>
+    </div>
   );
 }
 
-/* ───── Main Content ───── */
-function BookSessionContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const alumniId = searchParams.get("alumniId") ?? "";
+/* ─────────────── Time Slot List ─────────────── */
+function TimeSlotList({
+  slots,
+  selectedSlot,
+  onSelectSlot,
+  duration,
+}: {
+  slots: { start: string; end: string }[];
+  selectedSlot: string | null;
+  onSelectSlot: (t: string) => void;
+  duration: number;
+}) {
+  const tz = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone.replace("_", " "),
+    []
+  );
 
-  const [alumni, setAlumni] = useState<AlumniData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selectedOffering, setSelectedOffering] = useState<SessionType | null>(null);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  useEffect(() => {
-    if (!alumniId) { setLoading(false); return; }
-    getAlumniById(alumniId)
-      .then((d) => d ? setAlumni(d as AlumniData) : setError("Alumni not found."))
-      .catch(() => setError("Failed to load."))
-      .finally(() => setLoading(false));
-  }, [alumniId]);
-
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
-  const groupedAvailability = useMemo(() => {
-    if (!alumni?.availability) return [];
-    const map: Record<number, { start: string; end: string }[]> = {};
-    alumni.availability.forEach((a) => {
-      const key = a.dayOfWeek;
-      if (!map[key]) map[key] = [];
-      map[key].push({ start: a.startTime.slice(0, 5), end: a.endTime.slice(0, 5) });
-    });
-    return Object.entries(map)
-      .map(([day, slots]) => ({ day: Number(day), slots }))
-      .sort((a, b) => a.day - b.day);
-  }, [alumni?.availability]);
-
-  const selectedDateDay = date ? new Date(date + "T12:00").getDay() : -1;
-
-  const availableSlots = useMemo(() => {
-    if (!date) return [];
-    const day = new Date(date + "T12:00").getDay();
-    const group = groupedAvailability.find((g) => g.day === day);
-    return group ? group.slots : [];
-  }, [date, groupedAvailability]);
-
-  const isDateInPast = date ? new Date(date + "T23:59") < new Date() : false;
-  const duration = selectedOffering ? getDurationMinutes(selectedOffering.type) : 30;
-
-  /* grouped by time of day */
-  const slotGroups = useMemo(() => {
-    const morning: typeof availableSlots = [];
-    const afternoon: typeof availableSlots = [];
-    const evening: typeof availableSlots = [];
-    availableSlots.forEach((s) => {
+  // Group by time of day
+  const groups = useMemo(() => {
+    const morning: typeof slots = [];
+    const afternoon: typeof slots = [];
+    const evening: typeof slots = [];
+    slots.forEach((s) => {
       const h = parseInt(s.start, 10);
       if (h < 12) morning.push(s);
       else if (h < 17) afternoon.push(s);
@@ -242,23 +294,456 @@ function BookSessionContent() {
       { label: "Afternoon", slots: afternoon },
       { label: "Evening", slots: evening },
     ].filter((g) => g.slots.length > 0);
-  }, [availableSlots]);
+  }, [slots]);
 
-  /* formatted display date */
+  // Compute end time for selected slot
+  const endTime = useMemo(() => {
+    if (!selectedSlot) return "";
+    const [h, m] = selectedSlot.split(":").map(Number);
+    const endMin = (m ?? 0) + duration;
+    const endH = (h ?? 0) + Math.floor(endMin / 60);
+    const endM = endMin % 60;
+    return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+  }, [selectedSlot, duration]);
+
+  if (slots.length === 0) {
+    return (
+      <div
+        className="mt-4 rounded-2xl px-5 py-8 text-center"
+        style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        <p className="text-[13px] text-white/35">No slots on this day</p>
+        <p className="text-[11px] text-white/20 mt-1">Pick another date with a coral dot</p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-4 rounded-2xl p-6"
+      style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[15px] font-semibold text-white">Available times</h3>
+        <div className="flex items-center gap-1.5 text-[11px] text-white/25">
+          <Clock size={11} />
+          {tz}
+        </div>
+      </div>
+
+      {selectedSlot && (
+        <div
+          className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl text-[12px] font-medium text-white"
+          style={{
+            background: "rgba(232,87,58,0.10)",
+            border: "1px solid rgba(232,87,58,0.22)",
+          }}
+        >
+          <Clock size={12} style={{ color: CORAL }} />
+          {selectedSlot} – {endTime}
+          <span className="text-white/35 ml-1">({duration} min)</span>
+        </div>
+      )}
+
+      {groups.map((group) => (
+        <div key={group.label} className="mb-5 last:mb-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/22 mb-2.5">
+            {group.label}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {group.slots.map((s) => {
+              const active = selectedSlot === s.start;
+              return (
+                <button
+                  key={s.start}
+                  onClick={() => onSelectSlot(s.start)}
+                  className="py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150"
+                  style={
+                    active
+                      ? { background: CORAL_GRADIENT, color: "#fff", boxShadow: CORAL_GLOW }
+                      : {
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.07)",
+                          color: "rgba(255,255,255,0.65)",
+                        }
+                  }
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.borderColor = "rgba(232,87,58,0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                  }}
+                >
+                  {s.start}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+/* ─────────────── Session Type Cards ─────────────── */
+function SessionTypeStep({
+  sessionTypes,
+  selected,
+  onSelect,
+}: {
+  sessionTypes: SessionType[];
+  selected: SessionType | null;
+  onSelect: (st: SessionType) => void;
+}) {
+  return (
+    <div>
+      <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
+        Pick a session type
+      </h2>
+      <p className="text-[13px] text-white/35 mb-7">
+        Choose how you want to connect
+      </p>
+
+      <div className="space-y-3">
+        {sessionTypes.map((st) => {
+          const active = selected?.id === st.id;
+          const durationMin = getDurationMinutes(st.type);
+          const priceRounded = roundedRupees(st.pricePaise);
+          const platformFee = Math.round(priceRounded * 0.10 / 10) * 10;
+          const isGroup = st.type.includes("group") || st.maxParticipants > 1;
+
+          return (
+            <motion.button
+              key={st.id}
+              onClick={() => onSelect(st)}
+              whileTap={{ scale: 0.985 }}
+              className="w-full rounded-2xl p-5 text-left transition-all duration-200 relative overflow-hidden"
+              style={{
+                background: active
+                  ? "linear-gradient(135deg, rgba(232,87,58,0.12) 0%, rgba(232,87,58,0.05) 100%)"
+                  : "rgba(255,255,255,0.03)",
+                border: `1px solid ${active ? "rgba(232,87,58,0.35)" : "rgba(255,255,255,0.07)"}`,
+              }}
+              onMouseEnter={(e) => {
+                if (!active) e.currentTarget.style.borderColor = "rgba(232,87,58,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                if (!active) e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+              }}
+            >
+              {/* Left accent bar */}
+              {active && (
+                <div
+                  className="absolute left-0 top-4 bottom-4 w-0.5 rounded-full"
+                  style={{ background: CORAL_GRADIENT }}
+                />
+              )}
+
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200"
+                    style={
+                      active
+                        ? { background: CORAL_GRADIENT, color: "#fff", boxShadow: CORAL_GLOW }
+                        : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }
+                    }
+                  >
+                    {isGroup ? <Users size={17} /> : <Video size={17} />}
+                  </div>
+
+                  {/* Info */}
+                  <div>
+                    <p
+                      className="text-[15px] font-semibold leading-snug capitalize mb-0.5"
+                      style={{ color: active ? CORAL : "rgba(255,255,255,0.9)" }}
+                    >
+                      {st.type.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-[12px] text-white/30">
+                      {durationMin} min
+                      {st.descriptionOneLiner ? ` · ${st.descriptionOneLiner}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div className="text-right shrink-0">
+                  <p
+                    className="text-[18px] font-bold tabular-nums"
+                    style={{ color: active ? CORAL : "rgba(255,255,255,0.85)" }}
+                  >
+                    {formatPrice(st.pricePaise)}
+                  </p>
+                  <p className="text-[11px] text-white/25 mt-0.5">
+                    + ₹{platformFee} fee
+                  </p>
+                </div>
+              </div>
+
+              {/* Selected checkmark */}
+              {active && (
+                <div
+                  className="absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full"
+                  style={{ background: CORAL_GRADIENT }}
+                >
+                  <Check size={11} className="text-white" strokeWidth={3} />
+                </div>
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Summary Rail ─────────────── */
+function SummaryRail({
+  alumni,
+  sessionType,
+  date,
+  slot,
+  step,
+  onNext,
+  onBack,
+  submitting,
+  error,
+}: {
+  alumni: AlumniData;
+  sessionType: SessionType | null;
+  date: string | null;
+  slot: string | null;
+  step: Step;
+  onNext: () => void;
+  onBack: () => void;
+  submitting: boolean;
+  error: string;
+}) {
+  const canContinue =
+    step === "session" ? !!sessionType :
+    step === "datetime" ? !!(date && slot) :
+    true;
+
+  const priceRounded = sessionType ? roundedRupees(sessionType.pricePaise) : 0;
+  const platformFee = Math.round(priceRounded * 0.10 / 10) * 10;
+  const total = priceRounded + platformFee;
+
   const formattedDate = useMemo(() => {
-    if (!date) return "";
+    if (!date) return null;
     const d = new Date(date + "T12:00");
-    return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+    return `${DAY_NAMES_FULL[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
   }, [date]);
 
-  const handleSubmit = async () => {
-    if (!selectedOffering) { setError("Select a session type."); return; }
-    if (!date) { setError("Choose a date."); return; }
-    if (!time) { setError("Choose a time slot."); return; }
-    if (isDateInPast) { setError("Date cannot be in the past."); return; }
-    setSubmitting(true);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.replace("_", " ");
+  const initials = alumni.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("");
+
+  return (
+    <div className="lg:sticky lg:top-24 lg:self-start">
+      <div
+        className="rounded-2xl p-5 space-y-5"
+        style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        {/* Alumni header */}
+        <div className="flex items-center gap-3 pb-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="relative shrink-0">
+            {alumni.profilePhotoUrl ? (
+              <img
+                src={alumni.profilePhotoUrl}
+                alt={alumni.fullName}
+                className="h-11 w-11 rounded-full object-cover"
+                style={{ border: "2px solid rgba(255,255,255,0.08)" }}
+              />
+            ) : (
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[13px] font-bold text-white"
+                style={{ background: CORAL_GRADIENT }}
+              >
+                {initials}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-white truncate">{alumni.fullName}</p>
+            <p className="text-[11px] text-white/30 truncate">{alumni.universityName}</p>
+          </div>
+        </div>
+
+        {/* Selection items */}
+        <div className="space-y-3">
+          {sessionType ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[13px] text-white/60">
+                <Video size={13} className="text-white/25 shrink-0" />
+                <span className="capitalize">{sessionType.type.replace(/_/g, " ")}</span>
+              </div>
+              <span className="text-[13px] font-semibold text-white">{formatPrice(sessionType.pricePaise)}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-[12px] text-white/20 italic">
+              <Video size={12} />
+              No session selected
+            </div>
+          )}
+
+          {date && formattedDate && (
+            <div className="flex items-center gap-2 text-[13px] text-white/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/20 w-3">📅</span>
+              {formattedDate}
+            </div>
+          )}
+
+          {slot && (
+            <div className="flex items-center gap-2 text-[13px] text-white/60">
+              <Clock size={13} className="text-white/25 shrink-0" />
+              {slot}
+              <span className="text-[11px] text-white/25">· {tz}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Pricing breakdown */}
+        {sessionType && (
+          <div
+            className="space-y-2 pt-4"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+          >
+            <div className="flex justify-between text-[12px] text-white/35">
+              <span>Session fee</span>
+              <span>₹{priceRounded.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between text-[12px] text-white/35">
+              <span>Platform fee (10%)</span>
+              <span>₹{platformFee.toLocaleString("en-IN")}</span>
+            </div>
+            <div
+              className="flex justify-between text-[16px] font-bold text-white pt-2"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+            >
+              <span>Total</span>
+              <span style={{ color: CORAL }}>₹{total.toLocaleString("en-IN")}</span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-[12px] text-red-400 px-1">{error}</p>
+        )}
+
+        {/* CTA */}
+        <button
+          onClick={onNext}
+          disabled={!canContinue || submitting}
+          className="w-full rounded-xl py-3.5 text-[14px] font-bold text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          style={
+            canContinue && !submitting
+              ? { background: CORAL_GRADIENT, boxShadow: CORAL_GLOW }
+              : { background: "rgba(255,255,255,0.06)" }
+          }
+          onMouseEnter={(e) => {
+            if (canContinue && !submitting)
+              e.currentTarget.style.opacity = "0.9";
+          }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = ""; }}
+        >
+          {submitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 size={16} className="animate-spin" /> Creating booking…
+            </span>
+          ) : step === "confirm" ? (
+            "Confirm & pay"
+          ) : (
+            "Continue →"
+          )}
+        </button>
+
+        {step !== "session" && (
+          <button
+            onClick={onBack}
+            className="w-full text-[12px] text-white/25 hover:text-white/50 transition-colors"
+          >
+            ← Go back
+          </button>
+        )}
+
+        {/* Trust strip */}
+        <div
+          className="flex items-center justify-center gap-1.5 text-[11px] text-white/20 pt-1"
+        >
+          <ShieldCheck size={12} style={{ color: "rgba(34,197,94,0.6)" }} />
+          Full refund if {alumni.fullName.split(" ")[0]} doesn&apos;t confirm
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Main Content ─────────────── */
+function BookSessionContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const alumniId = searchParams.get("alumniId") ?? "";
+
+  const [alumni, setAlumni] = useState<AlumniData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [step, setStep] = useState<Step>("session");
+  const [selectedOffering, setSelectedOffering] = useState<SessionType | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!alumniId) { setLoading(false); return; }
+    getAlumniById(alumniId)
+      .then((d) => d ? setAlumni(d as AlumniData) : setError("Alumni not found."))
+      .catch(() => setError("Failed to load."))
+      .finally(() => setLoading(false));
+  }, [alumniId]);
+
+  // Derive which days-of-week have slots
+  const availableDays = useMemo(() => {
+    const s = new Set<number>();
+    (alumni?.availability ?? []).forEach((a) => s.add(a.dayOfWeek));
+    return s;
+  }, [alumni]);
+
+  // Derive slot list for selected date
+  const slotsForDate = useMemo(() => {
+    if (!selectedDate || !alumni) return [];
+    const jsDay = new Date(selectedDate + "T12:00").getDay();
+    return (alumni.availability ?? [])
+      .filter((a) => a.dayOfWeek === jsDay)
+      .map((a) => ({
+        start: a.startTime.slice(0, 5),
+        end: a.endTime.slice(0, 5),
+      }))
+      .sort((a, b) => a.start.localeCompare(b.start));
+  }, [selectedDate, alumni]);
+
+  const duration = selectedOffering ? getDurationMinutes(selectedOffering.type) : 30;
+
+  const handleNext = async () => {
     setError("");
-    const start = new Date(`${date}T${time}:00`);
+    if (step === "session") {
+      if (!selectedOffering) { setError("Please select a session type."); return; }
+      setStep("datetime");
+      return;
+    }
+    if (step === "datetime") {
+      if (!selectedDate) { setError("Please pick a date."); return; }
+      if (!selectedSlot) { setError("Please pick a time slot."); return; }
+      setStep("confirm");
+      return;
+    }
+    // step === "confirm" → submit
+    if (!selectedOffering || !selectedDate || !selectedSlot) return;
+    setSubmitting(true);
+    const start = new Date(`${selectedDate}T${selectedSlot}:00`);
     const end = new Date(start.getTime() + duration * 60 * 1000);
     try {
       const result = await createBookingDraft({
@@ -271,6 +756,13 @@ function BookSessionContent() {
         setError(result.error ?? "Could not create booking.");
         setSubmitting(false);
       } else {
+        // Store pending booking in localStorage for the browse banner
+        try {
+          localStorage.setItem(
+            "alumnow-pending-booking",
+            JSON.stringify({ id: result.data.id, alumniName: alumni!.fullName })
+          );
+        } catch { /* ignore */ }
         router.push(`/book/${result.data.id}`);
       }
     } catch {
@@ -279,524 +771,246 @@ function BookSessionContent() {
     }
   };
 
-  /* ────── Loading ────── */
+  const handleBack = () => {
+    setError("");
+    if (step === "confirm") { setStep("datetime"); return; }
+    if (step === "datetime") { setStep("session"); return; }
+  };
+
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#0D0D0D]">
-        <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] p-6 lg:block">
-          <Skeleton className="h-14 w-14 rounded-full" />
-          <Skeleton className="mt-4 h-5 w-36" />
-          <Skeleton className="mt-1 h-4 w-28" />
-          <div className="mt-8 space-y-2">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-[68px] w-full rounded-xl" />)}
+      <div className="max-w-[1100px] mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64 rounded-xl" />
+            <Skeleton className="h-4 w-40 rounded-lg" />
+            <Skeleton className="mt-4 h-[200px] w-full rounded-2xl" />
+            <Skeleton className="h-[160px] w-full rounded-2xl" />
           </div>
-        </aside>
-        <div className="flex-1 p-6 lg:p-10">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="mt-3 h-8 w-72" />
-          <Skeleton className="mt-8 h-44 w-full rounded-2xl" />
-          <Skeleton className="mt-5 h-44 w-full rounded-2xl" />
+          <Skeleton className="h-[360px] w-full rounded-2xl" />
         </div>
       </div>
     );
   }
 
-  /* ────── Error / Missing ────── */
-  if (!alumniId || error || !alumni) {
+  /* ── Error ── */
+  if (!alumniId || !alumni) {
     return (
-      <main className="mx-auto max-w-xl px-6 py-16 text-center">
-        <p className="text-muted-foreground">{error || "No alumni selected."}</p>
-        <Button className="mt-4" style={{ backgroundColor: ACCENT }} onClick={() => router.push("/browse")}>
-          Browse alumni
-        </Button>
-      </main>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <p className="text-white/40 mb-4">{error || "No alumni selected."}</p>
+          <button
+            onClick={() => router.push("/browse")}
+            className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white"
+            style={{ background: CORAL_GRADIENT }}
+          >
+            Browse alumni
+          </button>
+        </div>
+      </div>
     );
   }
 
-  const priceDisplay = (p: number) => `₹${(p / 100).toLocaleString("en-IN")}`;
-  const sessionIcons: Record<string, React.ReactNode> = {
-    one_on_one_video: <Video size={18} />,
-    group_session: <Users size={18} />,
-  };
-
   return (
-    <div className="flex min-h-screen bg-[#0D0D0D]">
-      {/* ─── Sidebar ─── */}
-      <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] lg:flex lg:flex-col">
-        {/* Profile header */}
-        <div className="flex items-center gap-3 border-b border-border px-5 py-5">
-          <div className="relative shrink-0">
-            <img
-              src={alumni.profilePhotoUrl ?? `https://picsum.photos/seed/${alumni.id}/100/100`}
-              alt={alumni.fullName}
-              className="h-12 w-12 rounded-full border-2 border-white object-cover shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-            />
-          </div>
-          <div className="min-w-0">
-            <h2 className="truncate text-[15px] font-semibold text-primary">
-              {alumni.fullName}
-            </h2>
-            <p className="truncate text-sm text-muted-foreground">{alumni.universityName}</p>
-            <p className="text-xs text-muted-foreground/70 mt-px">
-              {alumni.course} · {alumni.country}
-            </p>
-          </div>
-        </div>
+    <div className="max-w-[1100px] mx-auto px-6 py-10">
+      {/* Back to browse */}
+      <button
+        onClick={() => router.push("/browse")}
+        className="flex items-center gap-1.5 text-[12px] text-white/25 hover:text-white/55 mb-7 transition-colors"
+      >
+        <ChevronLeft size={14} /> Browse
+      </button>
 
-        <div className="flex-1 overflow-y-auto px-4 py-5">
-          {/* ── Session types — card list ── */}
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            Session types
-          </p>
-          <div className="space-y-2.5">
-            {alumni.sessionTypes.map((st) => {
-              const active = selectedOffering?.id === st.id;
-              return (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={() => { setSelectedOffering(st); setError(""); }}
-                  className={`group relative w-full rounded-xl border p-4 text-left transition-all duration-[180ms] ${
-                    active
-                      ? "border-[#E8573A] bg-[#E8573A]/[0.06]"
-                      : "border-white/10 bg-[#1A1A1A] hover:border-[#E8573A]/30 hover:bg-[#E8573A]/[0.02]"
-                  }`}
-                  style={active ? { borderColor: ACCENT } : {}}
-                >
-                  {active && (
-                    <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full" style={{ backgroundColor: ACCENT }} />
-                  )}
-                  <div className="flex items-start gap-3 pl-1">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-[180ms] ${
-                        active ? "text-white" : "text-muted-foreground bg-muted group-hover:bg-muted/80"
-                      }`}
-                      style={active ? { backgroundColor: ACCENT } : {}}
-                    >
-                      {sessionIcons[st.type] ?? <Video size={18} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-semibold capitalize leading-snug transition-colors duration-[180ms] ${
-                          active ? "text-[#E8573A]" : "text-primary"
-                        }`}>
-                          {st.type.replaceAll("_", " ")}
-                        </p>
-                        <p className={`shrink-0 font-mono text-sm font-semibold tabular-nums transition-colors duration-[180ms] ${
-                          active ? "text-[#E8573A]" : "text-primary"
-                        }`}>
-                          {priceDisplay(st.pricePaise)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {st.descriptionOneLiner && (
-                          <span className="text-xs text-muted-foreground truncate">
-                            {st.descriptionOneLiner}
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground/60 shrink-0">
-                          {getDurationMinutes(st.type)} min
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {active && (
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: ACCENT }}>
-                      <Check size={11} className="text-white" strokeWidth={3} />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+      <StepBar step={step} />
 
-          {/* ── Availability ── */}
-          {groupedAvailability.length > 0 && (
-            <div className="mt-7">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Availability
-              </p>
-              <div className="rounded-xl border border-border/50 bg-muted/40 p-4">
-                <div className="space-y-3">
-                  {groupedAvailability.map(({ day, slots }) => {
-                    const isActiveDay = date && selectedDateDay === day;
-                    return (
-                      <div key={day}>
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          {isActiveDay && (
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ACCENT }} />
-                          )}
-                          <span className={`text-xs font-semibold ${
-                            isActiveDay ? "text-[#E8573A]" : "text-primary"
-                          }`}>
-                            {DAY_NAMES_SHORT[day]}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {slots.map((s, i) => (
-                            <span
-                              key={i}
-                              className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-relaxed ${
-                                isActiveDay
-                                  ? "border-[#E8573A]/20 bg-[#E8573A]/5 text-[#E8573A]"
-                                  : "border-white/10 text-muted-foreground"
-                              }`}
-                            >
-                              {s.start}–{s.end}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      {/* ─── Main panel ─── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[640px] px-6 py-7 lg:px-10 lg:py-9">
-          {/* Breadcrumb */}
-          <nav className="mb-7 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <button
-              type="button"
-              onClick={() => router.push("/browse")}
-              className="hover:text-primary transition-colors"
-            >
-              Browse
-            </button>
-            <ChevronRight size={13} className="text-muted-foreground/50" />
-            <span className="text-primary font-medium truncate">
-              Book {alumni.fullName.split(" ")[0]}
-            </span>
-          </nav>
-
-          <h1 className="text-[26px] font-bold leading-tight text-primary lg:text-[30px]">
-            Book a session
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            with {alumni.fullName} · {alumni.universityName}
-          </p>
-
-          {/* Mobile session cards */}
-          <div className="mt-8 lg:hidden">
-            <p className="mb-3 text-sm font-semibold text-primary">Select a session type</p>
-            <div className="space-y-2.5">
-              {alumni.sessionTypes.map((st) => {
-                const active = selectedOffering?.id === st.id;
-                return (
-                  <button
-                    key={st.id}
-                    type="button"
-                    onClick={() => { setSelectedOffering(st); setError(""); }}
-                    className={`group relative w-full rounded-xl border p-4 text-left transition-all duration-[180ms] ${
-                      active
-                        ? "border-[#E8573A] bg-[#E8573A]/[0.06]"
-                        : "border-white/10 bg-[#1A1A1A] hover:border-[#E8573A]/30"
-                    }`}
-                  >
-                    {active && (
-                      <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full" style={{ backgroundColor: ACCENT }} />
-                    )}
-                    <div className="flex items-start gap-3 pl-1">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                          active ? "text-white" : "text-muted-foreground bg-muted"
-                        }`}
-                        style={active ? { backgroundColor: ACCENT } : {}}
-                      >
-                        {sessionIcons[st.type] ?? <Video size={18} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold capitalize ${active ? "text-[#E8573A]" : "text-primary"}`}>
-                            {st.type.replaceAll("_", " ")}
-                          </p>
-                          <p className={`shrink-0 font-mono text-sm font-semibold tabular-nums ${active ? "text-[#E8573A]" : "text-primary"}`}>
-                            {priceDisplay(st.pricePaise)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {st.descriptionOneLiner && (
-                            <span className="text-xs text-muted-foreground truncate">{st.descriptionOneLiner}</span>
-                          )}
-                          <span className="text-xs text-muted-foreground/60">{getDurationMinutes(st.type)} min</span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Booking form ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+        {/* ── Left: step content ── */}
+        <div>
           <AnimatePresence mode="wait">
-            {selectedOffering ? (
+            {step === "session" && (
               <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="mt-8"
+                key="session"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
-                {/* Selected session summary card */}
-                <div
-                  className="rounded-2xl border p-5"
-                  style={{ borderColor: `${ACCENT}20`, backgroundColor: `${ACCENT}04` }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${ACCENT}12` }}>
-                        {sessionIcons[selectedOffering.type] ?? <Video size={22} style={{ color: ACCENT }} />}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-primary capitalize leading-snug">
-                          {selectedOffering.type.replaceAll("_", " ")}
-                        </p>
-                        {selectedOffering.descriptionOneLiner && (
-                          <p className="mt-0.5 text-sm text-muted-foreground">{selectedOffering.descriptionOneLiner}</p>
-                        )}
-                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="font-medium tabular-nums">{duration} min</span>
-                          <span className="h-3 w-px bg-border" />
-                          <span className="font-mono font-semibold tabular-nums" style={{ color: ACCENT }}>
-                            {priceDisplay(selectedOffering.pricePaise)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOffering(null)}
-                      className="shrink-0 text-xs font-medium transition-colors"
-                      style={{ color: ACCENT }}
-                    >
-                      Change
-                    </button>
-                  </div>
-                </div>
+                <SessionTypeStep
+                  sessionTypes={alumni.sessionTypes}
+                  selected={selectedOffering}
+                  onSelect={(st) => { setSelectedOffering(st); setError(""); }}
+                />
+              </motion.div>
+            )}
 
-                {/* Divider */}
-                <div className="my-7 border-t border-white/10" />
-
-                {/* Date & time selection */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <CalendarDays size={16} style={{ color: ACCENT }} />
-                    <span className="text-sm font-semibold text-primary">Select date & time</span>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {/* Date picker trigger */}
-                    <div className="relative">
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Date</label>
-                      <button
-                        type="button"
-                        onClick={() => setCalendarOpen(!calendarOpen)}
-                        className="flex h-11 w-full items-center gap-2 rounded-xl border border-white/10 bg-[#1A1A1A] px-3.5 text-left text-sm transition-all duration-[180ms] hover:border-[#E8573A]/40"
-                      >
-                        <CalendarDays size={15} className="shrink-0 text-muted-foreground" />
-                        <span className={date ? "text-primary font-medium" : "text-muted-foreground"}>
-                          {date ? formattedDate : "Select a date"}
-                        </span>
-                        <ChevronDown size={14} className="ml-auto shrink-0 text-muted-foreground" />
-                      </button>
-                      <AnimatePresence>
-                        {calendarOpen && (
-                          <CalendarPicker
-                            value={date}
-                            onChange={setDate}
-                            minDate={today}
-                            onClose={() => setCalendarOpen(false)}
-                          />
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Selected time chip */}
-                    <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Time</label>
-                      <div className="flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-[#1A1A1A] px-3.5 text-sm">
-                        <Clock size={15} className="shrink-0 text-muted-foreground" />
-                        {time ? (
-                          <span className="font-medium text-primary">{time} – {(() => {
-                            const parts = time.split(":").map(Number);
-                            const h = parts[0] ?? 0;
-                            const m = parts[1] ?? 0;
-                            const endMin = m + duration;
-                            const endH = h + Math.floor(endMin / 60);
-                            const endM = endMin % 60;
-                            return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
-                          })()}</span>
-                        ) : (
-                          <span className="text-muted-foreground">Choose a slot below</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Duration + timezone trust line */}
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground/70">
-                    <span className="tabular-nums">{duration} min</span>
-                    <span className="h-3 w-px bg-border/60" />
-                    <span>IST (UTC+5:30)</span>
-                    {date && <><span className="h-3 w-px bg-border/60" /><span className="capitalize">{DAY_NAMES_FULL[selectedDateDay]}</span></>}
-                  </div>
-                </div>
-
-                {/* Available slots */}
-                {date && (
-                  <div className="mt-6">
-                    {availableSlots.length > 0 ? (
-                      <>
-                        <p className="mb-3 text-xs font-medium text-muted-foreground">
-                          {availableSlots.length} slot{availableSlots.length > 1 ? "s" : ""} available on {formattedDate}
-                        </p>
-                        <div className="space-y-3">
-                          {slotGroups.map((group) => (
-                            <div key={group.label}>
-                              <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                                {group.label}
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {group.slots.map((slot) => {
-                                  const active = time === slot.start;
-                                  return (
-                                    <button
-                                      key={slot.start}
-                                      type="button"
-                                      onClick={() => setTime(slot.start)}
-                                      className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-[180ms] ${
-                                        active
-                                          ? "text-white border-transparent shadow-sm"
-                                          : "border-white/10 bg-[#1A1A1A] text-white hover:border-[#E8573A]/40 hover:bg-[#E8573A]/[0.03]"
-                                      }`}
-                                      style={active ? { backgroundColor: ACCENT } : {}}
-                                    >
-                                      {slot.start} – {slot.end}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-white/10 bg-muted/20 px-5 py-6 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No available slots on this day
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground/60">
-                          Choose another date to see available times
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {isDateInPast && (
-                  <p className="mt-4 text-sm" style={{ color: "#dc2626" }}>Selected date is in the past.</p>
-                )}
-                {error && (
-                  <p className="mt-4 text-sm" style={{ color: "#dc2626" }}>{error}</p>
-                )}
-
-                {/* ── CTA ── */}
-                <div className="mt-8">
-                  <button
-                    type="button"
-                    disabled={submitting || !date || !time || isDateInPast}
-                    onClick={() => void handleSubmit()}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-6 text-base font-bold text-white transition-all duration-[180ms] disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      height: 54,
-                      backgroundColor: submitting ? ACCENT : ACCENT,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!submitting) e.currentTarget.style.backgroundColor = "#D44A2E";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!submitting) e.currentTarget.style.backgroundColor = ACCENT;
-                    }}
-                    onMouseDown={(e) => {
-                      if (!submitting) e.currentTarget.style.transform = "scale(0.98)";
-                    }}
-                    onMouseUp={(e) => {
-                      if (!submitting) e.currentTarget.style.transform = "";
-                    }}
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 size={20} className="animate-spin" />
-                        <span>Creating booking…</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Book session</span>
-                        <span className="font-mono tabular-nums opacity-90">
-                          · {priceDisplay(selectedOffering.pricePaise)}
-                        </span>
-                      </>
-                    )}
-                  </button>
-                  <p className="mt-2.5 text-center text-xs text-muted-foreground/60">
-                    You won&apos;t be charged until {alumni.fullName.split(" ")[0]} confirms the session
+            {step === "datetime" && (
+              <motion.div
+                key="datetime"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="mb-6">
+                  <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
+                    Pick a date & time
+                  </h2>
+                  <p className="text-[13px] text-white/35">
+                    Only dates with available slots are selectable
                   </p>
                 </div>
+
+                <AvailabilityCalendar
+                  availableDays={availableDays}
+                  selectedDate={selectedDate}
+                  onSelectDate={(d) => { setSelectedDate(d); setSelectedSlot(null); }}
+                />
+
+                {selectedDate && (
+                  <TimeSlotList
+                    slots={slotsForDate}
+                    selectedSlot={selectedSlot}
+                    onSelectSlot={setSelectedSlot}
+                    duration={duration}
+                  />
+                )}
+
+                {!selectedDate && availableDays.size > 0 && (
+                  <div className="mt-4 px-4 py-3 rounded-xl text-[12px] text-white/25"
+                    style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.07)" }}
+                  >
+                    Select a date above — coral dots show days {alumni.fullName.split(" ")[0]} is available
+                  </div>
+                )}
               </motion.div>
-            ) : (
+            )}
+
+            {step === "confirm" && (
               <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mt-20 hidden text-center lg:block"
+                key="confirm"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-                  <ChevronRight size={28} className="text-muted-foreground" />
-                </div>
-                <p className="mt-5 text-base font-medium text-muted-foreground">
-                  Select a session type from the sidebar
+                <h2 className="text-[22px] font-semibold text-white tracking-tight mb-1">
+                  Review & confirm
+                </h2>
+                <p className="text-[13px] text-white/35 mb-7">
+                  Check everything looks right before paying
                 </p>
+
+                {/* Confirmation summary card */}
+                <div
+                  className="rounded-2xl p-6 space-y-4"
+                  style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  {/* Alumni row */}
+                  <div className="flex items-center gap-3">
+                    {alumni.profilePhotoUrl ? (
+                      <img
+                        src={alumni.profilePhotoUrl}
+                        alt={alumni.fullName}
+                        className="h-12 w-12 rounded-full object-cover shrink-0"
+                        style={{ border: "2px solid rgba(255,255,255,0.08)" }}
+                      />
+                    ) : (
+                      <div
+                        className="flex h-12 w-12 items-center justify-center rounded-full shrink-0 text-[14px] font-bold text-white"
+                        style={{ background: CORAL_GRADIENT }}
+                      >
+                        {alumni.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[15px] font-semibold text-white">{alumni.fullName}</p>
+                      <p className="text-[12px] text-white/35">{alumni.universityName}</p>
+                    </div>
+                    {/* Tier badge if present */}
+                    <span
+                      className="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white"
+                      style={{ background: CORAL_GRADIENT }}
+                    >
+                      <Award size={9} /> Verified
+                    </span>
+                  </div>
+
+                  {/* Detail rows */}
+                  {[
+                    { label: "Session", value: selectedOffering?.type.replace(/_/g, " ") ?? "" },
+                    { label: "Date", value: selectedDate ? (() => { const d = new Date(selectedDate + "T12:00"); return `${DAY_NAMES_FULL[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`; })() : "" },
+                    { label: "Time", value: selectedSlot ? `${selectedSlot} (${Intl.DateTimeFormat().resolvedOptions().timeZone.replace("_", " ")})` : "" },
+                    { label: "Duration", value: `${duration} minutes` },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between py-2.5"
+                      style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                    >
+                      <span className="text-[12px] text-white/30">{label}</span>
+                      <span className="text-[13px] font-medium text-white/75 capitalize">{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Trust callouts */}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {[
+                    { icon: <ShieldCheck size={13} style={{ color: "#22c55e" }} />, text: "Full refund if session is cancelled" },
+                    { icon: <Clock size={13} className="text-white/25" />, text: "You won't be charged until confirmed" },
+                  ].map(({ icon, text }) => (
+                    <div
+                      key={text}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[11px] text-white/30"
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                    >
+                      {icon} {text}
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* ── Right: sticky summary rail ── */}
+        <SummaryRail
+          alumni={alumni}
+          sessionType={selectedOffering}
+          date={selectedDate}
+          slot={selectedSlot}
+          step={step}
+          onNext={() => void handleNext()}
+          onBack={handleBack}
+          submitting={submitting}
+          error={error}
+        />
       </div>
     </div>
   );
 }
 
-/* ───── Export ───── */
+/* ─────────────── Export ─────────────── */
 export default function NewBookingPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen bg-[#0D0D0D]">
-          <aside className="hidden w-80 shrink-0 border-r border-white/5 bg-[#0D0D0D] p-6 lg:block">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <Skeleton className="mt-4 h-5 w-36" />
-            <Skeleton className="mt-1 h-4 w-28" />
-            <div className="mt-8 space-y-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-[68px] w-full rounded-xl" />)}
+    <div className="min-h-screen app-background text-white pt-[72px]">
+      <Suspense
+        fallback={
+          <div className="max-w-[1100px] mx-auto px-6 py-10">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-64 rounded-xl" />
+                <Skeleton className="h-4 w-40 rounded-lg" />
+                <Skeleton className="mt-4 h-[200px] w-full rounded-2xl" />
+              </div>
+              <Skeleton className="h-[360px] w-full rounded-2xl" />
             </div>
-          </aside>
-          <div className="flex-1 p-6 lg:p-10">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="mt-3 h-8 w-72" />
-            <Skeleton className="mt-8 h-44 w-full rounded-2xl" />
-            <Skeleton className="mt-5 h-44 w-full rounded-2xl" />
           </div>
-        </div>
-      }
-    >
-      <BookSessionContent />
-    </Suspense>
+        }
+      >
+        <BookSessionContent />
+      </Suspense>
+    </div>
   );
 }

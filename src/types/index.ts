@@ -26,6 +26,11 @@ export interface AlumniCardData {
   avgResponseTimeHours: number | null;
   sessionTypes: SessionTypeData[];
   isSaved: boolean;
+  // Trust signals
+  sessionsCompleted?: number;
+  responseRate?: number;       // 0-100 %
+  completionRate?: number;     // 0-100 %
+  tier?: "top_mentor" | "verified" | "standard";
 }
 
 export interface SessionTypeData {
@@ -146,7 +151,8 @@ export interface AlumniFilters {
   availability?: "this_week" | "this_month" | "any";
   sessionType?: "1:1" | "group" | "both";
   search?: string;
-  sortBy?: "relevance" | "rating" | "newest";
+  sortBy?: "relevance" | "rating" | "newest" | "fastest_response";
+  topMentorOnly?: boolean;
   page?: number;
   pageSize?: number;
 }

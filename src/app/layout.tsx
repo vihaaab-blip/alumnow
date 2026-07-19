@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Poppins, Fraunces } from "next/font/google";
 import { SessionProvider } from "./SessionProvider";
 import { RouteNav } from "@/components/RouteNav";
 import { RouteFooter } from "@/components/RouteFooter";
@@ -12,6 +12,12 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-poppins",
+});
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  axes: ["SOFT", "WONK", "opsz"],
+  variable: "--font-fraunces",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +40,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${poppins.variable} font-sans`}
+        className={`${inter.variable} ${poppins.variable} ${fraunces.variable} font-sans app-background`}
       >
         <SessionProvider>
           <QueryProvider>
