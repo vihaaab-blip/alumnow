@@ -19,7 +19,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   if (status === "loading") {
     return (
       <div className="flex min-h-[calc(100dvh-64px)]">
-        <div className="w-[280px] flex-shrink-0 bg-primary p-4 space-y-3">
+        <div className="w-[280px] flex-shrink-0 bg-[#0d0d0d] p-4 space-y-3">
           <Skeleton className="h-16 w-full bg-white/10 rounded-none" />
           <Skeleton className="h-10 w-full bg-white/10" />
           <Skeleton className="h-10 w-full bg-white/10" />
@@ -61,7 +61,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         </p>
         <Link
           href="/"
-          className="mt-8 inline-flex items-center justify-center rounded-[10px] bg-primary px-8 py-3 text-sm font-semibold text-white hover:bg-primary-light transition-colors"
+          className="mt-8 inline-flex items-center justify-center rounded-[10px] bg-accent px-8 py-3 text-sm font-semibold text-white hover:bg-accent-dark transition-colors"
         >
           Go Home
         </Link>

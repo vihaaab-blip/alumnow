@@ -195,7 +195,7 @@ export default function AdminAlumniPage() {
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                statusFilter === s ? "bg-primary text-white" : "text-white/40 hover:text-white hover:bg-white/5"
+                statusFilter === s ? "bg-background text-white" : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
               {s === "PENDING" ? "Pending" : s === "ALL" ? "All" : s === "APPROVED" ? "Approved" : "Rejected"}

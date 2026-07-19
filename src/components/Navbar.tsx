@@ -178,7 +178,7 @@ export function Navbar() {
                     Log in
                   </Link>
                   <Link href="/register" onClick={() => setOpen(false)}
-                    className="flex-1 text-center text-sm font-semibold text-white bg-primary py-2.5 rounded-lg">
+                    className="flex-1 text-center text-sm font-semibold text-white bg-accent py-2.5 rounded-lg">
                     Get started
                   </Link>
                 </div>

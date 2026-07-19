@@ -91,7 +91,7 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
             <Button variant="outline" size="sm" className="mt-2" onClick={handleRemoveQr}>Remove QR</Button>
           </div>
         )}
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleQrUpload} className="mt-4 block text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white" />
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleQrUpload} className="mt-4 block text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white" />
       </div>
 
       <div className="rounded-2xl border border-border bg-[#1A1A1A] p-6">

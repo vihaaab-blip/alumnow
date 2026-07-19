@@ -30,7 +30,7 @@ export function ProfileHeader({
   const qsLabel = QS_LABELS[alumni.qsRankingTier] ?? null;
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-primary p-6 text-white md:p-8">
+    <div className="relative overflow-hidden rounded-xl bg-[#1A1A1A] p-6 text-white md:p-8">
       <Link
         href="/browse"
         className="mb-8 inline-flex items-center gap-2 text-sm text-white/75 hover:text-white transition-colors"

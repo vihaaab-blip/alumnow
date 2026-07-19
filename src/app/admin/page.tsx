@@ -47,7 +47,7 @@ export default async function AdminDashboardPage() {
           <h1 className="mt-2 text-3xl font-semibold text-primary">Admin Dashboard</h1>
           <p className="mt-2 text-muted-foreground">A live view of the alumnow. platform.</p>
         </div>
-        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">Admin only</span>
+        <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">Admin only</span>
       </div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ label, value, change, changeType, icon: Icon }) => (
