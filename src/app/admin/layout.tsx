@@ -17,10 +17,10 @@ const navItems = [
 function SidebarNav() {
   const pathname = usePathname();
   return (
-    <aside className="hidden w-[280px] flex-shrink-0 bg-primary text-white md:flex md:flex-col">
+    <aside className="hidden w-[280px] flex-shrink-0 bg-[#0d0d0d] text-white md:flex md:flex-col">
       <div className="flex h-16 items-center px-6 border-b border-white/10">
         <Link href="/admin" className="flex items-center gap-2">
-          <Logo className="text-xl" inverse />
+          <Logo className="text-xl" />
           <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">Admin</span>
         </Link>
       </div>

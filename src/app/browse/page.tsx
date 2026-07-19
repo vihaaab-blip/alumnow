@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getFilterOptions, saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
 import { getSavedAlumni } from "@/actions/student.actions";
@@ -113,6 +113,7 @@ function BrowsePageContent() {
   const [error, setError] = useState("");
   const [recentlyViewed, setRecentlyViewed] = useState<AlumniCardData[]>([]);
   const [pendingBooking, setPendingBooking] = useState<{ id: string; alumniName: string } | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
   const sortBy = (searchParams.get("sortBy") as AlumniFilters["sortBy"]) ?? "relevance";
@@ -198,9 +199,12 @@ function BrowsePageContent() {
   }, [items, savedItems]);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("browse-scroll-y");
-    if (saved) { requestAnimationFrame(() => window.scrollTo(0, Number(saved))); sessionStorage.removeItem("browse-scroll-y"); }
-    return () => { sessionStorage.setItem("browse-scroll-y", String(window.scrollY)); };
+    const el = contentRef.current;
+    if (el) {
+      const saved = sessionStorage.getItem("browse-scroll-y");
+      if (saved) { requestAnimationFrame(() => { el.scrollTop = Number(saved); }); sessionStorage.removeItem("browse-scroll-y"); }
+      return () => { sessionStorage.setItem("browse-scroll-y", String(el.scrollTop)); };
+    }
   }, []);
 
   // Load recently viewed from localStorage
@@ -224,10 +228,10 @@ function BrowsePageContent() {
   const activeCat = activeCategoryLabel(searchParams);
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="flex flex-col h-[100dvh] text-white">
 
       {/* Sub-nav bar */}
-      <div className="sticky top-0 z-20 border-b border-white/[0.05] bg-[#0d0d0d]/90 pt-16 shadow-[0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl">
+      <div className="z-20 border-b border-white/[0.05] bg-[#0d0d0d]/90 pt-16 shadow-[0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl shrink-0">
         <div className="max-w-[1600px] mx-auto px-6 h-12 flex items-center gap-4">
           {/* Category pills */}
           <div className="hidden md:flex items-center gap-1">
@@ -323,8 +327,8 @@ function BrowsePageContent() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-[1600px] mx-auto px-6 py-5">
+      <div ref={contentRef} className="flex-1 overflow-hidden">
+        <div className="h-full max-w-[1600px] mx-auto px-6 py-5 flex flex-col">
         {/* Header row */}
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -375,10 +379,10 @@ function BrowsePageContent() {
         </AnimatePresence>
 
         {/* Main grid: sidebar + content */}
-        <div className="flex gap-6">
+        <div className="flex gap-6 flex-1 min-h-0">
           {/* Filter sidebar */}
           {tab === "browse" && (
-            <div className="w-[240px] shrink-0 filter-sidebar rounded-xl overflow-hidden self-start sticky top-[100px]">
+            <div className="w-[240px] shrink-0 overflow-y-auto overflow-x-hidden rounded-xl">
               <FilterPanel
                 filters={filters}
                 options={{
@@ -394,7 +398,7 @@ function BrowsePageContent() {
           )}
 
           {/* Content area */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-y-auto">
             {/* Continue where you left off banner */}
             {pendingBooking && tab === "browse" && (
               <motion.div
@@ -522,6 +526,7 @@ function BrowsePageContent() {
             ) : null}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Slide-in detail panel */}
