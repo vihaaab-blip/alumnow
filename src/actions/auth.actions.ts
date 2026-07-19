@@ -59,16 +59,23 @@ export async function signupAlumni(input: {
             graduationYearJbcn: data.graduationYearJbcn,
             bio: data.bio,
             languages: data.languages ? JSON.stringify(data.languages.split(",").map((l: string) => l.trim()).filter(Boolean)) : "[]",
+            verificationStatus: "pending",
+            isVerifiedJbcnAlumnus: false,
             sessionTypes: { create: data.sessionTypes.map((st) => ({ type: st.type, pricePaise: st.pricePaise, maxParticipants: st.maxParticipants ?? 1, descriptionOneLiner: st.descriptionOneLiner })) },
             availability: { create: data.availability.map((a) => ({ dayOfWeek: a.dayOfWeek, startTime: a.startTime, endTime: a.endTime })) },
           },
         },
       },
     });
-    await sendEmail(emailTemplates.signupVerification(email, data.fullName), user.id);
+    try {
+      await sendEmail(emailTemplates.signupVerification(email, data.fullName), user.id);
+    } catch (error) {
+      console.warn("signupAlumni notification failed", error);
+    }
     return { success: true, data: { redirectTo: "/alumni/dashboard" } };
-  } catch {
-    return { success: false, error: "Something went wrong. Please try again." };
+  } catch (error) {
+    console.error("signupAlumni failed", error);
+    return { success: false, error: "Could not submit application. Please try again." };
   }
 }
 export async function logout() { await signOut({ redirectTo: "/" }); }

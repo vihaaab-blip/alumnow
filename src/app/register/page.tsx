@@ -6,10 +6,6 @@ import { signIn } from "next-auth/react";
 import {
   Check,
   LoaderCircle,
-  Plus,
-  X,
-  Video,
-  Users,
   Upload,
 } from "lucide-react";
 import { signup, signupAlumni } from "@/actions/auth.actions";
@@ -20,24 +16,10 @@ import { Input } from "@/components/ui/Input";
 const inputDark =
   "bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-coral/50 focus:ring-coral/10";
 
-const SESSION_TYPE_OPTIONS = [
-  { value: "one_on_one_video", label: "1:1 Video Call", icon: <Video size={16} /> },
-  { value: "group_session", label: "Group Session", icon: <Users size={16} /> },
-];
-
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const COUNTRIES = [
   "India", "United States", "United Kingdom", "Canada", "Australia",
   "Singapore", "Germany", "France", "Other",
 ];
-
-type SessionTypeRow = {
-  type: string;
-  pricePaise: number;
-  maxParticipants: number;
-  descriptionOneLiner: string;
-};
-type AvailRow = { dayOfWeek: number; startTime: string; endTime: string };
 
 function StudentForm({
   onStatusChange,
@@ -145,6 +127,27 @@ function AlumniWizard({
 }: {
   onStatusChange: (s: string) => void;
 }) {
+  const defaultSessionTypes = [
+    {
+      type: "call_30",
+      pricePaise: 29900,
+      maxParticipants: 1,
+      descriptionOneLiner: "A focused 30-minute mentoring call",
+    },
+    {
+      type: "call_60",
+      pricePaise: 49900,
+      maxParticipants: 1,
+      descriptionOneLiner: "A deeper 60-minute mentoring session",
+    },
+  ];
+
+  const defaultAvailability = [
+    { dayOfWeek: 1, startTime: "17:00", endTime: "19:00" },
+    { dayOfWeek: 3, startTime: "17:00", endTime: "19:00" },
+    { dayOfWeek: 6, startTime: "10:00", endTime: "13:00" },
+  ];
+
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
@@ -159,31 +162,25 @@ function AlumniWizard({
     setPhotoPreview(URL.createObjectURL(file));
   };
 
-  const [sessions, setSessions] = useState<SessionTypeRow[]>([{ type: "one_on_one_video", pricePaise: 99900, maxParticipants: 1, descriptionOneLiner: "" }]);
-  const addSession = () => setSessions((p) => [...p, { type: "one_on_one_video", pricePaise: 99900, maxParticipants: 1, descriptionOneLiner: "" }]);
-  const updSession = (i: number, k: keyof SessionTypeRow, v: string | number) => setSessions((p) => p.map((s, j) => j === i ? { ...s, [k]: v } : s));
-  const delSession = (i: number) => setSessions((p) => p.filter((_, j) => j !== i));
-
-  const [avail, setAvail] = useState<AvailRow[]>([{ dayOfWeek: 0, startTime: "09:00", endTime: "10:00" }]);
-  const addAvail = () => setAvail((p) => [...p, { dayOfWeek: 0, startTime: "09:00", endTime: "10:00" }]);
-  const updAvail = (i: number, k: keyof AvailRow, v: string | number) => setAvail((p) => p.map((a, j) => j === i ? { ...a, [k]: v } : a));
-  const delAvail = (i: number) => setAvail((p) => p.filter((_, j) => j !== i));
-
   const handleSubmit = async () => {
     if (acc.password !== acc.confirmPassword) { setError("Passwords don't match"); return; }
     if (acc.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setError(""); setStatus("creating"); onStatusChange("creating");
-    const r = await signupAlumni({ ...acc, ...profile, sessionTypes: sessions, availability: avail });
+    const r = await signupAlumni({
+      ...acc,
+      ...profile,
+      sessionTypes: defaultSessionTypes,
+      availability: defaultAvailability,
+    });
     if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
     setStatus("verified");
     onStatusChange("verified");
   };
 
-  const totalSteps = 4;
+  const totalSteps = 2;
   const canNext = () => {
-    if (step === 1) return acc.fullName && acc.email && acc.password && acc.confirmPassword;
-    if (step === 2) return profile.universityName && profile.course && profile.country;
-    if (step === 3) return sessions.length > 0 && sessions.every((s) => s.type && s.pricePaise > 0);
+    if (step === 1) return acc.fullName && acc.email && acc.phone && acc.password && acc.confirmPassword;
+    if (step === 2) return profile.universityName && profile.course && profile.country && profile.graduationYearJbcn;
     return true;
   };
 
@@ -208,8 +205,6 @@ function AlumniWizard({
         <h2 className="mt-1 text-xl font-semibold text-white font-heading">
           {step === 1 && "Create your alumni account"}
           {step === 2 && "Complete your profile"}
-          {step === 3 && "Set up session types & pricing"}
-          {step === 4 && "Set your availability"}
         </h2>
       </div>
 
@@ -260,53 +255,6 @@ function AlumniWizard({
         </div>
       )}
 
-      {step === 3 && (
-        <div className="space-y-4">
-          {sessions.map((s, i) => (
-            <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3 relative">
-              {sessions.length > 1 && <button type="button" onClick={() => delSession(i)} className="absolute top-3 right-3 text-white/20 hover:text-white/50"><X size={14} /></button>}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-xs font-medium text-white/40">Type
-                  <select value={s.type} onChange={(e) => updSession(i, "type", e.target.value)}
-                    className="mt-1 w-full rounded-[8px] bg-white/5 border border-white/10 text-white px-3 py-2 text-sm outline-none">
-                    {SESSION_TYPE_OPTIONS.map((o) => <option key={o.value} className="bg-[#1A1A1A] text-white" value={o.value}>{o.label}</option>)}
-                  </select>
-                </label>
-                <label className="block text-xs font-medium text-white/40">Price (₹)
-                  <Input type="number" min={0} value={s.pricePaise} onChange={(e) => updSession(i, "pricePaise", parseInt(e.target.value) || 0)} className={`mt-1 ${inputDark}`} />
-                </label>
-              </div>
-              <label className="block text-xs font-medium text-white/40">Description <Input value={s.descriptionOneLiner} onChange={(e) => updSession(i, "descriptionOneLiner", e.target.value)} className={`mt-1 ${inputDark}`} placeholder="Brief description" /></label>
-            </div>
-          ))}
-          <button type="button" onClick={addSession}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-white/30 hover:text-white/50 hover:border-white/20 hover:bg-white/5 transition-all">
-            <Plus size={16} /> Add another session type
-          </button>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="space-y-4">
-          {avail.map((a, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-              <select value={a.dayOfWeek} onChange={(e) => updAvail(i, "dayOfWeek", parseInt(e.target.value))}
-                className="rounded-[8px] bg-white/5 border border-white/10 text-white px-2 py-2 text-sm outline-none">
-                {DAYS.map((d, di) => <option key={d} className="bg-[#1A1A1A] text-white" value={di}>{d}</option>)}
-              </select>
-              <Input type="time" value={a.startTime} onChange={(e) => updAvail(i, "startTime", e.target.value)} className={`flex-1 ${inputDark}`} />
-              <span className="text-white/15">—</span>
-              <Input type="time" value={a.endTime} onChange={(e) => updAvail(i, "endTime", e.target.value)} className={`flex-1 ${inputDark}`} />
-              {avail.length > 1 && <button type="button" onClick={() => delAvail(i)} className="text-white/20 hover:text-white/50 shrink-0"><X size={14} /></button>}
-            </div>
-          ))}
-          <button type="button" onClick={addAvail}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-white/30 hover:text-white/50 hover:border-white/20 hover:bg-white/5 transition-all">
-            <Plus size={16} /> Add time slot
-          </button>
-        </div>
-      )}
-
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex gap-3 pt-2">
@@ -324,7 +272,7 @@ function AlumniWizard({
         ) : (
           <button type="button" onClick={handleSubmit} disabled={!canNext() || status !== "idle"}
             className="flex-1 rounded-xl bg-coral px-4 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-            {status === "idle" ? "Create alumni account" : "Creating..."}
+            {status === "idle" ? "Submit application" : "Submitting application..."}
           </button>
         )}
       </div>
