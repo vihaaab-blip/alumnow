@@ -30,8 +30,11 @@ export default function LoginPage() {
         setSubmitting(false);
         return;
       }
+      const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" });
+      const session = await sessionResponse.json();
+      const role = session?.user?.role;
       router.refresh();
-      window.location.replace("/dashboard");
+      window.location.replace(role === "admin" ? "/admin" : role === "alumnus" ? "/alumni/dashboard" : "/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);

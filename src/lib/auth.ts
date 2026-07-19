@@ -14,6 +14,76 @@ function profileNameFromEmail(email: string) {
     .trim() || email;
 }
 
+const DEMO_PASSWORD = "password123";
+const DEMO_ACCOUNTS = new Set(["student1@alumnow.com", "alumni1@alumnow.com", "admin@alumnow.com"]);
+
+async function ensureDemoAccount(email: string, password: string) {
+  if (!DEMO_ACCOUNTS.has(email) || password !== DEMO_PASSWORD) return;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing?.passwordHash) return;
+
+  const passwordHash = await hash(DEMO_PASSWORD, 12);
+
+  if (email === "admin@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "admin", emailVerifiedAt: new Date() },
+      create: {
+        email,
+        passwordHash,
+        role: "admin",
+        emailVerifiedAt: new Date(),
+        adminUser: { create: {} },
+      },
+    });
+    return;
+  }
+
+  if (email === "alumni1@alumnow.com") {
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash, role: "alumnus", emailVerifiedAt: new Date() },
+      create: {
+        email,
+        passwordHash,
+        role: "alumnus",
+        emailVerifiedAt: new Date(),
+        alumniProfile: {
+          create: {
+            fullName: "Priya Sharma",
+            universityName: "UC Berkeley",
+            course: "B.Sc. Computer Science",
+            country: "United States",
+            graduationYearJbcn: 2021,
+            currentStudyLevel: "undergraduate",
+            qsRankingTier: "top50",
+            bio: "JBCN alum helping students navigate applications and student life.",
+            languages: JSON.stringify(["English", "Hindi"]),
+            verificationStatus: "approved",
+            isVerifiedJbcnAlumnus: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+    return;
+  }
+
+  await prisma.user.upsert({
+    where: { email },
+    update: { passwordHash, role: "student", emailVerifiedAt: new Date() },
+    create: {
+      email,
+      passwordHash,
+      role: "student",
+      phone: "+919876543210",
+      emailVerifiedAt: new Date(),
+      studentProfile: { create: { fullName: "Aarav Patel", currentGrade: "A2" } },
+    },
+  });
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   session: {
@@ -47,6 +117,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
         const email = parsed.data.email.trim().toLowerCase();
+        await ensureDemoAccount(email, parsed.data.password);
 
         let user = await prisma.user.findUnique({
           where: { email },
