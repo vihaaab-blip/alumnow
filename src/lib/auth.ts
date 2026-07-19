@@ -1,13 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { compare, hash } from "bcrypt-ts";
 import { prisma } from "./prisma";
 import { loginSchema } from "./validation";
-
-const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_ID ?? "";
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET ?? "";
-const googleConfigured = Boolean(googleClientId && googleClientSecret);
 
 const isSecure = process.env.NODE_ENV === "production";
 
@@ -144,40 +139,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-    ...(googleConfigured ? [
-      Google({
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-      }),
-    ] : []),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user?.email) {
-        const email = user.email;
-        const existing = await prisma.user.findUnique({ where: { email } });
-        if (!existing) {
-          const newUser = await prisma.user.create({
-            data: {
-              email,
-              emailVerifiedAt: new Date(),
-              role: "student",
-              studentProfile: {
-                create: { fullName: user.name ?? email.split("@")[0] ?? email },
-              },
-            },
-          });
-          user.id = newUser.id;
-          (user as any).role = newUser.role;
-        } else {
-          user.id = existing.id;
-          (user as any).role = existing.role;
-          user.name = user.name ?? email;
-          if (!existing.emailVerifiedAt) {
-            await prisma.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } });
-          }
-        }
-      } else if (account?.provider === "credentials" && user?.id) {
+      if (account?.provider === "credentials" && user?.id) {
         const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, role: true } });
         if (dbUser) {
           (user as any).role = dbUser.role;
