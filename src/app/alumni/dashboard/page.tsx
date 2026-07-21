@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { getAlumniBookings } from "@/actions/booking.actions";
@@ -299,7 +299,7 @@ function AlumniDashboardContent() {
             <div className="relative flex items-center gap-4">
               <div className="relative">
                 <img
-                  src={session.user?.image ?? `https://picsum.photos/seed/${session.user.id}/100/100`}
+                  src={`https://picsum.photos/seed/${session.user.id}/100/100`}
                   alt={session.user?.name ?? "Profile"}
                   className="h-[52px] w-[52px] rounded-[12px] border-2 border-white/[0.12] object-cover shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
                 />

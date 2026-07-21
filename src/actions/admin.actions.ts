@@ -1,11 +1,11 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { randomBytes } from "node:crypto";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
-import { hash } from "bcrypt-ts";
 
 async function guard() {
-  const session = await auth();
-  if (!session?.user?.id || (session.user as any).role !== "admin") throw new Error("Admin access required.");
+  const session = await getServerSession();
+  if (!session?.user?.id || session.user.role !== "admin") throw new Error("Admin access required.");
   return session.user.id;
 }
 
@@ -76,11 +76,19 @@ export async function createAlumniProfile(data: {
   pricePaise?: number
 }) {
   await guard();
-  const passwordHash = await hash("temp123456", 10);
+  const { createServerSupabaseClient } = await import("@/utils/supabase/server");
+  const supabase = await createServerSupabaseClient();
+  const tempPassword = randomBytes(16).toString("hex");
+  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    email: data.email,
+    password: tempPassword,
+    options: { data: { role: "alumnus", full_name: data.fullName } },
+  });
+  if (signUpError || !authData.user) throw new Error("Failed to create user in Supabase Auth.");
   const user = await prisma.user.create({
     data: {
+      id: authData.user.id,
       email: data.email,
-      passwordHash,
       role: "alumnus",
       alumniProfile: {
         create: {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Poppins, Fraunces } from "next/font/google";
-import { SessionProvider } from "./SessionProvider";
+import { SupabaseProvider } from "@/components/SupabaseProvider";
 import { RouteNav } from "@/components/RouteNav";
 import { RouteFooter } from "@/components/RouteFooter";
 import { Toaster } from "@/components/ui/Toaster";
@@ -42,7 +42,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} ${fraunces.variable} font-sans app-background`}
       >
-        <SessionProvider>
+        <SupabaseProvider>
           <QueryProvider>
             <div className="flex min-h-[100dvh] flex-col">
               <RouteNav />
@@ -51,7 +51,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </QueryProvider>
-        </SessionProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

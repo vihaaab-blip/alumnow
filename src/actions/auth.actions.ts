@@ -1,9 +1,6 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
-import { hash, compare } from "bcrypt-ts";
-import { AuthError } from "next-auth";
-import { signOut } from "@/lib/auth";
+import { createServerSupabaseClient } from "@/utils/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, signupAlumniSchema } from "@/lib/validation";
 import { sendEmail, emailTemplates } from "@/lib/email";
@@ -12,21 +9,78 @@ import { rateLimit } from "@/lib/rate-limit";
 import type { ApiResponse } from "@/types";
 
 export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
-  try { const parsed = signupSchema.parse(input); const email = parsed.email.trim().toLowerCase(); const existing = await prisma.user.findUnique({ where: { email } }); if (existing) return { success: false, error: "An account with this email already exists." }; const passwordHash = await hash(parsed.password, 12); await prisma.user.create({ data: { email, passwordHash, phone: parsed.phone, role: "student", emailVerifiedAt: new Date(), studentProfile: { create: { fullName: parsed.fullName, dateOfBirth: parsed.dateOfBirth instanceof Date ? parsed.dateOfBirth : null, currentGrade: parsed.currentGrade, school: parsed.school } } } }); return { success: true, data: { redirectTo: "/dashboard" } }; } catch (error) { if (error instanceof Error && "flatten" in error) return { success: false, error: "Please check your details." }; return { success: false, error: "Something went wrong. Please try again." }; }
+  try {
+    const parsed = signupSchema.parse(input);
+    const email = parsed.email.trim().toLowerCase();
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return { success: false, error: "An account with this email already exists." };
+
+    const supabase = await createServerSupabaseClient();
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: parsed.password,
+      options: {
+        data: {
+          role: "student",
+          full_name: parsed.fullName,
+          phone: parsed.phone,
+        },
+      },
+    });
+
+    if (signUpError || !authData.user) {
+      console.error("Supabase signup failed:", signUpError);
+      return { success: false, error: "Could not create account. Please try again." };
+    }
+
+    await prisma.user.create({
+      data: {
+        id: authData.user.id,
+        email,
+        phone: parsed.phone,
+        role: "student",
+        emailVerifiedAt: new Date(),
+        studentProfile: {
+          create: {
+            fullName: parsed.fullName,
+            dateOfBirth: parsed.dateOfBirth instanceof Date ? parsed.dateOfBirth : null,
+            currentGrade: parsed.currentGrade,
+            school: parsed.school,
+          },
+        },
+      },
+    });
+
+    await supabase.auth.signOut();
+
+    return { success: true, data: { redirectTo: "/dashboard" } };
+  } catch (error) {
+    if (error instanceof Error && "flatten" in error) return { success: false, error: "Please check your details." };
+    console.error("signup error:", error);
+    return { success: false, error: "Something went wrong. Please try again." };
+  }
 }
 
 export async function login(input: { email: string; password: string }): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
     const parsed = loginSchema.parse(input);
-    const email = parsed.email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email }, select: { role: true, passwordHash: true } });
-    if (!user?.passwordHash) return { success: false, error: "Invalid email or password." };
-    const valid = await compare(parsed.password, user.passwordHash);
-    if (!valid) return { success: false, error: "Invalid email or password." };
-    const redirectTo = user.role === "alumnus" ? "/alumni/dashboard" : user.role === "admin" ? "/admin" : "/dashboard";
+
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: parsed.email.trim().toLowerCase(),
+      password: parsed.password,
+    });
+
+    if (error || !data.session) {
+      return { success: false, error: "Invalid email or password." };
+    }
+
+    const role = data.user.user_metadata?.role as string ?? "student";
+    const redirectTo = role === "alumnus" ? "/alumni/dashboard" : role === "admin" ? "/admin" : "/dashboard";
     return { success: true, data: { redirectTo } };
   } catch (error) {
-    if (error instanceof AuthError) return { success: false, error: "Invalid email or password." };
+    console.error("login error:", error);
     return { success: false, error: "Unable to sign in." };
   }
 }
@@ -45,12 +99,32 @@ export async function signupAlumni(input: {
     }
     const { data } = parsed;
     const email = data.email.trim().toLowerCase();
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return { success: false, error: "An account with this email already exists." };
-    const passwordHash = await hash(data.password, 12);
+
+    const supabase = await createServerSupabaseClient();
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: data.password,
+      options: {
+        data: {
+          role: "alumnus",
+          full_name: data.fullName,
+          phone: data.phone,
+        },
+      },
+    });
+
+    if (signUpError || !authData.user) {
+      console.error("Supabase alumni signup failed:", signUpError);
+      return { success: false, error: "Could not create account. Please try again." };
+    }
+
     const user = await prisma.user.create({
       data: {
-        email, passwordHash, phone: data.phone, role: "alumnus", emailVerifiedAt: new Date(),
+        id: authData.user.id,
+        email, phone: data.phone, role: "alumnus", emailVerifiedAt: new Date(),
         alumniProfile: {
           create: {
             fullName: data.fullName,
@@ -68,6 +142,9 @@ export async function signupAlumni(input: {
         },
       },
     });
+
+    await supabase.auth.signOut();
+
     try {
       await sendEmail(emailTemplates.signupVerification(email, data.fullName), user.id);
     } catch (error) {
@@ -79,7 +156,11 @@ export async function signupAlumni(input: {
     return { success: false, error: "Could not submit application. Please try again." };
   }
 }
-export async function logout() { await signOut({ redirectTo: "/" }); }
+
+export async function logout() {
+  const supabase = await createServerSupabaseClient();
+  await supabase.auth.signOut();
+}
 
 export async function forgotPassword(input: unknown): Promise<ApiResponse<undefined>> {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
@@ -87,13 +168,23 @@ export async function forgotPassword(input: unknown): Promise<ApiResponse<undefi
     return { success: false, error: "Too many requests. Try again later." };
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Enter a valid email address." };
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (user) {
-    const token = randomBytes(32).toString("hex");
-    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
-    await prisma.passwordResetToken.create({ data: { userId: user.id, token, expiresAt: new Date(Date.now() + 1800000) } });
-    await sendEmail({ to: user.email, subject: "Reset your AlumNow password", body: `Reset link: ${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password?token=${token}`, eventType: "password_reset_requested" }, user.id);
-  }
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password`,
+  });
+  if (error) console.error("forgotPassword supabase error:", error);
+
   return { success: true };
 }
-export async function resetPassword(input: unknown): Promise<ApiResponse<undefined>> { const parsed = resetPasswordSchema.safeParse(input); if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid reset details." }; const token = await prisma.passwordResetToken.findUnique({ where: { token: parsed.data.token } }); if (!token || token.expiresAt < new Date()) return { success: false, error: "This reset link has expired. Request a new one." }; await prisma.$transaction([prisma.user.update({ where: { id: token.userId }, data: { passwordHash: await hash(parsed.data.password, 12) } }), prisma.passwordResetToken.delete({ where: { id: token.id } })]); return { success: true }; }
+
+export async function resetPassword(input: unknown): Promise<ApiResponse<undefined>> {
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid reset details." };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { success: false, error: "Failed to reset password. The link may have expired." };
+
+  return { success: true };
+}

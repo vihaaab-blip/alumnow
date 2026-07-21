@@ -1,12 +1,12 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
 import { bookingDraftSchema } from "@/lib/validation";
 import { sendEmail, emailTemplates } from "@/lib/email";
 
 async function studentId() {
-  const session = await auth();
-  if (!session?.user?.id || (session.user as any).role !== "student")
+  const session = await getServerSession();
+  if (!session?.user?.id || session.user.role !== "student")
     throw new Error("Please sign in as a student.");
   return session.user.id;
 }
@@ -111,8 +111,8 @@ export async function getMyBookings() {
 
 export async function getAlumniBookings() {
   try {
-    const session = await auth();
-    if (!session?.user?.id || (session.user as any).role !== "alumnus") {
+    const session = await getServerSession();
+    if (!session?.user?.id || session.user.role !== "alumnus") {
       return [];
     }
     const profile = await prisma.alumniProfile.findUnique({

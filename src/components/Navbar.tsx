@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, LogOut, UserRound, Shield, ArrowRight } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/hooks/useSession";
 import { Button } from "./ui/Button";
 import { Logo } from "./Logo";
 

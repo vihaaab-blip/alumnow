@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { getMyBookings, getAlumniBookings } from "@/actions/booking.actions";
@@ -380,7 +380,7 @@ function DashboardContent() {
             <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <img
-                  src={session.user?.image ?? `https://picsum.photos/seed/${session.user?.id}/100/100`}
+                  src={`https://picsum.photos/seed/${session.user?.id}/100/100`}
                   alt={session.user?.name ?? "Profile"}
                   className="h-14 w-14 rounded-[14px] border border-white/12 object-cover"
                 />
@@ -491,7 +491,7 @@ function DashboardContent() {
             <div className="relative flex items-center gap-4">
               <div className="relative">
                 <img
-                  src={session.user?.image ?? `https://picsum.photos/seed/${session.user?.id}/100/100`}
+                  src={`https://picsum.photos/seed/${session.user?.id}/100/100`}
                   alt={session.user?.name ?? "Profile"}
                   className="h-[52px] w-[52px] rounded-[12px] border-2 border-white/[0.12] object-cover shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
                 />
@@ -701,7 +701,7 @@ function DashboardContent() {
                       return (
                         <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
                           <div className="relative shrink-0">
-                            <img src={b.alumni?.user?.image ?? b.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${b.alumniId}/80/80`}
+                            <img src={b.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${b.alumniId}/80/80`}
                               alt={b.alumni?.fullName || "Mentor"} className="h-9 w-9 rounded-full object-cover" />
                             <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
                           </div>
@@ -814,7 +814,7 @@ function DashboardContent() {
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">
                                 <img src={dashboardMode === "student"
-                                  ? (booking.alumni?.user?.image ?? booking.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${booking.alumniId}/80/80`)
+                                  ? (booking.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${booking.alumniId}/80/80`)
                                   : (booking.student?.image ?? `https://picsum.photos/seed/${booking.studentId}/80/80`)}
                                   alt={dashboardMode === "student" ? (booking.alumni?.fullName || "Mentor") : (booking.student?.studentProfile?.fullName || "Student")}
                                   className="h-8 w-8 rounded-full object-cover" />

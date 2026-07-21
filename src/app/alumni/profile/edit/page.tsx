@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AlumniProfileEditPage() {
-  const session = await auth();
+  const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
 
   const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });

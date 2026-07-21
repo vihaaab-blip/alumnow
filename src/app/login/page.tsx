@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { useSupabase } from "@/components/SupabaseProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { supabase } = useSupabase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,21 +21,22 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await signIn("credentials", {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
-      if (result?.error) {
+
+      if (signInError || !data.session) {
         setError("No account found with this email. Please sign up first.");
         setSubmitting(false);
         return;
       }
-      const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" });
-      const session = await sessionResponse.json();
-      const role = session?.user?.role;
+
+      const role = data.user.user_metadata?.role ?? "student";
       router.refresh();
-      window.location.replace(role === "admin" ? "/admin" : role === "alumnus" ? "/alumni/dashboard" : "/dashboard");
+      window.location.replace(
+        role === "admin" ? "/admin" : role === "alumnus" ? "/alumni/dashboard" : "/dashboard"
+      );
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -45,7 +47,6 @@ export default function LoginPage() {
     <div className="relative min-h-screen overflow-hidden bg-[#0D0D0D]">
       <div className="relative z-10 mx-auto flex min-h-screen items-center justify-center px-4 py-8">
         <div className="flex w-full max-w-[1040px] min-h-[650px] flex-col overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#1A1A1A] shadow-lg md:flex-row">
-          {/* Left — Branding */}
           <div className="relative w-full md:w-[45%] min-h-[300px] md:min-h-full overflow-hidden rounded-[2rem] bg-[#0D0D0D] m-2 flex items-center justify-center">
             <div className="text-center px-8">
               <Logo className="text-4xl" />
@@ -56,7 +57,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right — Form */}
           <div className="relative flex w-full md:w-[55%] flex-col justify-center px-10 py-12 md:px-14">
             <div className="relative z-10">
               <h1 className="text-center text-[40px] font-semibold tracking-tight text-white font-heading">

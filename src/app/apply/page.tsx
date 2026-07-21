@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSupabase } from "@/components/SupabaseProvider";
 import { Check, LoaderCircle, Upload } from "lucide-react";
 import { applyAsAlumni } from "@/actions/alumni.actions";
 import { Button } from "@/components/ui/Button";
@@ -25,6 +26,7 @@ const inputDark =
   "bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-coral/50 focus:ring-coral/10";
 
 export default function ApplyPage() {
+  const { supabase } = useSupabase();
   const [data, setData] = useState(initial);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -64,7 +66,23 @@ export default function ApplyPage() {
       return;
     }
     setStatus("creating");
-    const result = await applyAsAlumni(data);
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email: data.email.trim().toLowerCase(),
+      password: data.password,
+      options: {
+        data: {
+          role: "alumnus",
+          full_name: data.fullName,
+          phone: data.phone,
+        },
+      },
+    });
+    if (signUpError) {
+      setError(signUpError.message);
+      setStatus("idle");
+      return;
+    }
+    const result = await applyAsAlumni({ ...data, authUserId: authData.user!.id });
     if (!result.success) {
       setError(result.error ?? "Please check your details.");
       setStatus("idle");

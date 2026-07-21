@@ -1,8 +1,8 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
 export async function getSavedAlumni() {
-  const session = await auth();
+  const session = await getServerSession();
   if (!session?.user?.id) return [];
   const saved = await prisma.savedAlumni.findMany({
     where: { studentId: session.user.id },

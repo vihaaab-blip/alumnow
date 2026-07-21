@@ -1,13 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 import { alumniProfileSchema, sessionTypeSchema } from "@/lib/validation";
 import { redirect } from "next/navigation";
 import type { ApiResponse } from "@/types";
 
 async function guard() {
-  const session = await auth();
+  const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
   const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });
   if (!profile) redirect("/apply");

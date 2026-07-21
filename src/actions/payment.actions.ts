@@ -1,11 +1,11 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
 import { paymentRefSchema } from "@/lib/validation";
 import { sendEmail, emailTemplates } from "@/lib/email";
 export async function submitPaymentRef(bookingId: string, input: unknown) {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Please sign in." };
     const parsed = paymentRefSchema.safeParse(input);
     if (!parsed.success)

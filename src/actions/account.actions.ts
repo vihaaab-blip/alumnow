@@ -1,7 +1,7 @@
 "use server";
 
-import { hash, compare } from "bcrypt-ts";
-import { auth } from "@/lib/auth";
+import { createServerSupabaseClient } from "@/utils/supabase/server";
+import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
 import type { ApiResponse } from "@/types";
 import { z } from "zod";
@@ -25,7 +25,7 @@ const updatePhoneSchema = z.object({
 
 export async function updateAccountName(input: unknown): Promise<ApiResponse<{ name: string }>> {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Not authenticated." };
 
     const parsed = updateNameSchema.safeParse(input);
@@ -58,23 +58,24 @@ export async function updateAccountName(input: unknown): Promise<ApiResponse<{ n
 
 export async function changePassword(input: unknown): Promise<ApiResponse<undefined>> {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Not authenticated." };
 
     const parsed = changePasswordSchema.safeParse(input);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
 
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user?.passwordHash) return { success: false, error: "Account uses social login. Cannot change password." };
+    const supabase = await createServerSupabaseClient();
 
-    const valid = await compare(parsed.data.currentPassword, user.passwordHash);
-    if (!valid) return { success: false, error: "Current password is incorrect." };
-
-    const newHash = await hash(parsed.data.newPassword, 12);
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newHash },
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: session.user.email,
+      password: parsed.data.currentPassword,
     });
+    if (signInError) return { success: false, error: "Current password is incorrect." };
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: parsed.data.newPassword,
+    });
+    if (updateError) return { success: false, error: "Failed to change password." };
 
     return { success: true };
   } catch (error) {
@@ -85,7 +86,7 @@ export async function changePassword(input: unknown): Promise<ApiResponse<undefi
 
 export async function updateAccountPhone(input: unknown): Promise<ApiResponse<undefined>> {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Not authenticated." };
 
     const parsed = updatePhoneSchema.safeParse(input);
@@ -117,7 +118,7 @@ export async function getAccountData(): Promise<ApiResponse<{
   alumniUniversity: string | null;
 }>> {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Not authenticated." };
 
     const user = await prisma.user.findUnique({
@@ -138,7 +139,7 @@ export async function getAccountData(): Promise<ApiResponse<{
         role: user.role,
         createdAt: user.createdAt,
         name,
-        hasPassword: Boolean(user.passwordHash),
+        hasPassword: true,
         profilePhotoUrl,
         studentGrade: user.studentProfile?.currentGrade ?? null,
         school: user.studentProfile?.school ?? null,

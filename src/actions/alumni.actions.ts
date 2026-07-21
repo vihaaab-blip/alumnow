@@ -1,13 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
-import { hash } from "bcrypt-ts";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { alumniApplicationSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ApiResponse } from "@/types";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/supabase-auth";
 
 export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
   const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
@@ -18,9 +17,10 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
   if (exists) return { success: false, error: "An account with this email already exists. Try logging in." };
   const langStr = parsed.data.languages ?? "";
   const languages = JSON.stringify(langStr.split(",").map((item) => item.trim()).filter(Boolean));
-  const passwordHash = await hash(parsed.data.password, 12);
+  const authUserId = (input as any).authUserId as string | undefined;
+  if (!authUserId) return { success: false, error: "Authentication failed. Please try again." };
   const user = await prisma.$transaction(async (tx) => {
-    const account = await tx.user.create({ data: { email: parsed.data.email, phone: parsed.data.phone, role: "alumnus", passwordHash, emailVerifiedAt: new Date() } });
+    const account = await tx.user.create({ data: { id: authUserId, email: parsed.data.email, phone: parsed.data.phone, role: "alumnus", emailVerifiedAt: new Date() } });
     const photoUrl = parsed.data.profilePhotoUrl || `https://picsum.photos/seed/${encodeURIComponent(parsed.data.fullName)}/400/400`;
     await tx.alumniProfile.create({ data: { userId: account.id, fullName: parsed.data.fullName, profilePhotoUrl: photoUrl, universityName: parsed.data.universityName, course: parsed.data.course, country: parsed.data.country, graduationYearJbcn: parsed.data.graduationYearJbcn, bio: parsed.data.bio, languages, verificationStatus: "pending", isVerifiedJbcnAlumnus: false, avgResponseTimeHours: 6, sessionTypes: { create: [{ type: "call_30", pricePaise: 29900, descriptionOneLiner: "A focused 30-minute conversation" }, { type: "call_45", pricePaise: 39900, descriptionOneLiner: "A balanced 45-minute conversation" }, { type: "call_60", pricePaise: 49900, descriptionOneLiner: "A deeper one-hour conversation" }, { type: "group_40", pricePaise: 99900, maxParticipants: 6, descriptionOneLiner: "Learn together in a small group" }] } } });
     return account;
@@ -109,7 +109,7 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
       prisma.alumniProfile.count({ where }),
     ]);
 
-    const session = await auth();
+    const session = await getServerSession();
     const saved = session?.user?.id
       ? await prisma.savedAlumni.findMany({ where: { studentId: session.user.id }, select: { alumniId: true } })
       : [];
@@ -134,7 +134,7 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
 
 export async function getAlumniById(id: string) {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     const alumni = await prisma.alumniProfile.findUnique({
       where: { id, verificationStatus: "approved" },
       include: { sessionTypes: true, availability: true },
@@ -191,7 +191,7 @@ export async function getFilterOptions(country?: string) {
 
 export async function saveAlumni(alumniId: string) {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Please sign in." };
     await prisma.savedAlumni.upsert({
       where: { studentId_alumniId: { studentId: session.user.id, alumniId } },
@@ -207,7 +207,7 @@ export async function saveAlumni(alumniId: string) {
 
 export async function unsaveAlumni(alumniId: string) {
   try {
-    const session = await auth();
+    const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Please sign in." };
     await prisma.savedAlumni.deleteMany({ where: { studentId: session.user.id, alumniId } });
     return { success: true };

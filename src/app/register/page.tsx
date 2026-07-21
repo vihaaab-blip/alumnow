@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { useSupabase } from "@/components/SupabaseProvider";
 import {
   Check,
   LoaderCircle,
@@ -26,6 +26,7 @@ function StudentForm({
 }: {
   onStatusChange: (s: string) => void;
 }) {
+  const { supabase } = useSupabase();
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
   const [fullName, setFullName] = useState("");
@@ -60,16 +61,11 @@ function StudentForm({
       onStatusChange("idle");
       return;
     }
-    const result = await signIn("credentials", {
-      email,
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
       password,
-      createIfMissing: "student",
-      fullName,
-      phone,
-      school: school || "Not specified",
-      redirect: false,
     });
-    if (result?.error) {
+    if (signInError) {
       setError("Account created but sign-in failed. Please go to login.");
       setStatus("idle");
       onStatusChange("idle");

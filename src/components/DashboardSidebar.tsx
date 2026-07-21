@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/hooks/useSession";
 import { Logo } from "./Logo";
 import {
   LayoutDashboard, Search, BookOpen, Star, User, Settings,
@@ -87,7 +87,7 @@ export function DashboardSidebar() {
         {session?.user && (
           <div className="flex items-center gap-2.5 px-3 py-2">
             <img
-              src={session.user.image ?? `https://picsum.photos/seed/${(session.user as any).id}/80/80`}
+              src={`https://picsum.photos/seed/${session.user.id}/80/80`}
               alt={session.user.name ?? "User"}
               className="h-8 w-8 rounded-full border border-white/15 object-cover"
             />

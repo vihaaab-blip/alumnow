@@ -1,6 +1,8 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+"use client";
+
+import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";

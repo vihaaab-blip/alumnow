@@ -124,48 +124,10 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   role: 'role',
   email: 'email',
-  passwordHash: 'passwordHash',
   phone: 'phone',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  emailVerifiedAt: 'emailVerifiedAt',
-  googleOauthId: 'googleOauthId'
-};
-
-exports.Prisma.AccountScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  type: 'type',
-  provider: 'provider',
-  providerAccountId: 'providerAccountId',
-  refreshToken: 'refreshToken',
-  accessToken: 'accessToken',
-  expiresAt: 'expiresAt',
-  tokenType: 'tokenType',
-  scope: 'scope',
-  idToken: 'idToken',
-  sessionState: 'sessionState'
-};
-
-exports.Prisma.SessionScalarFieldEnum = {
-  id: 'id',
-  sessionToken: 'sessionToken',
-  userId: 'userId',
-  expires: 'expires'
-};
-
-exports.Prisma.VerificationTokenScalarFieldEnum = {
-  identifier: 'identifier',
-  token: 'token',
-  expires: 'expires'
-};
-
-exports.Prisma.PasswordResetTokenScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  token: 'token',
-  expiresAt: 'expiresAt',
-  createdAt: 'createdAt'
+  emailVerifiedAt: 'emailVerifiedAt'
 };
 
 exports.Prisma.StudentProfileScalarFieldEnum = {
@@ -318,10 +280,6 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
-  Account: 'Account',
-  Session: 'Session',
-  VerificationToken: 'VerificationToken',
-  PasswordResetToken: 'PasswordResetToken',
   StudentProfile: 'StudentProfile',
   AlumniProfile: 'AlumniProfile',
   AlumniAvailability: 'AlumniAvailability',

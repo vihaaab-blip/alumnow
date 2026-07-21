@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/hooks/useSession";
 import {
   LayoutDashboard,
   Search,
@@ -64,10 +64,7 @@ export function Sidebar() {
         {session?.user && (
           <div className="flex items-center gap-3 px-3 py-2.5">
             <img
-              src={
-                session.user.image ??
-                `https://picsum.photos/seed/${session.user.id}/80/80`
-              }
+              src={`https://picsum.photos/seed/${session.user.id}/80/80`}
               alt={session.user.name ?? ""}
               className="h-7 w-7 rounded-[6px] object-cover shrink-0"
             />

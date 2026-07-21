@@ -11,17 +11,25 @@
 
 ## Important Codebase Conventions
 - `primary` Tailwind color = `#FFFFFF` (white) — never use `bg-primary text-white` (invisible on dark bg); use `bg-background text-white` or `bg-accent text-white`
-- SQLite database at `prisma/dev.db`
-- Auth: NextAuth v5 with JWT strategy, Credentials provider only
-- Admin role check: `(session.user as any).role !== "admin"`
-- Demo accounts exist in `auth.ts`: `admin@alumnow.com`, `alumni1@alumnow.com`, `student1@alumnow.com` with password `password123`
+- Auth: Supabase Auth (email/password), NOT NextAuth. Uses `auth.users` table managed by Supabase.
+- Prisma User table uses Supabase auth UUID as `User.id` (no `@default(cuid())`)
+- Session: `useSession()` from `@/hooks/useSession` returns same shape as next-auth
+- Server session: `getServerSession()` from `@/lib/supabase-auth` replaces `auth()` from `@/lib/auth`
+- Admin role check: `session.user.role !== "admin"`
+- Client-side sign-in: `signIn("credentials", { email, password })` from `@/hooks/useSession`
+- Client-side sign-out: `signOut()` from `@/hooks/useSession`
+- User metadata (role, full_name) stored in `auth.users.raw_user_meta_data` during signup
 
 ## Database Schema Notes
 - `AlumniProfile.verificationStatus` defaults to `"pending"` (lowercase) — always use lowercase when filtering
-- `bootstrapSqliteSchema` in `prisma.ts` auto-adds `isActive` column if missing
 - `isVerifiedJbcnAlumnus` column exists in the initial migration
+- All IDs in Prisma are Supabase auth UUIDs (for User) or Prisma-generated cuids (for other models)
+- Database: PostgreSQL via Supabase at `db.rxravqontgymnmcmiaew.supabase.co`
+- Prisma manages all tables (User, StudentProfile, AlumniProfile, Booking, etc.)
 
 ## Common Fixes
 - White-on-white text: search for `bg-primary text-white` patterns and replace
 - Case-sensitive filter: ensure filter values match DB casing (lowercase)
 - Admin approve error: check `guard()` auth first, then Prisma update
+- `document is not defined` during build: add `typeof document === "undefined"` guards in cookie handlers
+- Session persistence: Supabase `persistSession: true` is default in `createBrowserClient` — don't disable it
