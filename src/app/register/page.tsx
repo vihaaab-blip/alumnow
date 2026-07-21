@@ -167,12 +167,19 @@ function AlumniWizard({
     if (acc.password !== acc.confirmPassword) { setError("Passwords don't match"); return; }
     if (acc.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setError(""); setStatus("creating"); onStatusChange("creating");
-    const r = await signupAlumni({
-      ...acc,
-      ...profile,
-      sessionTypes: defaultSessionTypes,
-    });
-    if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
+    try {
+      const r = await signupAlumni({
+        ...acc,
+        ...profile,
+        sessionTypes: defaultSessionTypes,
+      });
+      if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
+    } catch (e) {
+      console.error("signupAlumni unexpected error:", e);
+      setError("Something went wrong. Please try again.");
+      setStatus("idle"); onStatusChange("idle");
+      return;
+    }
     setStatus("verified");
     onStatusChange("verified");
   };

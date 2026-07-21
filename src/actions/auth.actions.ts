@@ -39,7 +39,10 @@ export async function signupAlumni(input: {
 }): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
     const parsed = signupAlumniSchema.safeParse(input);
-    if (!parsed.success) return { success: false, error: "Please check your details." };
+    if (!parsed.success) {
+      console.error("signupAlumni validation error:", parsed.error.issues);
+      return { success: false, error: "Please check your details." };
+    }
     const { data } = parsed;
     const email = data.email.trim().toLowerCase();
     const existing = await prisma.user.findUnique({ where: { email } });

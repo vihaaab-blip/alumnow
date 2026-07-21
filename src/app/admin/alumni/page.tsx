@@ -93,8 +93,9 @@ export default function AdminAlumniPage() {
     try {
       const result = await getAllAlumni({ page: p, pageSize: 20, search: debouncedSearch, status: statusFilter });
       setData(result as any);
-    } catch {
-      toast({ title: "Failed to load alumni", variant: "error" });
+    } catch (e) {
+      console.error("Failed to load alumni:", e);
+      toast({ title: "Failed to load alumni", description: e instanceof Error ? e.message : "Unknown error", variant: "error" });
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,7 @@ export default function AdminAlumniPage() {
       setCreateOpen(false);
       setCreateForm({ fullName: "", email: "", bio: "", pricePaise: "" });
       load(page);
-    } catch { toast({ title: "Failed to create alumni", variant: "error" }); }
+    } catch (e) { console.error("Create alumni error:", e); toast({ title: "Failed to create alumni", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
   };
 
   const handleApprove = async (id: string) => {
@@ -133,7 +134,7 @@ export default function AdminAlumniPage() {
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as any : row) } : prev);
       toast({ title: "Alumni rejected — will not appear on marketplace", variant: "success" });
       setDetailItem(null);
-    } catch { toast({ title: "Failed to reject", variant: "error" }); }
+    } catch (e) { console.error("Reject error:", e); toast({ title: "Failed to reject", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
   };
 
@@ -144,7 +145,7 @@ export default function AdminAlumniPage() {
       await toggleAlumniActive(id, !item.isActive);
       setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as any : i) } : prev);
       toast({ title: item.isActive ? "Alumni deactivated" : "Alumni activated", variant: "success" });
-    } catch { toast({ title: "Failed to update", variant: "error" }); }
+    } catch (e) { console.error("Toggle active error:", e); toast({ title: "Failed to update", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
   };
 

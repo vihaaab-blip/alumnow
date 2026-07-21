@@ -117,7 +117,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
         const email = parsed.data.email.trim().toLowerCase();
-        await ensureDemoAccount(email, parsed.data.password);
+        try {
+          await ensureDemoAccount(email, parsed.data.password);
+        } catch (e) {
+          console.error("ensureDemoAccount failed:", e);
+        }
 
         let user = await prisma.user.findUnique({
           where: { email },
@@ -166,9 +170,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "credentials" && user?.id) {
-        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, role: true } });
-        if (dbUser) {
-          (user as any).role = dbUser.role;
+        try {
+          const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, role: true } });
+          if (dbUser) {
+            (user as any).role = dbUser.role;
+          }
+        } catch (e) {
+          console.error("signIn callback DB lookup failed:", e);
         }
       }
       return true;
