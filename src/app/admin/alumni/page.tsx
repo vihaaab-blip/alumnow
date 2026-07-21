@@ -80,7 +80,7 @@ export default function AdminAlumniPage() {
   const [data, setData] = useState<PaginatedResult<AdminAlumniExtended> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" | "approve" | "reject" } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -190,7 +190,7 @@ export default function AdminAlumniPage() {
       <div className="mt-6 flex items-center gap-3">
         <Input placeholder="Search by name or bio..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <div className="flex gap-1 rounded-xl bg-white/5 p-1 border border-white/10">
-          {["PENDING", "ALL", "APPROVED", "REJECTED"].map((s) => (
+          {["pending", "all", "approved", "rejected"].map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -198,8 +198,8 @@ export default function AdminAlumniPage() {
                 statusFilter === s ? "bg-background text-white" : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
             >
-              {s === "PENDING" ? "Pending" : s === "ALL" ? "All" : s === "APPROVED" ? "Approved" : "Rejected"}
-              {s === "PENDING" && data && (
+              {s === "pending" ? "Pending" : s === "all" ? "All" : s === "approved" ? "Approved" : "Rejected"}
+              {s === "pending" && data && (
                 <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">
                   {data.items.filter((i) => i.verificationStatus === "pending").length}
                 </span>
@@ -212,7 +212,7 @@ export default function AdminAlumniPage() {
       {loading && <p className="mt-4 text-sm text-muted-foreground">Loading...</p>}
 
       {/* Pending review cards */}
-      {statusFilter === "PENDING" && pendingItems.length > 0 && (
+      {statusFilter === "pending" && pendingItems.length > 0 && (
         <div className="mt-6 space-y-3">
           <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wider">Pending Review ({pendingItems.length})</h2>
           {pendingItems.map((item) => (
@@ -279,7 +279,7 @@ export default function AdminAlumniPage() {
         <div className="mt-12 text-center">
           <p className="text-lg text-white/30">No alumni found</p>
           <p className="mt-1 text-sm text-white/20">
-            {statusFilter === "PENDING" ? "No pending applications to review." : "Try adjusting your filters."}
+            {statusFilter === "pending" ? "No pending applications to review." : "Try adjusting your filters."}
           </p>
         </div>
       )}

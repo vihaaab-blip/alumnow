@@ -36,8 +36,8 @@ export async function getAllAlumni(opts?: {
       { bio: { contains: opts.search } },
     ];
   }
-  if (opts?.status && opts.status !== "ALL") {
-    where.verificationStatus = opts.status;
+  if (opts?.status && opts.status.toLowerCase() !== "all") {
+    where.verificationStatus = opts.status.toLowerCase();
   }
   const [items, total] = await Promise.all([
     prisma.alumniProfile.findMany({
