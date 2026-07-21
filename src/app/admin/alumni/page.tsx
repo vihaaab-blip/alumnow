@@ -120,7 +120,10 @@ export default function AdminAlumniPage() {
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as any : row) } : prev);
       toast({ title: "Alumni approved — now visible on marketplace", variant: "success" });
       setDetailItem(null);
-    } catch { toast({ title: "Failed to approve", variant: "error" }); }
+    } catch (e) {
+      console.error("Approve error:", e);
+      toast({ title: "Failed to approve", description: e instanceof Error ? e.message : "Unknown error", variant: "error" });
+    }
     setConfirmAction(null);
   };
 
