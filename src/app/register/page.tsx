@@ -142,12 +142,6 @@ function AlumniWizard({
     },
   ];
 
-  const defaultAvailability = [
-    { dayOfWeek: 1, startTime: "17:00", endTime: "19:00" },
-    { dayOfWeek: 3, startTime: "17:00", endTime: "19:00" },
-    { dayOfWeek: 6, startTime: "10:00", endTime: "13:00" },
-  ];
-
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
@@ -160,6 +154,13 @@ function AlumniWizard({
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoPreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setProfile((p) => ({ ...p, profilePhotoUrl: ev.target!.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
@@ -170,7 +171,6 @@ function AlumniWizard({
       ...acc,
       ...profile,
       sessionTypes: defaultSessionTypes,
-      availability: defaultAvailability,
     });
     if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
     setStatus("verified");

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check, LoaderCircle } from "lucide-react";
+import { Check, LoaderCircle, Upload } from "lucide-react";
 import { applyAsAlumni } from "@/actions/alumni.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -10,7 +10,7 @@ type Form = {
   fullName: string; email: string; phone: string; password: string;
   confirmPassword: string; universityName: string; course: string;
   graduationYearJbcn: string; country: string; bio: string;
-  languages: string; currentStudyLevel: string; linkedinUrl: string;
+  languages: string; currentStudyLevel: string;   linkedinUrl: string; profilePhotoUrl: string;
   tosAccepted: boolean;
 };
 
@@ -18,7 +18,7 @@ const initial: Form = {
   fullName: "", email: "", phone: "", password: "", confirmPassword: "",
   universityName: "", course: "", graduationYearJbcn: "", country: "India",
   bio: "", languages: "English, Hindi", currentStudyLevel: "undergraduate",
-  linkedinUrl: "", tosAccepted: false,
+  linkedinUrl: "", profilePhotoUrl: "", tosAccepted: false,
 };
 
 const inputDark =
@@ -29,6 +29,20 @@ export default function ApplyPage() {
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [status, setStatus] = useState<"idle" | "creating" | "submitted">("idle");
+  const [photoPreview, setPhotoPreview] = useState("");
+
+  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoPreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        update("profilePhotoUrl", ev.target!.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const update = (key: keyof Form, value: string | boolean) =>
     setData((current) => ({ ...current, [key]: value }));
@@ -144,6 +158,19 @@ export default function ApplyPage() {
               Country
               <Input required value={data.country} onChange={(e) => update("country", e.target.value)} className={`mt-2 ${inputDark}`} placeholder="e.g. United States" />
             </label>
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-white/15"><Upload size={20} /></div>
+                )}
+              </div>
+              <label className="cursor-pointer rounded-[10px] border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50 hover:bg-white/10 transition-all">
+                Upload photo
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+              </label>
+            </div>
             <label className="block text-sm font-semibold text-white/70">
               Bio
               <textarea

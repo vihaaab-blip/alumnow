@@ -36,7 +36,6 @@ export async function signupAlumni(input: {
   universityName: string; course: string; country: string; graduationYearJbcn: number; bio?: string; profilePhotoUrl?: string;
   languages?: string;
   sessionTypes: { type: string; pricePaise: number; maxParticipants?: number; descriptionOneLiner?: string }[];
-  availability: { dayOfWeek: number; startTime: string; endTime: string }[];
 }): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
     const parsed = signupAlumniSchema.safeParse(input);
@@ -62,7 +61,6 @@ export async function signupAlumni(input: {
             verificationStatus: "pending",
             isVerifiedJbcnAlumnus: false,
             sessionTypes: { create: data.sessionTypes.map((st) => ({ type: st.type, pricePaise: st.pricePaise, maxParticipants: st.maxParticipants ?? 1, descriptionOneLiner: st.descriptionOneLiner })) },
-            availability: { create: data.availability.map((a) => ({ dayOfWeek: a.dayOfWeek, startTime: a.startTime, endTime: a.endTime })) },
           },
         },
       },

@@ -46,6 +46,7 @@ export const alumniApplicationSchema = z.object({
   graduationYearJbcn: z.coerce.number().int().min(2015).max(2026),
   country: z.string().min(2).max(100),
   bio: z.string().max(750).optional(),
+  profilePhotoUrl: z.string().optional(),
   languages: z.string().min(2).max(100),
   currentStudyLevel: z.enum(["undergraduate", "postgraduate", "other"]),
   linkedinUrl: z.string().url("Invalid LinkedIn URL").optional().or(z.literal("")),
@@ -121,7 +122,7 @@ export const signupAlumniSchema = z.object({
     dayOfWeek: z.number().int().min(0).max(6),
     startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:mm format"),
     endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:mm format"),
-  })).min(1, "At least one availability slot is required"),
+  })).optional(),
 });
 
 export const reviewSchema = z.object({
