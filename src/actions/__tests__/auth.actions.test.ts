@@ -1,35 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { forgotPasswordSchema, resetPasswordSchema, loginSchema, signupSchema } from "@/lib/validation";
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    passwordResetToken: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      deleteMany: vi.fn(),
-      delete: vi.fn(),
-    },
-    notificationLog: {
-      create: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/auth", () => ({
-  signIn: vi.fn(),
-  signOut: vi.fn(),
-}));
-
-vi.mock("bcrypt-ts", () => ({
-  hash: vi.fn().mockResolvedValue("hashed_password"),
-  compare: vi.fn(),
-}));
-
 vi.mock("@/lib/email", () => ({
   sendEmail: vi.fn(),
   emailTemplates: {
