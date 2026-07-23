@@ -52,8 +52,6 @@ export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: 
       },
     });
 
-    await supabase.auth.signOut();
-
     return { success: true, data: { redirectTo: "/dashboard" } };
   } catch (error) {
     if (error instanceof Error && "flatten" in error) return { success: false, error: "Please check your details." };
@@ -143,8 +141,6 @@ export async function signupAlumni(input: {
       },
     });
 
-    await supabase.auth.signOut();
-
     try {
       await sendEmail(emailTemplates.signupVerification(email, data.fullName), user.id);
     } catch (error) {
@@ -171,7 +167,7 @@ export async function forgotPassword(input: unknown): Promise<ApiResponse<undefi
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/reset-password`,
   });
   if (error) console.error("forgotPassword supabase error:", error);
 

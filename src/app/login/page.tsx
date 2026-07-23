@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useSupabase } from "@/components/SupabaseProvider";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { supabase } = useSupabase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +31,6 @@ export default function LoginPage() {
       }
 
       const role = data.user.user_metadata?.role ?? "student";
-      router.refresh();
       window.location.replace(
         role === "admin" ? "/admin" : role === "alumnus" ? "/alumni/dashboard" : "/dashboard"
       );

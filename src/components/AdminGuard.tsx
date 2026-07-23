@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,7 +12,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/signin?error=unauthorized");
+      router.push("/login?error=unauthorized");
     }
   }, [status, router]);
 

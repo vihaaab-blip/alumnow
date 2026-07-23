@@ -32,24 +32,24 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>("loading");
   const [supabase] = useState(() => createBrowserClient(supabaseUrl, supabaseKey, {
     cookies: {
-      get(key: string) {
-        if (typeof document === "undefined") return undefined;
-        const match = document.cookie.split("; ").find((c) => c.startsWith(`${key}=`));
-        return match ? decodeURIComponent(match.split("=")[1]!) : undefined;
+      getAll() {
+        if (typeof document === "undefined") return [];
+        return document.cookie.split("; ").filter(Boolean).map((c) => {
+          const sep = c.indexOf("=");
+          return { name: c.slice(0, sep), value: decodeURIComponent(c.slice(sep + 1)) };
+        });
       },
-      set(key: string, value: string, options: Record<string, unknown>) {
+      setAll(cookiesToSet) {
         if (typeof document === "undefined") return;
-        let cookie = `${key}=${encodeURIComponent(value)}`;
-        if (options?.domain) cookie += `; Domain=${options.domain}`;
-        if (options?.path) cookie += `; Path=${options.path}`;
-        if (options?.maxAge) cookie += `; Max-Age=${options.maxAge}`;
-        if (options?.secure) cookie += "; Secure";
-        if (options?.sameSite) cookie += `; SameSite=${options.sameSite}`;
-        document.cookie = cookie;
-      },
-      remove(key: string) {
-        if (typeof document === "undefined") return;
-        document.cookie = `${key}=; Path=/; Max-Age=0`;
+        cookiesToSet.forEach(({ name, value, options }) => {
+          let cookie = `${name}=${encodeURIComponent(value)}`;
+          if (options.path) cookie += `; Path=${options.path}`;
+          if (options.domain) cookie += `; Domain=${options.domain}`;
+          if (options.maxAge != null) cookie += `; Max-Age=${options.maxAge}`;
+          if (options.secure) cookie += "; Secure";
+          if (options.sameSite) cookie += `; SameSite=${options.sameSite}`;
+          document.cookie = cookie;
+        });
       },
     },
   }));

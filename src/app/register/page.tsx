@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSupabase } from "@/components/SupabaseProvider";
 import {
   Check,
   LoaderCircle,
@@ -26,7 +25,6 @@ function StudentForm({
 }: {
   onStatusChange: (s: string) => void;
 }) {
-  const { supabase } = useSupabase();
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
   const [fullName, setFullName] = useState("");
@@ -57,16 +55,6 @@ function StudentForm({
     });
     if (r.error) {
       setError(r.error);
-      setStatus("idle");
-      onStatusChange("idle");
-      return;
-    }
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (signInError) {
-      setError("Account created but sign-in failed. Please go to login.");
       setStatus("idle");
       onStatusChange("idle");
       return;
@@ -163,13 +151,14 @@ function AlumniWizard({
     if (acc.password !== acc.confirmPassword) { setError("Passwords don't match"); return; }
     if (acc.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setError(""); setStatus("creating"); onStatusChange("creating");
+    let result: Awaited<ReturnType<typeof signupAlumni>> | undefined;
     try {
-      const r = await signupAlumni({
+      result = await signupAlumni({
         ...acc,
         ...profile,
         sessionTypes: defaultSessionTypes,
       });
-      if (r.error) { setError(r.error); setStatus("idle"); onStatusChange("idle"); return; }
+      if (result.error) { setError(result.error); setStatus("idle"); onStatusChange("idle"); return; }
     } catch (e) {
       console.error("signupAlumni unexpected error:", e);
       setError("Something went wrong. Please try again.");
@@ -178,6 +167,7 @@ function AlumniWizard({
     }
     setStatus("verified");
     onStatusChange("verified");
+    window.location.replace(result.data?.redirectTo ?? "/alumni/dashboard");
   };
 
   const totalSteps = 2;
@@ -305,12 +295,12 @@ export default function RegisterPage() {
               : "This will only take a moment."}
           </p>
           {status === "verified" && role === "alumni" && (
-            <button
-              onClick={() => { window.location.href = "/login"; }}
-              className="mt-6 rounded-xl bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all"
-            >
-              Go to Login
-            </button>
+              <button
+                onClick={() => { window.location.href = "/alumni/dashboard"; }}
+                className="mt-6 rounded-xl bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all"
+              >
+                Go to Dashboard
+              </button>
           )}
         </div>
       </div>

@@ -40,7 +40,7 @@ export const emailTemplates = {
   sendPasswordResetEmail: (email: string, token: string) => ({
     to: email,
     subject: "Reset your AlumNow password",
-    body: `Reset link: ${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password?token=${token}\n\nThis link expires in 15 minutes.`,
+    body: `Reset link: ${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/reset-password?token=${token}\n\nThis link expires in 15 minutes.`,
     eventType: "password_reset_requested" as const,
   }),
 
