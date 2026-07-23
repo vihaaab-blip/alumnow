@@ -187,6 +187,34 @@ function AlumniWizard({
     return true;
   };
 
+  if (status === "submitting") {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
+          <LoaderCircle className="animate-spin text-coral" size={28} />
+        </div>
+        <h1 className="mt-6 text-2xl font-semibold text-white font-heading">Submitting your application...</h1>
+        <p className="mt-2 text-white/40">This will only take a moment.</p>
+      </div>
+    );
+  }
+  if (status === "submitted") {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
+          <Check size={30} className="text-white" />
+        </div>
+        <h1 className="mt-6 text-2xl font-semibold text-white font-heading">Application submitted!</h1>
+        <p className="mt-2 text-white/40">Your mentor application is pending review. You will be notified once it is approved.</p>
+        <button
+          onClick={() => { window.location.href = "/login"; }}
+          className="mt-6 rounded-xl bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-0">
