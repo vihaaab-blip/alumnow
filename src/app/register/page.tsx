@@ -45,11 +45,15 @@ function StudentForm({
       setError("Passwords don't match");
       return;
     }
+    if (!/[0-9]/.test(password)) {
+      setError("Password must contain at least 1 number");
+      return;
+    }
     setStatus("creating");
     onStatusChange("creating");
     const r = await signup({
       email, password, fullName, phone,
-      dateOfBirth: null, currentGrade: "Other",
+      currentGrade: "Other",
       school: school || "Not specified",
       confirmPassword, tosAccepted: true,
     });
@@ -150,7 +154,8 @@ function AlumniWizard({
   const handleSubmit = async () => {
     if (acc.password !== acc.confirmPassword) { setError("Passwords don't match"); return; }
     if (acc.password.length < 8) { setError("Password must be at least 8 characters"); return; }
-    setError(""); setStatus("creating"); onStatusChange("creating");
+    if (!/[0-9]/.test(acc.password)) { setError("Password must contain at least 1 number"); return; }
+    setError(""); setStatus("submitting"); onStatusChange("submitting");
     let result: Awaited<ReturnType<typeof signupAlumni>> | undefined;
     try {
       result = await signupAlumni({
@@ -165,8 +170,8 @@ function AlumniWizard({
       setStatus("idle"); onStatusChange("idle");
       return;
     }
-    setStatus("verified");
-    onStatusChange("verified");
+    setStatus("submitted");
+    onStatusChange("submitted");
     window.location.replace(result.data?.redirectTo ?? "/alumni/dashboard");
   };
 
@@ -293,7 +298,7 @@ function AlumniWizard({
         ) : (
           <button type="button" onClick={handleSubmit} disabled={!canNext() || status !== "idle"}
             className="flex-1 rounded-xl bg-coral px-4 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-            {status === "idle" ? "Submit application" : "Submitting application..."}
+            {status === "idle" ? "Submit application" : "Submitting..."}
           </button>
         )}
       </div>
@@ -305,40 +310,40 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"student" | "alumni">("student");
   const [status, setStatus] = useState("idle");
 
-  if (status !== "idle") {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center px-6 bg-[#0D0D0D]">
-        <div className="relative z-10 rounded-2xl border border-white/10 bg-[#1A1A1A] p-10 shadow-lg text-center max-w-sm w-full">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
-            {status === "verified" ? <Check size={30} className="text-white" /> : <LoaderCircle className="animate-spin text-coral" size={28} />}
-          </div>
-          <h1 className="mt-6 text-2xl font-semibold text-white font-heading">
-            {status === "creating"
-              ? (role === "alumni" ? "Submitting your application..." : "Creating your account...")
-              : (role === "alumni" ? "Application submitted!" : "Account created!")}
-          </h1>
-          <p className="mt-2 text-white/40">
-            {status === "verified"
-              ? (role === "alumni" ? "Your mentor application is pending review. You will be notified once it is approved." : "Redirecting you...")
-              : "This will only take a moment."}
-          </p>
-          {status === "verified" && role === "alumni" && (
-              <button
-                onClick={() => { window.location.href = "/alumni/dashboard"; }}
-                className="mt-6 rounded-xl bg-coral px-6 py-3 text-sm font-semibold text-white hover:bg-coral-light transition-all"
-              >
-                Go to Dashboard
-              </button>
-          )}
+  // Overlay shown on top of the form during submit/success (does NOT unmount the form)
+  const overlay =
+    status === "creating" || status === "submitting" ? (
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl bg-[#1A1A1A]/90 backdrop-blur-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
+          <LoaderCircle className="animate-spin text-coral" size={28} />
         </div>
+        <h1 className="mt-6 text-2xl font-semibold text-white font-heading">
+          {role === "alumni" ? "Submitting your application..." : "Creating your account..."}
+        </h1>
+        <p className="mt-2 text-white/40">This will only take a moment.</p>
       </div>
-    );
-  }
+    ) : status === "verified" || status === "submitted" ? (
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl bg-[#1A1A1A]/90 backdrop-blur-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mx-auto">
+          <Check size={30} className="text-white" />
+        </div>
+        <h1 className="mt-6 text-2xl font-semibold text-white font-heading">
+          {role === "alumni" ? "Application submitted!" : "Account created!"}
+        </h1>
+        <p className="mt-2 text-white/40">
+          {role === "alumni"
+            ? "Your mentor application is pending review. You will be notified once it is approved."
+            : "Redirecting you..."}
+        </p>
+      </div>
+    ) : null;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0D0D0D]">
       <div className="relative mx-auto max-w-xl px-6 py-14">
-        <div className="rounded-2xl border border-white/10 bg-[#1A1A1A] shadow-lg p-8 sm:p-10">
+        <div className="relative rounded-2xl border border-white/10 bg-[#1A1A1A] shadow-lg p-8 sm:p-10">
+          {overlay}
+
           <p className="text-sm font-semibold uppercase tracking-widest text-white/40">Join the network</p>
           <h1 className="mt-3 text-3xl font-semibold text-white font-heading">Create your account</h1>
 

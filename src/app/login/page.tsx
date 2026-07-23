@@ -4,10 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { useSupabase } from "@/components/SupabaseProvider";
+import { login } from "@/actions/auth.actions";
 
 export default function LoginPage() {
-  const { supabase } = useSupabase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,26 +17,13 @@ export default function LoginPage() {
     setSubmitting(true);
     setError("");
 
-    try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError || !data.session) {
-        setError("No account found with this email. Please sign up first.");
-        setSubmitting(false);
-        return;
-      }
-
-      const role = data.user.user_metadata?.role ?? "student";
-      window.location.replace(
-        role === "admin" ? "/admin" : role === "alumnus" ? "/alumni/dashboard" : "/dashboard"
-      );
-    } catch {
-      setError("Something went wrong. Please try again.");
+    const result = await login({ email, password });
+    if (result.error) {
+      setError(result.error);
       setSubmitting(false);
+      return;
     }
+    window.location.replace(result.data?.redirectTo ?? "/dashboard");
   }
 
   return (

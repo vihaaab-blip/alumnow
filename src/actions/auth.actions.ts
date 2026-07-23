@@ -6,6 +6,7 @@ import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, s
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { headers } from "next/headers";
 import { rateLimit } from "@/lib/rate-limit";
+import { createUserWithAdmin } from "@/lib/supabase-admin";
 import type { ApiResponse } from "@/types";
 
 export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
@@ -16,27 +17,19 @@ export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return { success: false, error: "An account with this email already exists." };
 
-    const supabase = await createServerSupabaseClient();
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    const authUser = await createUserWithAdmin({
       email,
       password: parsed.password,
-      options: {
-        data: {
-          role: "student",
-          full_name: parsed.fullName,
-          phone: parsed.phone,
-        },
-      },
+      user_metadata: { role: "student", full_name: parsed.fullName, phone: parsed.phone },
     });
 
-    if (signUpError || !authData.user) {
-      console.error("Supabase signup failed:", signUpError);
+    if (!authUser) {
       return { success: false, error: "Could not create account. Please try again." };
     }
 
     await prisma.user.create({
       data: {
-        id: authData.user.id,
+        id: authUser.id,
         email,
         phone: parsed.phone,
         role: "student",
@@ -101,27 +94,19 @@ export async function signupAlumni(input: {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return { success: false, error: "An account with this email already exists." };
 
-    const supabase = await createServerSupabaseClient();
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    const authUser = await createUserWithAdmin({
       email,
       password: data.password,
-      options: {
-        data: {
-          role: "alumnus",
-          full_name: data.fullName,
-          phone: data.phone,
-        },
-      },
+      user_metadata: { role: "alumnus", full_name: data.fullName, phone: data.phone },
     });
 
-    if (signUpError || !authData.user) {
-      console.error("Supabase alumni signup failed:", signUpError);
+    if (!authUser) {
       return { success: false, error: "Could not create account. Please try again." };
     }
 
     const user = await prisma.user.create({
       data: {
-        id: authData.user.id,
+        id: authUser.id,
         email, phone: data.phone, role: "alumnus", emailVerifiedAt: new Date(),
         alumniProfile: {
           create: {

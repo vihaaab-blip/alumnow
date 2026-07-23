@@ -27,6 +27,12 @@
 - Database: PostgreSQL via Supabase at `db.rxravqontgymnmcmiaew.supabase.co`
 - Prisma manages all tables (User, StudentProfile, AlumniProfile, Booking, etc.)
 
+## Supabase Admin API
+- `src/lib/supabase-admin.ts` — uses `SUPABASE_SERVICE_ROLE_KEY` (server-only env var) to call Auth Admin API
+- `confirmUserEmail(userId)` — confirms user email via `PUT /auth/v1/admin/users/{id}` with `email_confirm: true`
+- Called automatically in both `signup()` and `signupAlumni()` server actions after `supabase.auth.signUp()` succeeds
+- This replaces Supabase's built-in email confirmation flow (confirmations disabled via API instead of dashboard toggle)
+
 ## Common Fixes
 - White-on-white text: search for `bg-primary text-white` patterns and replace
 - Case-sensitive filter: ensure filter values match DB casing (lowercase)
