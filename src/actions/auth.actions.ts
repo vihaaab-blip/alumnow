@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/utils/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, signupAlumniSchema } from "@/lib/validation";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { rateLimit } from "@/lib/rate-limit";
 import { createUserWithAdmin } from "@/lib/supabase-admin";
@@ -53,27 +54,28 @@ export async function signup(input: unknown): Promise<ApiResponse<{ redirectTo: 
   }
 }
 
-export async function login(input: { email: string; password: string }): Promise<ApiResponse<{ redirectTo: string }>> {
-  try {
-    const parsed = loginSchema.parse(input);
+export async function loginAction(_prev: { error?: string } | undefined, formData: FormData): Promise<{ error?: string } | undefined> {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
-    const supabase = await createServerSupabaseClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: parsed.email.trim().toLowerCase(),
-      password: parsed.password,
-    });
-
-    if (error || !data.session) {
-      return { success: false, error: "Invalid email or password." };
-    }
-
-    const role = data.user.user_metadata?.role as string ?? "student";
-    const redirectTo = role === "alumnus" ? "/alumni/dashboard" : role === "admin" ? "/admin" : "/dashboard";
-    return { success: true, data: { redirectTo } };
-  } catch (error) {
-    console.error("login error:", error);
-    return { success: false, error: "Unable to sign in." };
+  const parsed = loginSchema.safeParse({ email, password });
+  if (!parsed.success) {
+    return { error: "Invalid email or password." };
   }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email.trim().toLowerCase(),
+    password: parsed.data.password,
+  });
+
+  if (error || !data.session) {
+    return { error: "Invalid email or password." };
+  }
+
+  const role = data.user.user_metadata?.role as string ?? "student";
+  const redirectTo = role === "alumnus" ? "/alumni/dashboard" : role === "admin" ? "/admin" : "/dashboard";
+  redirect(redirectTo);
 }
 
 export async function signupAlumni(input: {

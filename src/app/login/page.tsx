@@ -1,30 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { LoaderCircle, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { login } from "@/actions/auth.actions";
+import { loginAction } from "@/actions/auth.actions";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-
-    const result = await login({ email, password });
-    if (result.error) {
-      setError(result.error);
-      setSubmitting(false);
-      return;
-    }
-    window.location.replace(result.data?.redirectTo ?? "/dashboard");
-  }
+  const [state, formAction, pending] = useActionState(loginAction, undefined);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0D0D0D]">
@@ -49,7 +32,7 @@ export default function LoginPage() {
                 Sign in to your account
               </p>
 
-              <form onSubmit={handleSubmit}>
+              <form action={formAction}>
                 <div className="group flex items-center gap-2 rounded-[1.25rem] border border-white/10 bg-white/5 p-2 transition-all focus-within:border-coral/50 focus-within:ring-2 focus-within:ring-coral/10">
                   <div className="flex-1 pl-2">
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/25">
@@ -57,9 +40,8 @@ export default function LoginPage() {
                     </label>
                     <input
                       type="email"
+                      name="email"
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       className="mt-0.5 w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25"
                       placeholder="Enter your email"
                     />
@@ -67,11 +49,11 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     className="group/btn relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full"
-                    disabled={submitting}
+                    disabled={pending}
                   >
                     <div className="absolute inset-0 rounded-full bg-coral group-hover/btn:bg-coral-light transition-colors">
                       <div className="relative z-10 flex h-[52px] w-[52px] items-center justify-center">
-                        {submitting ? (
+                        {pending ? (
                           <LoaderCircle
                             size={20}
                             className="animate-spin text-white"
@@ -94,9 +76,8 @@ export default function LoginPage() {
                   <div className="rounded-[1.25rem] border border-white/10 bg-white/5 p-2 transition-all focus-within:border-coral/50 focus-within:ring-2 focus-within:ring-coral/10">
                     <input
                       type="password"
+                      name="password"
                       required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
                       className="w-full bg-transparent px-2 py-1.5 text-sm text-white outline-none placeholder:text-white/25"
                       placeholder="Enter your password"
                     />
@@ -112,8 +93,8 @@ export default function LoginPage() {
                   </Link>
                 </div>
 
-                {error && (
-                  <p className="mt-3 text-sm text-red-400">{error}</p>
+                {state?.error && (
+                  <p className="mt-3 text-sm text-red-400">{state.error}</p>
                 )}
               </form>
             </div>
