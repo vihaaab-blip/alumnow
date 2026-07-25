@@ -5,6 +5,7 @@ import { RouteNav } from "@/components/RouteNav";
 import { RouteFooter } from "@/components/RouteFooter";
 import { Toaster } from "@/components/ui/Toaster";
 import { QueryProvider } from "@/components/QueryProvider";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -44,11 +45,11 @@ export default function RootLayout({
       >
         <SupabaseProvider>
           <QueryProvider>
-            <div className="flex min-h-[100dvh] flex-col">
-              <RouteNav />
+            <RouteNav />
+            <SmoothScroll>
               <main className="flex-1">{children}</main>
               <RouteFooter />
-            </div>
+            </SmoothScroll>
             <Toaster />
           </QueryProvider>
         </SupabaseProvider>
