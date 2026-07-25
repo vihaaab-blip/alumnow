@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getFilterOptions, saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
+import { getFilterOptions, listAlumni, saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
 import { getSavedAlumni } from "@/actions/student.actions";
 import { FilterPanel } from "@/components/FilterPanel";
 import { AlumniGrid } from "@/components/AlumniGrid";
@@ -44,11 +44,14 @@ const sortOptions = [
 
 function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
   const qsTiers = sp.getAll("qsTier");
+  const universities = sp.getAll("university");
+  const countries = sp.getAll("country");
+  const courses = sp.getAll("course");
   return {
     search: sp.get("search") ?? undefined,
-    university: sp.get("university") ?? undefined,
-    country: sp.get("country") ?? undefined,
-    course: sp.get("course") ?? undefined,
+    universities: universities.length > 0 ? universities : undefined,
+    countries: countries.length > 0 ? countries : undefined,
+    courses: courses.length > 0 ? courses : undefined,
     studyLevel: sp.get("studyLevel") ?? undefined,
     gradYearMin: sp.get("gradYearMin") ? Number(sp.get("gradYearMin")) : undefined,
     gradYearMax: sp.get("gradYearMax") ? Number(sp.get("gradYearMax")) : undefined,
@@ -60,12 +63,24 @@ function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
   };
 }
 
+const ARRAY_PARAM_KEYS: Record<string, string> = {
+  qsTiers: "qsTier",
+  universities: "university",
+  countries: "country",
+  courses: "course",
+};
+
 function filtersToParams(filters: AlumniFilters): string {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
-    if (key === "qsTiers" && Array.isArray(value)) value.forEach((t) => params.append("qsTier", t));
-    else if (typeof value !== "object") params.set(key, String(value));
+    if (Array.isArray(value)) {
+      if (value.length === 0) return;
+      const paramKey = ARRAY_PARAM_KEYS[key] ?? key;
+      value.forEach((v) => params.append(paramKey, v));
+    } else if (typeof value !== "object") {
+      params.set(key, String(value));
+    }
   });
   return params.toString();
 }
@@ -77,9 +92,9 @@ const activeFilterLabels: Record<string, (v: any) => string> = {
   qsTiers: (v: string[]) => v.map((t) => `QS ${t}`).join(", "),
   minRating: (v: string) => `${v}+ stars`,
   sortBy: (v) => `Sort: ${v}`,
-  country: (v: string) => v,
-  university: (v: string) => v,
-  course: (v: string) => v,
+  countries: (v: string[]) => v.join(", "),
+  universities: (v: string[]) => v.join(", "),
+  courses: (v: string[]) => v.join(", "),
   gradYearMin: (v: number) => `From ${v}`,
   gradYearMax: (v: number) => `To ${v}`,
 };
@@ -126,14 +141,12 @@ function BrowsePageContent() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    const params = new URLSearchParams(filtersToParams(queryParams));
-    params.set("page", String(queryParams.page ?? 1));
-    params.set("pageSize", String(queryParams.pageSize ?? ITEMS_PER_PAGE));
-    fetch(`/api/alumni?${params.toString()}`, { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Failed to load alumni");
-        return response.json();
-      })
+    // Called directly as a server action rather than via a /api/alumni fetch
+    // hop - one fewer network round trip per marketplace load, and it lets
+    // the request ride through middleware's auth-header fast path (the /api
+    // prefix is excluded from middleware, so a fetch to /api/alumni would
+    // always fall back to a full Supabase Auth re-check).
+    listAlumni(queryParams)
       .then((result) => { if (!cancelled) setData(result as any); })
       .catch(() => { if (!cancelled) { setError("Failed to load alumni."); setData({ items: [], total: 0, totalPages: 1 }); } })
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -142,11 +155,11 @@ function BrowsePageContent() {
 
   useEffect(() => {
     let cancelled = false;
-    getFilterOptions(filters.country)
+    getFilterOptions()
       .then((result) => { if (!cancelled) setOptions(result); })
       .catch(() => { if (!cancelled) setOptions({ universities: [], countries: [], courses: [] }); });
     return () => { cancelled = true; };
-  }, [filters.country]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -438,9 +451,9 @@ function BrowsePageContent() {
             )}
 
             {error && (
-              <div className="rounded-2xl border border-dashed border-red-300 bg-red-50 px-6 py-12 text-center" role="alert">
-                <h2 className="text-lg font-semibold text-red-700">Something went wrong</h2>
-                <p className="mt-2 text-sm text-red-500">{error}</p>
+              <div className="rounded-2xl border border-dashed border-red-500/30 bg-red-500/5 px-6 py-12 text-center" role="alert">
+                <h2 className="text-lg font-semibold text-red-400">Something went wrong</h2>
+                <p className="mt-2 text-sm text-red-300/70">{error}</p>
                 <Button className="mt-4" variant="outline" onClick={() => setPage((p) => p)}>Retry</Button>
               </div>
             )}

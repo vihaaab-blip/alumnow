@@ -140,9 +140,9 @@ export interface AdminStats {
 }
 
 export interface AlumniFilters {
-  university?: string;
-  country?: string;
-  course?: string;
+  universities?: string[];
+  countries?: string[];
+  courses?: string[];
   studyLevel?: string;
   gradYearMin?: number;
   gradYearMax?: number;

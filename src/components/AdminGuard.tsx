@@ -52,8 +52,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   if (session?.user?.role !== "admin") {
     return (
       <div className="flex min-h-[calc(100dvh-64px)] flex-col items-center justify-center px-6 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 mb-6">
-          <span className="text-3xl font-bold text-red-500">!</span>
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 mb-6">
+          <span className="text-3xl font-bold text-red-400">!</span>
         </div>
         <h1 className="text-4xl font-bold text-primary">Access Denied</h1>
         <p className="mt-4 max-w-md text-muted-foreground">

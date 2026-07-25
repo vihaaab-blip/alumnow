@@ -3,7 +3,6 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowRight } from "lucide-react";
 import { ScrollButton } from "./ScrollButton";
-import { MetalFx } from "metal-fx";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
@@ -84,14 +83,13 @@ export function HeroSection() {
               applications, and make your next big decision with confidence.
             </p>
             <div data-hero-in className="mt-10 flex flex-wrap items-center gap-4">
-              <MetalFx preset="chromatic" strength={1} theme="dark">
-                <Link href="/browse" className="group inline-flex">
-                  <span className="inline-flex h-12 items-center gap-2 rounded-full bg-coral px-7 text-sm font-semibold text-white transition-all duration-300 group-hover:bg-coral-light">
-                    Find your mentor
-                    <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-                  </span>
-                </Link>
-              </MetalFx>
+              <Link
+                href="/browse"
+                className="group inline-flex h-12 items-center gap-2 rounded-full bg-coral px-7 text-sm font-semibold text-white transition-all duration-300 hover:bg-coral-light"
+              >
+                Find your mentor
+                <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+              </Link>
               <ScrollButton target="how-it-works" />
             </div>
           </div>

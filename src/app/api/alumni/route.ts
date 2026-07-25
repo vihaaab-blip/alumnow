@@ -6,6 +6,9 @@ export async function GET(request: Request) {
     const page = Math.max(1, Number(params.get("page") ?? "1"));
     const qsTiers = params.getAll("qsTier");
     const languages = params.getAll("language");
+    const universities = params.getAll("university");
+    const countries = params.getAll("country");
+    const courses = params.getAll("course");
     const gradYearMin = params.get("gradYearMin");
     const gradYearMax = params.get("gradYearMax");
     const priceMin = params.get("priceMin");
@@ -14,9 +17,9 @@ export async function GET(request: Request) {
 
     const result = await listAlumni({
       search: params.get("search") ?? undefined,
-      university: params.get("university") ?? undefined,
-      country: params.get("country") ?? undefined,
-      course: params.get("course") ?? undefined,
+      universities: universities.length > 0 ? universities : undefined,
+      countries: countries.length > 0 ? countries : undefined,
+      courses: courses.length > 0 ? courses : undefined,
       studyLevel: params.get("studyLevel") ?? undefined,
       gradYearMin: gradYearMin ? Number(gradYearMin) : undefined,
       gradYearMax: gradYearMax ? Number(gradYearMax) : undefined,

@@ -33,7 +33,7 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
   return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }
 
-export type AlumniListFilters = { search?: string; university?: string; country?: string; course?: string; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; priceMin?: number; priceMax?: number; languages?: string[]; minRating?: string; availability?: string; sortBy?: string; page?: number; pageSize?: number };
+export type AlumniListFilters = { search?: string; universities?: string[]; countries?: string[]; courses?: string[]; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; priceMin?: number; priceMax?: number; languages?: string[]; minRating?: string; availability?: string; sortBy?: string; page?: number; pageSize?: number };
 
 function parseLanguages(languages: unknown): string[] {
   if (Array.isArray(languages)) return languages;
@@ -57,6 +57,12 @@ function restHeaders(extra?: HeadersInit): HeadersInit {
 
 const ilikeEscape = (value: string) => value.replaceAll("%", "\\%").replaceAll(",", "\\,");
 
+// PostgREST `in.()` list syntax: each value must be double-quoted (with internal
+// quotes/backslashes escaped) so values containing commas, parens, or spaces
+// (e.g. "University College London") are parsed as a single list item.
+const pgInList = (values: string[]) =>
+  `in.(${values.map((v) => `"${v.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`).join(",")})`;
+
 // Reads go straight against the Supabase REST API rather than through the pooled
 // Prisma connection: that pool has proven unreliable in production (see prisma.ts
 // history), and listAlumni previously swallowed those failures into an empty list,
@@ -79,9 +85,9 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
       const term = ilikeEscape(search);
       params.set("or", `(fullName.ilike.*${term}*,universityName.ilike.*${term}*,course.ilike.*${term}*,bio.ilike.*${term}*)`);
     }
-    if (filters.university) params.set("universityName", `eq.${filters.university}`);
-    if (filters.country) params.set("country", `eq.${filters.country}`);
-    if (filters.course) params.set("course", `ilike.*${ilikeEscape(filters.course)}*`);
+    if (filters.universities?.length) params.set("universityName", pgInList(filters.universities));
+    if (filters.countries?.length) params.set("country", pgInList(filters.countries));
+    if (filters.courses?.length) params.set("course", pgInList(filters.courses));
     if (filters.studyLevel && filters.studyLevel !== "both") params.set("currentStudyLevel", `eq.${filters.studyLevel}`);
     if (filters.gradYearMin) params.append("graduationYearJbcn", `gte.${filters.gradYearMin}`);
     if (filters.gradYearMax) params.append("graduationYearJbcn", `lte.${filters.gradYearMax}`);
@@ -94,7 +100,7 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
 
     const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
       headers: restHeaders({ Prefer: "count=exact" }),
-      cache: "no-store",
+      next: { revalidate: 15 },
     });
     if (!res.ok) throw new Error(`Failed to load alumni: ${res.status} ${await res.text()}`);
 
@@ -158,7 +164,7 @@ export async function getAlumniById(id: string) {
     });
     const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
       headers: restHeaders(),
-      cache: "no-store",
+      next: { revalidate: 15 },
     });
     if (!res.ok) throw new Error(`Failed to load alumni: ${res.status} ${await res.text()}`);
     const rows = (await res.json()) as any[];
@@ -181,14 +187,20 @@ export async function getAlumniById(id: string) {
   }
 }
 
-export async function getFilterOptions(country?: string) {
+// Distinct university/country/course values across approved+active alumni —
+// this is what backs the marketplace filter dropdowns. It needs no separate
+// "options" table or sync step: as soon as an admin approves a new alumnus,
+// their university/course/country become selectable here automatically
+// (deduped for free by the DISTINCT-style Set), and once nobody approved has
+// a given value anymore it naturally drops out. Cached briefly since these
+// change only when an admin approves someone, not on every page view.
+export async function getFilterOptions() {
   try {
-    const fetchDistinct = async (column: string, filterByCountry: boolean) => {
+    const fetchDistinct = async (column: string) => {
       const params = new URLSearchParams({ select: column, verificationStatus: "eq.approved", isActive: "eq.true", order: `${column}.asc` });
-      if (filterByCountry && country) params.set("country", `eq.${country}`);
       const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
         headers: restHeaders(),
-        cache: "no-store",
+        next: { revalidate: 60 },
       });
       if (!res.ok) throw new Error(`Failed to load filter options: ${res.status} ${await res.text()}`);
       const rows = (await res.json()) as Record<string, string>[];
@@ -196,9 +208,9 @@ export async function getFilterOptions(country?: string) {
     };
 
     const [universities, countries, courses] = await Promise.all([
-      fetchDistinct("universityName", true),
-      fetchDistinct("country", false),
-      fetchDistinct("course", true),
+      fetchDistinct("universityName"),
+      fetchDistinct("country"),
+      fetchDistinct("course"),
     ]);
     return { universities, countries, courses };
   } catch (error) {
