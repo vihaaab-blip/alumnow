@@ -2,24 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
 import { AdminStatCard } from "@/components/AdminStatCard";
 import Link from "next/link";
-import { Users, CalendarDays, IndianRupee, Star } from "lucide-react";
+import { Users, CalendarDays, IndianRupee, Star, ArrowUpRight, GraduationCap, ClipboardList } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const monthAgo = () => new Date(new Date().setMonth(new Date().getMonth() - 1));
 
 async function getStats() {
-  const [totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, prevMonthAlumni, prevMonthBookings, prevMonthRevenue] = await Promise.all([
+  const [totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue] = await Promise.all([
     prisma.alumniProfile.count().catch(() => 0),
     prisma.booking.count().catch(() => 0),
     prisma.payment.aggregate({ _sum: { amountPaise: true }, where: { status: "verified" } }).catch(() => ({ _sum: { amountPaise: null } })),
     prisma.review.count({ where: { moderationStatus: "pending" } }).catch(() => 0),
     prisma.alumniProfile.count({ where: { verificationStatus: "pending" } }).catch(() => 0),
+    prisma.user.count({ where: { role: "student" } }).catch(() => 0),
     prisma.alumniProfile.count({ where: { createdAt: { lt: monthAgo() } } }).catch(() => 0),
     prisma.booking.count({ where: { createdAt: { lt: monthAgo() } } }).catch(() => 0),
     prisma.payment.aggregate({ _sum: { amountPaise: true }, where: { status: "verified", createdAt: { lt: monthAgo() } } }).catch(() => ({ _sum: { amountPaise: null } })),
   ]);
-  return { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, prevMonthAlumni, prevMonthBookings, prevMonthRevenue };
+  return { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue };
 }
 
 export default async function AdminDashboardPage() {
@@ -41,7 +42,7 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, prevMonthAlumni, prevMonthBookings, prevMonthRevenue } = statsData;
+  const { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue } = statsData;
   const totalRevenuePaise = totalRevenueResult._sum.amountPaise ?? 0;
   const prevRevenuePaise = prevMonthRevenue._sum.amountPaise ?? 0;
 
@@ -51,67 +52,97 @@ export default async function AdminDashboardPage() {
     return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
   };
 
-  const stats = [
-    { label: "Total Alumni", value: totalAlumni, change: calcChange(totalAlumni, prevMonthAlumni), changeType: (totalAlumni >= prevMonthAlumni ? "increase" : "decrease") as "increase" | "decrease", icon: Users },
-    { label: "Total Bookings", value: totalBookings, change: calcChange(totalBookings, prevMonthBookings), changeType: (totalBookings >= prevMonthBookings ? "increase" : "decrease") as "increase" | "decrease", icon: CalendarDays },
-    { label: "Total Revenue", value: `\u20B9${(totalRevenuePaise / 100).toLocaleString("en-IN")}`, change: calcChange(totalRevenuePaise, prevRevenuePaise), changeType: (totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease") as "increase" | "decrease", icon: IndianRupee },
-    { label: "Pending Reviews", value: pendingReviews, icon: Star },
+  const alumniChange = calcChange(totalAlumni, prevMonthAlumni);
+  const bookingsChange = calcChange(totalBookings, prevMonthBookings);
+  const revenueChange = calcChange(totalRevenuePaise, prevRevenuePaise);
+
+  const quickLinks = [
+    { label: "Review applications", href: "/admin/alumni", icon: GraduationCap, count: pendingApplications },
+    { label: "Moderate reviews", href: "/admin/reviews", icon: ClipboardList, count: pendingReviews },
+    { label: "Manage bookings", href: "/admin/bookings", icon: CalendarDays },
+    { label: "View users", href: "/admin/users", icon: Users },
   ];
 
   return (
     <div>
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-accent">Operations</p>
-          <h1 className="mt-2 text-3xl font-semibold text-primary">Admin Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">A live view of the alumnow. platform.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Operations</p>
+          <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Admin overview</h1>
+          <p className="mt-2 text-sm text-white/40">A live view of the alumnow. platform.</p>
         </div>
-        <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">Admin only</span>
+        <span className="rounded-full border border-coral/25 bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral">Admin only</span>
       </div>
 
       {/* Pending applications alert */}
       {pendingApplications > 0 && (
         <Link
           href="/admin/alumni"
-          className="mt-6 flex items-center gap-3 rounded-xl px-5 py-4 transition-colors hover:opacity-90"
+          className="mt-6 flex items-center gap-3 rounded-2xl px-5 py-4 transition-colors hover:opacity-90"
           style={{
-            background: "linear-gradient(90deg, rgba(232,87,58,0.12) 0%, rgba(232,87,58,0.04) 100%)",
+            background: "linear-gradient(90deg, rgba(232,87,58,0.14) 0%, rgba(232,87,58,0.03) 100%)",
             border: "1px solid rgba(232,87,58,0.25)",
           }}
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20 text-lg font-bold text-amber-400">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coral/20 text-lg font-bold text-coral">
             {pendingApplications}
           </span>
           <div className="flex-1">
             <p className="text-sm font-semibold text-white">
               {pendingApplications} alumni application{pendingApplications !== 1 ? "s" : ""} pending review
             </p>
-            <p className="text-xs text-white/50 mt-0.5">Click to review and approve or reject</p>
+            <p className="text-xs text-white/45 mt-0.5">Click to review and approve or reject</p>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/40">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
+          <ArrowUpRight size={16} className="text-white/40" />
         </Link>
       )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(({ label, value, change, changeType, icon: Icon }) => (
-          change !== undefined ? (
-            <AdminStatCard
-              key={label}
-              label={label}
-              value={value}
-              change={change ?? undefined}
-              changeType={changeType}
-            />
-          ) : (
-            <Card key={label} className="border-l-4 border-l-accent p-5">
-              <Icon className="text-accent" size={21} />
-              <p className="mt-6 text-sm text-muted-foreground">{label}</p>
-              <p className="mt-1 font-mono text-3xl font-semibold text-primary">{value}</p>
-            </Card>
-          )
-        ))}
+        <AdminStatCard label="Total Alumni" value={totalAlumni} icon={GraduationCap} tint="coral" change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
+        <AdminStatCard label="Total Bookings" value={totalBookings} icon={CalendarDays} tint="blue" change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
+        <AdminStatCard label="Total Revenue" value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`} icon={IndianRupee} tint="green" change={revenueChange ?? undefined} changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"} />
+        <AdminStatCard label="Pending Reviews" value={pendingReviews} icon={Star} tint="amber" href="/admin/reviews" />
+      </div>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold text-white">Platform snapshot</h2>
+          <p className="mt-1 text-xs text-white/40">Registered accounts across the marketplace.</p>
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Students</p>
+              <p className="mt-2 font-mono text-2xl font-bold text-white">{totalStudents}</p>
+            </div>
+            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Alumni</p>
+              <p className="mt-2 font-mono text-2xl font-bold text-white">{totalAlumni}</p>
+            </div>
+            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Pending</p>
+              <p className="mt-2 font-mono text-2xl font-bold text-coral">{pendingApplications}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-sm font-semibold text-white">Quick actions</h2>
+          <div className="mt-4 space-y-1.5">
+            {quickLinks.map(({ label, href, icon: Icon, count }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+              >
+                <Icon size={16} className="text-white/30" />
+                <span className="flex-1">{label}</span>
+                {count != null && count > 0 && (
+                  <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[11px] font-bold text-coral">{count}</span>
+                )}
+                <ArrowUpRight size={14} className="text-white/20" />
+              </Link>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );

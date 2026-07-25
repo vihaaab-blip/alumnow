@@ -250,7 +250,7 @@ export function SwipeDeck({
       <div className="mt-5 flex items-center justify-center gap-4">
         <Button
           variant="outline"
-          className="h-14 w-14 rounded-full border-2 p-0 hover:border-red-400 hover:bg-red-50 hover:text-red-500"
+          className="h-14 w-14 rounded-full border-2 p-0 hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
           aria-label="Skip"
           onClick={() => handleSwipe("left")}
           disabled={!swipeReady}

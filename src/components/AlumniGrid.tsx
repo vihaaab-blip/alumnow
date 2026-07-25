@@ -65,9 +65,9 @@ export function AlumniGrid({
 
   const FILTER_LABELS: Record<string, string> = {
     search: "Search",
-    university: "University",
-    country: "Country",
-    course: "Course",
+    universities: "University",
+    countries: "Country",
+    courses: "Course",
     studyLevel: "Study level",
     qsTiers: "QS Tier",
     languages: "Languages",

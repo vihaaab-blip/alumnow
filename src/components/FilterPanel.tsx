@@ -75,6 +75,45 @@ function ChipGroup({ options, selected, onChange }: { options: { value: string; 
   );
 }
 
+function MultiSelectSearch({ options, selected, onChange, placeholder }: { options: string[]; selected: string[]; onChange: (vals: string[]) => void; placeholder: string }) {
+  const [query, setQuery] = useState("");
+  const filtered = query.trim()
+    ? options.filter((o) => o.toLowerCase().includes(query.trim().toLowerCase()))
+    : options;
+  const toggle = (value: string) => {
+    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  };
+  return (
+    <div className="space-y-2">
+      <input
+        type="text"
+        placeholder={placeholder}
+        className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      {filtered.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+          {filtered.map((opt) => {
+            const active = selected.includes(opt);
+            return (
+              <button
+                key={opt}
+                onClick={() => toggle(opt)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${active ? "chip-active" : "chip-inactive"}`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-xs text-white/25">{options.length === 0 ? "No options yet" : "No matches"}</p>
+      )}
+    </div>
+  );
+}
+
 function PillGroup<T extends string>({ options, selected, onChange }: { options: { value: T; label: string }[]; selected: T | ""; onChange: (v: T | undefined) => void }) {
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -143,9 +182,9 @@ function DualRangeSlider({ min, max, value, onChange }: { min: number; max: numb
 
 function countActive(d: AlumniFilters) {
   return [
-    d.university,
-    d.country,
-    d.course,
+    d.universities?.length ? "uni" : null,
+    d.countries?.length ? "country" : null,
+    d.courses?.length ? "course" : null,
     d.studyLevel,
     d.gradYearMin || d.gradYearMax ? "grad" : null,
     d.qsTiers?.length ? `qs-${d.qsTiers.length}` : null,
@@ -170,17 +209,10 @@ export function FilterPanel({
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const [uniInput, setUniInput] = useState(filters.university ?? "");
-  const [courseInput, setCourseInput] = useState(filters.course ?? "");
-  const [countryInput, setCountryInput] = useState("");
-
   const [draft, setDraft] = useState<AlumniFilters>({ ...filters });
 
   useEffect(() => {
     setDraft({ ...filters });
-    setUniInput(filters.university ?? "");
-    setCourseInput(filters.course ?? "");
-    setCountryInput("");
   }, [filters]);
 
   const updateDraft = (partial: Partial<AlumniFilters>) => {
@@ -189,10 +221,10 @@ export function FilterPanel({
 
   const handleApply = () => {
     onChange({
-      course: courseInput || undefined,
-      university: uniInput || undefined,
+      courses: draft.courses,
+      universities: draft.universities,
       topMentorOnly: draft.topMentorOnly,
-      country: draft.country,
+      countries: draft.countries,
       minRating: draft.minRating,
       qsTiers: draft.qsTiers,
       gradYearMin: draft.gradYearMin,
@@ -205,18 +237,10 @@ export function FilterPanel({
   };
 
   const handleClearAll = () => {
-    setCourseInput("");
-    setUniInput("");
-    setCountryInput("");
     setDraft({ ...INITIAL });
     onClear();
     setDrawerOpen(false);
   };
-
-  const countryList = options.countries.map((c) => ({ value: c, label: c }));
-  const filteredCountries = countryInput.trim()
-    ? countryList.filter((c) => c.label.toLowerCase().includes(countryInput.toLowerCase()))
-    : countryList;
 
   const activeCount = countActive(filters);
 
@@ -242,24 +266,22 @@ export function FilterPanel({
       {/* Filter sections */}
       <div className="px-5">
         {/* Course — primary filter, must be first */}
-        <FilterSection title="Course" count={courseInput ? 1 : 0} icon={<BookOpen size={14} />}>
-          <input
-            type="text"
-            placeholder="Search courses..."
-            className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
-            value={courseInput}
-            onChange={(e) => setCourseInput(e.target.value)}
+        <FilterSection title="Course" count={draft.courses?.length} icon={<BookOpen size={14} />}>
+          <MultiSelectSearch
+            options={options.courses}
+            selected={draft.courses ?? []}
+            onChange={(vals) => updateDraft({ courses: vals.length > 0 ? vals : undefined })}
+            placeholder="Filter courses..."
           />
         </FilterSection>
 
         {/* University */}
-        <FilterSection title="University" count={uniInput ? 1 : 0} icon={<Book size={14} />}>
-          <input
-            type="text"
-            placeholder="Search universities..."
-            className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
-            value={uniInput}
-            onChange={(e) => setUniInput(e.target.value)}
+        <FilterSection title="University" count={draft.universities?.length} icon={<Book size={14} />}>
+          <MultiSelectSearch
+            options={options.universities}
+            selected={draft.universities ?? []}
+            onChange={(vals) => updateDraft({ universities: vals.length > 0 ? vals : undefined })}
+            placeholder="Filter universities..."
           />
         </FilterSection>
 
@@ -295,34 +317,13 @@ export function FilterPanel({
         </FilterSection>
 
         {/* Country */}
-        <FilterSection title="Country" count={draft.country ? 1 : 0} icon={<Globe size={14} />}>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Search countries..."
-              className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/15 transition-all placeholder:text-white/25"
-              value={countryInput}
-              onChange={(e) => setCountryInput(e.target.value)}
-            />
-            {filteredCountries.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                {filteredCountries.map((c) => {
-                  const active = draft.country === c.value;
-                  return (
-                    <button
-                      key={c.value}
-                      onClick={() => updateDraft({ country: active ? undefined : c.value })}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${active ? "chip-active" : "chip-inactive"}`}
-                    >
-                      {c.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-white/25">No countries match</p>
-            )}
-          </div>
+        <FilterSection title="Country" count={draft.countries?.length} icon={<Globe size={14} />}>
+          <MultiSelectSearch
+            options={options.countries}
+            selected={draft.countries ?? []}
+            onChange={(vals) => updateDraft({ countries: vals.length > 0 ? vals : undefined })}
+            placeholder="Filter countries..."
+          />
         </FilterSection>
 
         {/* Minimum Rating */}
