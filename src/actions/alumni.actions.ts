@@ -70,6 +70,7 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
     const params = new URLSearchParams({
       select: "*,sessionTypes:SessionTypeOffering(*),availability:AlumniAvailability(*)",
       verificationStatus: "eq.approved",
+      isActive: "eq.true",
       offset: String((page - 1) * pageSize),
       limit: String(pageSize),
     });
@@ -153,6 +154,7 @@ export async function getAlumniById(id: string) {
       select: "*,sessionTypes:SessionTypeOffering(*),availability:AlumniAvailability(*)",
       id: `eq.${id}`,
       verificationStatus: "eq.approved",
+      isActive: "eq.true",
     });
     const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
       headers: restHeaders(),
@@ -182,7 +184,7 @@ export async function getAlumniById(id: string) {
 export async function getFilterOptions(country?: string) {
   try {
     const fetchDistinct = async (column: string, filterByCountry: boolean) => {
-      const params = new URLSearchParams({ select: column, verificationStatus: "eq.approved", order: `${column}.asc` });
+      const params = new URLSearchParams({ select: column, verificationStatus: "eq.approved", isActive: "eq.true", order: `${column}.asc` });
       if (filterByCountry && country) params.set("country", `eq.${country}`);
       const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
         headers: restHeaders(),
