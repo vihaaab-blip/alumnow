@@ -77,6 +77,13 @@ export default async function handler(request: NextRequest) {
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
+  } else if (path === "/dashboard" && role === "admin") {
+    // Admins have their own dashboard at /admin with real platform
+    // statistics - the generic student/alumni dashboard doesn't apply to
+    // them and shouldn't even flash on screen before a client redirect.
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin";
+    return NextResponse.redirect(url);
   } else if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

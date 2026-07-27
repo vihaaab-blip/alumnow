@@ -198,9 +198,10 @@ function DashboardContent() {
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status !== "authenticated") return;
+    if (session?.user?.role === "admin") { router.replace("/admin"); return; }
     getMyBookings().then(setBookings).catch(() => setBookings([]));
     getAlumniBookings().then(setAlumniBookings).catch(() => setAlumniBookings([])).finally(() => setLoading(false));
-  }, [status, router]);
+  }, [status, router, session]);
 
   const activeBookings = dashboardMode === "student" ? bookings : alumniBookings;
   const now = Date.now();
