@@ -22,9 +22,10 @@ export function DockNav() {
 
   if (pathname.startsWith("/admin")) return null;
 
+  const isAdmin = (session?.user as any)?.role === "admin";
   const links = [
     { href: "/browse", label: "Marketplace" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: isAdmin ? "/admin" : "/dashboard", label: "Dashboard" },
   ];
 
   return (
@@ -66,24 +67,21 @@ export function DockNav() {
         <div className="hidden md:flex items-center gap-2">
           {session?.user ? (
             <>
-              <Link
-                href="/account"
-                className={`text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150 ${
-                  pathname === "/account"
-                    ? "text-coral bg-coral/10"
-                    : "text-white/50 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <UserRound size={14} />
-                {session.user.name ?? "Account"}
-              </Link>
-              {(session.user as any).role === "admin" && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/70">
+                <UserRound size={14} className="text-white/35" />
+                {session.user.name ?? session.user.email}
+              </span>
+              {(session.user as any).role === "admin" ? (
                 <Link
                   href="/admin"
                   className="text-sm text-white/50 hover:text-white transition-colors"
                 >
                   Admin
                 </Link>
+              ) : (
+                <span className="text-sm text-white/30">
+                  {(session.user as any).role === "alumnus" ? "Alumni" : "Student"}
+                </span>
               )}
               <button
                 onClick={() => signOut({ redirectTo: "/" })}
@@ -146,18 +144,10 @@ export function DockNav() {
 
               {session?.user ? (
                 <>
-                  <Link
-                    href="/account"
-                    onClick={() => setMobileOpen(false)}
-                    className={`px-3 py-2.5 text-sm rounded-lg flex items-center gap-2 ${
-                      pathname === "/account"
-                        ? "text-coral bg-coral/10"
-                        : "text-white/50 hover:bg-white/5"
-                    }`}
-                  >
-                    <UserRound size={14} /> {session.user.name ?? "Account"}
-                  </Link>
-                  {(session.user as any).role === "admin" && (
+                  <div className="px-3 py-2.5 text-sm rounded-lg flex items-center gap-2 text-white/70">
+                    <UserRound size={14} className="text-white/35" /> {session.user.name ?? session.user.email}
+                  </div>
+                  {(session.user as any).role === "admin" ? (
                     <Link
                       href="/admin"
                       onClick={() => setMobileOpen(false)}
@@ -165,6 +155,10 @@ export function DockNav() {
                     >
                       Admin
                     </Link>
+                  ) : (
+                    <div className="px-3 py-2.5 text-sm text-white/30">
+                      {(session.user as any).role === "alumnus" ? "Alumni" : "Student"}
+                    </div>
                   )}
                   <button
                     onClick={() => {

@@ -18,7 +18,7 @@ export function ScrollButton({
           if (smoother) smoother.scrollTo(el, true, "top top");
           else el.scrollIntoView({ behavior: "smooth" });
         }}
-        className="group inline-flex"
+        className="group inline-flex rounded-full"
       >
         <span className="inline-flex h-12 items-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition-all duration-300 group-hover:border-white/30 group-hover:bg-white/5">
           See how it works

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useSession, signOut } from "@/hooks/useSession";
 import { Logo } from "./Logo";
 import {
-  LayoutDashboard, Search, BookOpen, Star, User, Settings,
+  LayoutDashboard, Search, BookOpen, Star, User,
   LogOut, ChevronRight, GraduationCap
 } from "lucide-react";
 
@@ -22,8 +22,7 @@ const sections = [
   {
     label: "Account",
     items: [
-      { href: "/alumni/profile", icon: User, label: "Profile" },
-      { href: "/admin/settings", icon: Settings, label: "Settings" },
+      { href: "/account", icon: User, label: "Profile & Settings" },
     ],
   },
 ];
