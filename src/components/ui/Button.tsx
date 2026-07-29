@@ -10,7 +10,7 @@ const variants = cva(
         primary:
           "bg-white text-[#0D0D0D] shadow-sm hover:bg-white/90 hover:shadow-md",
         accent:
-          "bg-coral text-white shadow-sm hover:bg-coral-light hover:shadow-md",
+          "btn-coral text-white",
         outline:
           "border border-white/15 bg-white/5 text-white shadow-sm hover:bg-white/10 hover:shadow-md",
         ghost: "text-white/70 hover:bg-white/5",
