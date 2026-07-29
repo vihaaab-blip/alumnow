@@ -17,8 +17,9 @@ export default async function AdminSettingsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: "Settings" }]} />
-      <h1 className="text-3xl font-semibold text-primary">Platform settings</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Keep payment and public metric configuration current.</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Configuration</p>
+      <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Platform settings</h1>
+      <p className="mt-2 text-sm text-white/40">Keep payment and public metric configuration current.</p>
       <div className="mt-8">
         <AdminPlatformSettings
           initialUpi={upiSetting?.value ?? "alumnow@upi"}

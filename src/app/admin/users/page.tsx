@@ -44,10 +44,11 @@ export default function AdminUsersPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: "Users" }]} />
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-primary">Users</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Manage all platform users.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Accounts</p>
+          <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Users</h1>
+          <p className="mt-2 text-sm text-white/40">Every account on the alumnow. platform, students and alumni alike.</p>
         </div>
       </div>
 
@@ -61,7 +62,7 @@ export default function AdminUsersPage() {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="h-11 rounded-[10px] border border-white/10 bg-white/[0.02] px-3.5 text-sm text-white outline-none focus:border-coral/40 focus:ring-4 focus:ring-coral/10"
         >
           <option value="ALL">All roles</option>
           <option value="student">Student</option>
@@ -70,9 +71,9 @@ export default function AdminUsersPage() {
         </select>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02]">
         <table className="w-full min-w-[650px] text-left text-sm">
-          <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-white/35">
             <tr>
               <th className="p-4">Name</th>
               <th>Email</th>
@@ -82,22 +83,22 @@ export default function AdminUsersPage() {
           </thead>
           <tbody>
             {data?.items.map((user) => (
-              <tr key={user.id} className="border-b border-border last:border-0">
-                <td className="p-4 font-semibold text-primary">
+              <tr key={user.id} className="border-b border-white/[0.06] last:border-0 transition-colors hover:bg-white/[0.02]">
+                <td className="p-4 font-semibold text-white">
                   {user.studentProfile?.fullName ?? user.alumniProfile?.fullName ?? "—"}
                 </td>
-                <td>{user.email}</td>
+                <td className="text-white/50">{user.email}</td>
                 <td>
                   <Badge tone={user.role === "admin" ? "accent" : user.role === "alumnus" ? "success" : "neutral"}>
                     {user.role}
                   </Badge>
                 </td>
-                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td className="text-white/50">{new Date(user.createdAt).toLocaleDateString()}</td>
               </tr>
             ))}
             {(!data || data.items.length === 0) && (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-sm text-muted-foreground">
+                <td colSpan={4} className="p-8 text-center text-sm text-white/40">
                   {loading ? "Loading..." : "No users found."}
                 </td>
               </tr>
@@ -107,7 +108,7 @@ export default function AdminUsersPage() {
       </div>
 
       {data && data.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between text-sm text-white/40">
           <span>Page {data.page} of {data.totalPages}</span>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>

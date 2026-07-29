@@ -249,11 +249,16 @@ export function FilterPanel({
       {/* Header */}
       <div className="px-5 py-4 border-b border-white/5">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-white">Filters</h2>
-            {resultCount != null && (
-              <p className="text-xs text-white/50 mt-0.5">{resultCount} result{resultCount !== 1 ? "s" : ""}</p>
-            )}
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-coral/12 text-coral">
+              <SlidersHorizontal size={13} />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-white">Filters</h2>
+              {resultCount != null && (
+                <p className="text-xs text-white/50 mt-0.5">{resultCount} result{resultCount !== 1 ? "s" : ""}</p>
+              )}
+            </div>
           </div>
           {activeCount > 0 && (
             <button onClick={handleClearAll} className="text-xs font-semibold text-coral hover:underline transition-all">
@@ -407,7 +412,7 @@ export function FilterPanel({
       {/* Mobile drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
+          <div className="fixed inset-0 bg-black/60" onClick={() => setDrawerOpen(false)} />
           <div className="fixed bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-[#0D0D0D] p-4 shadow-2xl animate-slide-up">
             <div className="mb-3 flex items-center justify-between px-1">
               <h2 className="font-semibold text-white">Filters</h2>
@@ -421,7 +426,7 @@ export function FilterPanel({
       )}
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:block">{content}</div>
+      <div className="hidden lg:block rounded-[16px] border border-white/[0.06] bg-white/[0.02]">{content}</div>
     </>
   );
 }

@@ -9,8 +9,9 @@ export default async function AdminReviewsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: "Reviews" }]} />
-      <h1 className="text-3xl font-semibold text-primary">Review moderation</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Approve useful, safe feedback before it appears publicly.</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Moderation</p>
+      <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Review moderation</h1>
+      <p className="mt-2 text-sm text-white/40">Approve useful, safe feedback before it appears publicly.</p>
       <div className="mt-8">
         <AdminReviewModeration reviews={reviews as any} />
       </div>

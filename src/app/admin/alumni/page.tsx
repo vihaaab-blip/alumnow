@@ -40,10 +40,16 @@ function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
   onViewDetails: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-coral/20 bg-coral/5 p-5">
-      <div className="flex items-start justify-between gap-4">
+    <div
+      className="relative overflow-hidden rounded-2xl p-5"
+      style={{
+        background: "linear-gradient(90deg, rgba(232,87,58,0.1) 0%, rgba(232,87,58,0.02) 100%)",
+        border: "1px solid rgba(232,87,58,0.22)",
+      }}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4 min-w-0">
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
             {item.profilePhotoUrl ? (
               <img src={item.profilePhotoUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -56,10 +62,10 @@ function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
             <p className="font-semibold text-white truncate">{item.fullName}</p>
             <p className="text-xs text-white/40 truncate">{item.user.email}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.universityName}</span>
-              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.course}</span>
-              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">{item.country}</span>
-              <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[11px] text-white/50">Class of {item.graduationYearJbcn}</span>
+              <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/50">{item.universityName}</span>
+              <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/50">{item.course}</span>
+              <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/50">{item.country}</span>
+              <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/50">Class of {item.graduationYearJbcn}</span>
             </div>
             {item.bio && (
               <p className="mt-2 text-xs text-white/30 line-clamp-2">{item.bio}</p>
@@ -157,10 +163,11 @@ export default function AdminAlumniPage() {
       <Breadcrumbs items={[{ label: "Alumni" }]} />
 
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold text-primary">Alumni Reviews</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Review, approve, or reject mentor applications.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Applications</p>
+          <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Alumni reviews</h1>
+          <p className="mt-2 text-sm text-white/40">Review, approve, or reject mentor applications.</p>
         </div>
         <DialogRoot open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -213,12 +220,12 @@ export default function AdminAlumniPage() {
         </div>
       </div>
 
-      {loading && <p className="mt-4 text-sm text-muted-foreground">Loading...</p>}
+      {loading && <p className="mt-4 text-sm text-white/40">Loading...</p>}
 
       {/* Pending review cards */}
       {statusFilter === "pending" && pendingItems.length > 0 && (
         <div className="mt-6 space-y-3">
-          <h2 className="text-sm font-semibold text-coral uppercase tracking-wider">Pending Review ({pendingItems.length})</h2>
+          <h2 className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Pending review ({pendingItems.length})</h2>
           {pendingItems.map((item) => (
             <PendingReviewCard
               key={item.id}
@@ -233,9 +240,9 @@ export default function AdminAlumniPage() {
 
       {/* Other items table */}
       {otherItems.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-[#1A1A1A]">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02]">
           <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="border-b border-border bg-background text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-white/35">
               <tr>
                 <th className="p-4">Alumnus</th>
                 <th>University</th>
@@ -247,11 +254,11 @@ export default function AdminAlumniPage() {
             </thead>
             <tbody>
               {otherItems.map((item) => (
-                <tr key={item.id} className="border-b border-border last:border-0 hover:bg-white/[0.02] transition-colors">
+                <tr key={item.id} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.02] transition-colors">
                   <td className="p-4">
-                    <p className="font-semibold text-primary">{item.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{item.user.email}</p>
-                    {item.user.phone && <p className="text-xs text-muted-foreground">{item.user.phone}</p>}
+                    <p className="font-semibold text-white">{item.fullName}</p>
+                    <p className="text-xs text-white/40">{item.user.email}</p>
+                    {item.user.phone && <p className="text-xs text-white/40">{item.user.phone}</p>}
                   </td>
                   <td>{item.universityName}</td>
                   <td>{item.course}</td>
@@ -290,7 +297,7 @@ export default function AdminAlumniPage() {
 
       {/* Pagination */}
       {data && data.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between text-sm text-white/40">
           <span>Page {data.page} of {data.totalPages}</span>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>

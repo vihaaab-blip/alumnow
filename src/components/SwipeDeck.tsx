@@ -44,18 +44,20 @@ const SwipeCardInner = memo(function SwipeCardInner({ alumni, onSave, onSkip }: 
       transition={{ duration: 0.3, ease: [0.18, 0.89, 0.32, 1.28] }}
     >
       <motion.div
-        className="pointer-events-none absolute left-5 top-5 z-10 rounded-xl border-4 border-green-500 bg-white px-4 py-2 shadow-lg"
+        className="pointer-events-none absolute left-5 top-5 z-10 flex items-center gap-2 rounded-xl border-2 border-coral bg-[#151517]/95 px-4 py-2 shadow-[0_8px_24px_rgba(232,87,58,0.35)]"
         style={{ opacity: likeOpacity, rotate: -12 }}
       >
-        <Heart size={32} className="fill-green-500 text-green-500" />
+        <Heart size={22} className="fill-coral text-coral" />
+        <span className="text-sm font-bold uppercase tracking-wider text-coral">Save</span>
       </motion.div>
       <motion.div
-        className="pointer-events-none absolute right-5 top-5 z-10 rounded-xl border-4 border-red-500 bg-white px-4 py-2 shadow-lg"
+        className="pointer-events-none absolute right-5 top-5 z-10 flex items-center gap-2 rounded-xl border-2 border-white/30 bg-[#151517]/95 px-4 py-2 shadow-lg"
         style={{ opacity: nopeOpacity, rotate: 12 }}
       >
-        <XIcon size={32} className="text-red-500" />
+        <span className="text-sm font-bold uppercase tracking-wider text-white/60">Skip</span>
+        <XIcon size={22} className="text-white/60" />
       </motion.div>
-      <div className="absolute inset-0 rounded-xl border border-border shadow-sm">
+      <div className="absolute inset-0 rounded-[16px] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <AlumniCard alumni={alumni} variant="swipe" />
       </div>
     </motion.div>
@@ -199,9 +201,11 @@ export function SwipeDeck({
       >
         <div className="relative flex min-h-[560px] items-center justify-center">
           <div className="text-center">
-            <Sparkles className="mx-auto mb-4 text-accent" size={40} />
-            <p className="text-lg font-semibold text-primary">You&apos;ve seen everyone!</p>
-            <p className="mt-1 text-sm text-muted-foreground">Check back later for new alumni.</p>
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-coral/10">
+              <Sparkles className="text-coral" size={26} />
+            </span>
+            <p className="text-lg font-semibold text-white">You&apos;ve seen everyone!</p>
+            <p className="mt-1 text-sm text-white/40">Check back later for new alumni.</p>
           </div>
         </div>
         {showEmptyUndo && lastAction && (
@@ -225,7 +229,7 @@ export function SwipeDeck({
           return (
             <div
               key={card.id}
-              className="absolute inset-0 overflow-hidden rounded-xl border border-border shadow-sm"
+              className="absolute inset-0 overflow-hidden rounded-[16px] border border-white/[0.06] shadow-sm"
               style={{
                 zIndex,
                 transform: `scale(${1 - (i + 1) * 0.03}) translateY(${(i + 1) * 8}px)`,
@@ -250,7 +254,7 @@ export function SwipeDeck({
       <div className="mt-5 flex items-center justify-center gap-4">
         <Button
           variant="outline"
-          className="h-14 w-14 rounded-full border-2 p-0 hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
+          className="h-14 w-14 rounded-full border-2 border-white/10 bg-white/[0.03] p-0 text-white/50 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
           aria-label="Skip"
           onClick={() => handleSwipe("left")}
           disabled={!swipeReady}
@@ -259,7 +263,7 @@ export function SwipeDeck({
         </Button>
         <Button
           variant="accent"
-          className="h-16 w-16 rounded-full p-0 shadow-lg shadow-accent/25"
+          className="h-16 w-16 rounded-full p-0"
           aria-label="Save"
           onClick={() => handleSwipe("right")}
           disabled={!swipeReady || savingId === current.id}
@@ -274,7 +278,7 @@ export function SwipeDeck({
           </motion.div>
         )}
       </div>
-      <p className="mt-3 text-center text-xs text-muted-foreground">
+      <p className="mt-3 text-center text-xs text-white/35">
         Swipe right to save &middot; left to skip &middot; or use arrow keys
       </p>
     </div>
