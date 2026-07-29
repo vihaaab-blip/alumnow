@@ -6,6 +6,7 @@ import { applyAsAlumni } from "@/actions/alumni.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { resizeImageToDataUrl } from "@/lib/image";
 
 type Form = {
   fullName: string; email: string; phone: string; password: string;
@@ -33,17 +34,16 @@ export default function ApplyPage() {
   const [status, setStatus] = useState<"idle" | "creating" | "submitted">("idle");
   const [photoPreview, setPhotoPreview] = useState("");
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file));
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (typeof ev.target?.result === "string") {
-        update("profilePhotoUrl", ev.target!.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const resized = await resizeImageToDataUrl(file);
+      setPhotoPreview(resized);
+      update("profilePhotoUrl", resized);
+    } catch {
+      setError("Could not process that photo. Please try a different image.");
+    }
   };
 
   const update = (key: keyof Form, value: string | boolean) =>
@@ -184,10 +184,13 @@ export default function ApplyPage() {
                   <div className="flex h-full w-full items-center justify-center text-white/15"><Upload size={20} /></div>
                 )}
               </div>
-              <label className="cursor-pointer rounded-[10px] border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50 hover:bg-white/10 transition-all">
-                Upload photo
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
-              </label>
+              <div>
+                <label className="cursor-pointer rounded-[10px] border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50 hover:bg-white/10 transition-all">
+                  Upload photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+                </label>
+                <p className="mt-1.5 text-xs text-white/30">Square photo works best — auto-cropped and resized to 512×512px.</p>
+              </div>
             </div>
             <label className="block text-sm font-semibold text-white/70">
               Bio
