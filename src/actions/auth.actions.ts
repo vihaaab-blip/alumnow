@@ -22,7 +22,7 @@ function restHeaders(extra?: HeadersInit): HeadersInit {
   };
 }
 
-async function findUserByEmail(email: string) {
+export async function findUserByEmail(email: string) {
   const params = new URLSearchParams({ select: "id,email", email: `eq.${email}`, limit: "1" });
   const res = await fetch(`${supabaseUrl}/rest/v1/User?${params.toString()}`, {
     headers: restHeaders(),
@@ -73,7 +73,7 @@ async function createStudentUserRecord(input: {
   if (!profileRes.ok) throw new Error(`StudentProfile create failed: ${profileRes.status} ${await profileRes.text()}`);
 }
 
-async function createAlumniUserRecord(input: {
+export async function createAlumniUserRecord(input: {
   id: string;
   email: string;
   phone: string;

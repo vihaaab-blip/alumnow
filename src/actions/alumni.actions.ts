@@ -7,30 +7,65 @@ import { alumniApplicationSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ApiResponse } from "@/types";
 import { getServerSession } from "@/lib/supabase-auth";
+import { createAlumniUserRecord, findUserByEmail } from "@/actions/auth.actions";
 
+const DEFAULT_SESSION_TYPES = [
+  { type: "call_30", pricePaise: 29900, descriptionOneLiner: "A focused 30-minute conversation" },
+  { type: "call_45", pricePaise: 39900, descriptionOneLiner: "A balanced 45-minute conversation" },
+  { type: "call_60", pricePaise: 49900, descriptionOneLiner: "A deeper one-hour conversation" },
+  { type: "group_40", pricePaise: 99900, maxParticipants: 6, descriptionOneLiner: "Learn together in a small group" },
+];
+
+// Writes go through the same Supabase REST path as signupAlumni/student
+// signup rather than a raw Prisma transaction - that pooled connection has
+// repeatedly proven unreliable in production, and unlike every other action
+// in this codebase this one had no try/catch at all, so a failed Prisma call
+// surfaced to the user as a bare "Something went wrong" with nothing logged
+// server-side to diagnose. Alumni signup was the last place still on the old
+// path (student signup was migrated earlier), which is exactly why it kept
+// failing while student signup worked fine.
 export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redirectTo: string }>> {
-  const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
-  if (!rateLimit(`apply:${ip}`, { max: 3, windowMs: 900000 })) return { success: false, error: "Too many applications. Try again in 15 minutes." };
-  const parsed = alumniApplicationSchema.safeParse(input);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check your application details." };
-  const exists = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (exists) return { success: false, error: "An account with this email already exists. Try logging in." };
-  const langStr = parsed.data.languages ?? "";
-  const languages = JSON.stringify(langStr.split(",").map((item) => item.trim()).filter(Boolean));
-  const authUserId = (input as any).authUserId as string | undefined;
-  if (!authUserId) return { success: false, error: "Authentication failed. Please try again." };
-  const user = await prisma.$transaction(async (tx) => {
-    const account = await tx.user.create({ data: { id: authUserId, email: parsed.data.email, phone: parsed.data.phone, role: "alumnus", emailVerifiedAt: new Date() } });
-    const photoUrl = parsed.data.profilePhotoUrl || `https://picsum.photos/seed/${encodeURIComponent(parsed.data.fullName)}/400/400`;
-    await tx.alumniProfile.create({ data: { userId: account.id, fullName: parsed.data.fullName, profilePhotoUrl: photoUrl, universityName: parsed.data.universityName, course: parsed.data.course, country: parsed.data.country, graduationYearJbcn: parsed.data.graduationYearJbcn, bio: parsed.data.bio, languages, verificationStatus: "pending", isVerifiedJbcnAlumnus: false, avgResponseTimeHours: 6, sessionTypes: { create: [{ type: "call_30", pricePaise: 29900, descriptionOneLiner: "A focused 30-minute conversation" }, { type: "call_45", pricePaise: 39900, descriptionOneLiner: "A balanced 45-minute conversation" }, { type: "call_60", pricePaise: 49900, descriptionOneLiner: "A deeper one-hour conversation" }, { type: "group_40", pricePaise: 99900, maxParticipants: 6, descriptionOneLiner: "Learn together in a small group" }] } } });
-    return account;
-  });
   try {
-    await sendEmail({ to: user.email, subject: "Your alumnow mentor application has been submitted", body: `Welcome ${parsed.data.fullName}. Your mentor application has been submitted and is pending review by our team. You will be notified once your profile is approved.`, eventType: "alumni_application_submitted" }, user.id);
+    const ip = (await headers()).get("x-forwarded-for") ?? "unknown";
+    if (!rateLimit(`apply:${ip}`, { max: 3, windowMs: 900000 })) return { success: false, error: "Too many applications. Try again in 15 minutes." };
+    const parsed = alumniApplicationSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check your application details." };
+
+    const email = parsed.data.email.trim().toLowerCase();
+    const exists = await findUserByEmail(email);
+    if (exists) return { success: false, error: "An account with this email already exists. Try logging in." };
+
+    const authUserId = (input as any).authUserId as string | undefined;
+    if (!authUserId) return { success: false, error: "Authentication failed. Please try again." };
+
+    const photoUrl = parsed.data.profilePhotoUrl || `https://picsum.photos/seed/${encodeURIComponent(parsed.data.fullName)}/400/400`;
+
+    await createAlumniUserRecord({
+      id: authUserId,
+      email,
+      phone: parsed.data.phone,
+      fullName: parsed.data.fullName,
+      profilePhotoUrl: photoUrl,
+      universityName: parsed.data.universityName,
+      course: parsed.data.course,
+      country: parsed.data.country,
+      graduationYearJbcn: parsed.data.graduationYearJbcn,
+      bio: parsed.data.bio,
+      languages: parsed.data.languages,
+      sessionTypes: DEFAULT_SESSION_TYPES,
+    });
+
+    try {
+      await sendEmail({ to: email, subject: "Your alumnow mentor application has been submitted", body: `Welcome ${parsed.data.fullName}. Your mentor application has been submitted and is pending review by our team. You will be notified once your profile is approved.`, eventType: "alumni_application_submitted" }, authUserId);
+    } catch (error) {
+      console.warn("applyAsAlumni notification failed", error);
+    }
+    return { success: true, data: { redirectTo: "/alumni/application-under-review" } };
   } catch (error) {
-    console.warn("applyAsAlumni notification failed", error);
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    console.error("applyAsAlumni failed:", msg, error);
+    return { success: false, error: `Could not submit application: ${msg}` };
   }
-  return { success: true, data: { redirectTo: "/alumni/dashboard" } };
 }
 
 export type AlumniListFilters = { search?: string; universities?: string[]; countries?: string[]; courses?: string[]; studyLevel?: string; gradYearMin?: number; gradYearMax?: number; qsTiers?: string[]; priceMin?: number; priceMax?: number; languages?: string[]; minRating?: string; availability?: string; sortBy?: string; page?: number; pageSize?: number };
