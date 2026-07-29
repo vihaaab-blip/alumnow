@@ -142,11 +142,11 @@ export default function AccountPage() {
 
   const roleBadge = (role: string) => {
     const map: Record<string, { label: string; color: string }> = {
-      student: { label: "Student", color: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" },
+      student: { label: "Student", color: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
       alumnus: { label: "Alumni", color: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
-      admin: { label: "Admin", color: "bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20" },
+      admin: { label: "Admin", color: "bg-[#F0744E]/10 text-[#F0744E] border-[#F0744E]/20" },
     };
-    const info = map[role] ?? { label: "Student", color: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" };
+    const info = map[role] ?? { label: "Student", color: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" };
     return (
       <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${info.color}`}>
         <Shield size={10} />
@@ -440,8 +440,8 @@ export default function AccountPage() {
                   </a>
                   <a href="/alumni/profile/availability" className="flex items-center justify-between p-3 -mx-3 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-[8px] bg-[#3B82F6]/10 flex items-center justify-center">
-                        <Calendar size={14} className="text-[#3B82F6]" />
+                      <div className="h-8 w-8 rounded-[8px] bg-[#E8573A]/10 flex items-center justify-center">
+                        <Calendar size={14} className="text-[#E8573A]" />
                       </div>
                       <div>
                         <p className="text-[13px] font-medium text-white">Manage availability</p>

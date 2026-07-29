@@ -98,7 +98,7 @@ function generateRatingDist(bookings: any[]) {
   const dist = [5, 4, 3, 2, 1].map((r) => ({
     rating: `${r}★`,
     count: bookings.filter((b) => b.review?.rating === r).length,
-    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#D97706" : r === 2 ? "#DC2626" : "#EF4444",
+    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#B0B0B8" : r === 2 ? "#DC2626" : "#EF4444",
   }));
   return dist;
 }
@@ -111,8 +111,8 @@ function getGreeting() {
 }
 
 const STATUS_MAP: Record<string, { label: string; classes: string }> = {
-  pending_payment: { label: "Pending Payment", classes: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20" },
-  payment_submitted: { label: "Payment Submitted", classes: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" },
+  pending_payment: { label: "Pending Payment", classes: "bg-[#B0B0B8]/10 text-[#B0B0B8] border-[#B0B0B8]/20" },
+  payment_submitted: { label: "Payment Submitted", classes: "bg-white/8 text-white/70 border-white/15" },
   confirmed: { label: "Confirmed", classes: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
   completed: { label: "Completed", classes: "bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20" },
   cancelled: { label: "Cancelled", classes: "bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20" },
@@ -261,7 +261,7 @@ function AlumniDashboardContent() {
     },
     {
       icon: DollarSign, label: "Total Earnings", value: `₹${(totalEarnings / 100000).toFixed(1)}`, unit: "L",
-      color: "#D97706", bg: "bg-[#D97706]/8",
+      color: "#B0B0B8", bg: "bg-[#B0B0B8]/8",
       trend: earningsTrend, sparkData: sparkEarnings,
       detail: `Best month: ${peakEarningsMonth?.month} · ₹${peakEarningsMonth ? (peakEarningsMonth.amount / 100).toFixed(0) : 0}K`,
     },
@@ -495,8 +495,8 @@ function AlumniDashboardContent() {
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
                 <Link href="/alumni/profile/pricing" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#D97706]/10">
-                    <DollarSign size={14} style={{ color: "#D97706" }} />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#B0B0B8]/10">
+                    <DollarSign size={14} style={{ color: "#B0B0B8" }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-primary">Pricing & session types</p>
@@ -535,8 +535,8 @@ function AlumniDashboardContent() {
                     />
                     <defs>
                       <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#D97706" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#D97706" stopOpacity={0.3} />
+                        <stop offset="0%" stopColor="#B0B0B8" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#B0B0B8" stopOpacity={0.3} />
                       </linearGradient>
                     </defs>
                   </BarChart>
@@ -590,8 +590,8 @@ function AlumniDashboardContent() {
                         </div>
                         <div className="shrink-0 flex items-center gap-2">
                           {isUrgent ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D97706]/20 bg-[#D97706]/5 text-[#D97706] px-2.5 py-0.5 text-[10px] font-mono tabular-nums">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] animate-pulse" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B0B0B8]/20 bg-[#B0B0B8]/5 text-[#B0B0B8] px-2.5 py-0.5 text-[10px] font-mono tabular-nums">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[#B0B0B8] animate-pulse" />
                               <CountdownTimer target={b.scheduledStartAt} />
                             </span>
                           ) : (

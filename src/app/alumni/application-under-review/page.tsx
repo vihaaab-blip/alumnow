@@ -21,7 +21,7 @@ export default function AlumniApplicationUnderReviewPage() {
     <div className="min-h-[calc(100dvh-64px)] bg-[#0D0D0D] px-6 py-16 text-white">
       <div className="mx-auto max-w-2xl">
         <div className="rounded-2xl border border-white/10 bg-[#1A1A1A] p-8 shadow-lg">
-          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${rejected ? "bg-red-500/10 text-red-300" : "bg-amber-500/10 text-amber-300"}`}>
+          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${rejected ? "bg-red-500/10 text-red-300" : "bg-coral/10 text-coral-light"}`}>
             {rejected ? <MailCheck size={26} /> : <Clock size={26} />}
           </div>
           <h1 className="mt-6 text-3xl font-semibold">

@@ -99,9 +99,9 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminStatCard label="Total Alumni" value={totalAlumni} icon={GraduationCap} tint="coral" change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
-        <AdminStatCard label="Total Bookings" value={totalBookings} icon={CalendarDays} tint="blue" change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
-        <AdminStatCard label="Total Revenue" value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`} icon={IndianRupee} tint="green" change={revenueChange ?? undefined} changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"} />
-        <AdminStatCard label="Pending Reviews" value={pendingReviews} icon={Star} tint="amber" href="/admin/reviews" />
+        <AdminStatCard label="Total Bookings" value={totalBookings} icon={CalendarDays} change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
+        <AdminStatCard label="Total Revenue" value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`} icon={IndianRupee} change={revenueChange ?? undefined} changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"} />
+        <AdminStatCard label="Pending Reviews" value={pendingReviews} icon={Star} href="/admin/reviews" />
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

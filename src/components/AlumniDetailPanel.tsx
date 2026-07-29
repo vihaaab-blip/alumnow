@@ -156,7 +156,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                     <p className="text-[10px] text-white/25 mt-0.5">Graduated</p>
                   </div>
                   <div className="stat-chip">
-                    <Star size={14} className="mx-auto text-amber-400 mb-1.5" />
+                    <Star size={14} className="mx-auto text-coral mb-1.5" />
                     <p className="text-[15px] font-bold text-white tabular-nums">
                       {alumni.ratingAvg != null ? alumni.ratingAvg.toFixed(1) : "—"}
                     </p>
@@ -274,7 +274,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-white/25">
                     {alumni.ratingCount} review{alumni.ratingCount !== 1 ? "s" : ""}
                     {alumni.ratingAvg != null && (
-                      <span className="ml-2 text-amber-400">{alumni.ratingAvg.toFixed(1)} ★</span>
+                      <span className="ml-2 text-coral">{alumni.ratingAvg.toFixed(1)} ★</span>
                     )}
                   </p>
 
@@ -341,7 +341,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
             </div>
             {alumni.ratingAvg != null && (
               <div className="flex items-center gap-1 text-[12px] text-white/45">
-                <Star size={11} className="fill-amber-400 text-amber-400" />
+                <Star size={11} className="fill-coral text-coral" />
                 {alumni.ratingAvg.toFixed(1)}
                 {alumni.ratingCount ? (
                   <span className="text-white/25">({alumni.ratingCount})</span>

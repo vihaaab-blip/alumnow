@@ -93,7 +93,7 @@ function generateRatingDist(bookings: any[]) {
   const dist = [5, 4, 3, 2, 1].map((r) => ({
     rating: `${r}★`,
     count: bookings.filter((b) => b.review?.rating === r).length,
-    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#D97706" : r === 2 ? "#DC2626" : "#EF4444",
+    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#B0B0B8" : r === 2 ? "#DC2626" : "#EF4444",
   }));
   return dist;
 }
@@ -144,8 +144,8 @@ function ChartTooltip({ active, payload, label }: any) {
 
 /* ─── Status Badge ─── */
 const STATUS_MAP: Record<string, { label: string; classes: string; icon?: any }> = {
-  pending_payment: { label: "Pending Payment", classes: "bg-[#D97706]/10 text-[#D97706] border-[#D97706]/20", icon: Clock },
-  payment_submitted: { label: "Payment Submitted", classes: "bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/20" },
+  pending_payment: { label: "Pending Payment", classes: "bg-[#B0B0B8]/10 text-[#B0B0B8] border-[#B0B0B8]/20", icon: Clock },
+  payment_submitted: { label: "Payment Submitted", classes: "bg-white/8 text-white/70 border-white/15" },
   confirmed: { label: "Confirmed", classes: "bg-[#E8573A]/10 text-[#E8573A] border-[#E8573A]/20" },
   completed: { label: "Completed", classes: "bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20" },
   cancelled: { label: "Cancelled", classes: "bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20" },
@@ -307,9 +307,9 @@ function DashboardContent() {
   const statusRingColor = (s: string) => {
     if (s === "completed") return "#16A34A";
     if (s === "confirmed") return ACCENT;
-    if (s === "pending_payment") return "#D97706";
+    if (s === "pending_payment") return "#B0B0B8";
     if (s === "cancelled") return "#DC2626";
-    if (s === "payment_submitted") return "#3B82F6";
+    if (s === "payment_submitted") return "#B0B0B8";
     return "#6E6E76";
   };
 
@@ -325,19 +325,19 @@ function DashboardContent() {
     },
     {
       icon: Clock, label: "Total Hours", value: chartTotalHours.toFixed(1), unit: "h",
-      color: "#3B82F6", bg: "bg-[#3B82F6]/8",
+      color: "#E8573A", bg: "bg-[#E8573A]/8",
       trend: hoursTrend, sparkData: sparklineHours,
       detail: `${chartTotalHours.toFixed(1)}h this week`,
     },
     {
       icon: Star, label: "Rating", value: chartAvgRating > 0 ? chartAvgRating.toFixed(1) : "—", unit: chartAvgRating > 0 ? "" : "",
-      color: "#D97706", bg: "bg-[#D97706]/8",
+      color: "#B0B0B8", bg: "bg-[#B0B0B8]/8",
       trend: ratingTrend, sparkData: sparklineRatings,
       detail: chartTotalRatings > 0 ? `${chartTotalRatings} reviews total` : "No ratings yet",
     },
     {
       icon: TrendingUp, label: "Upcoming", value: String(realUpcomingCount), unit: "",
-      color: "#8B5CF6", bg: "bg-[#8B5CF6]/8",
+      color: "#F0744E", bg: "bg-[#F0744E]/8",
       trend: upcomingTrend, sparkData: sparklineUpcoming,
       detail: realUpcomingCount > 0 ? `Next: ${activeBookings.find((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled") ? new Date(activeBookings.find((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled")!.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}` : "No upcoming sessions",
     },
@@ -406,9 +406,9 @@ function DashboardContent() {
           <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: "Completed", value: "0", detail: "No completed sessions", icon: Award, color: "#16A34A" },
-              { label: "Total hours", value: "0.0h", detail: "No mentoring hours yet", icon: Clock, color: "#3B82F6" },
-              { label: "Rating", value: "—", detail: "No ratings yet", icon: Star, color: "#D97706" },
-              { label: "Upcoming", value: "0", detail: "Clear schedule", icon: TrendingUp, color: "#8B5CF6" },
+              { label: "Total hours", value: "0.0h", detail: "No mentoring hours yet", icon: Clock, color: "#E8573A" },
+              { label: "Rating", value: "—", detail: "No ratings yet", icon: Star, color: "#B0B0B8" },
+              { label: "Upcoming", value: "0", detail: "Clear schedule", icon: TrendingUp, color: "#F0744E" },
             ].map((item) => (
               <div key={item.label} className="rounded-[16px] border border-white/8 bg-[#171719] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
                 <div className="mb-5 flex items-center justify-between">
@@ -489,7 +489,7 @@ function DashboardContent() {
             <div className="absolute inset-0 aurora-mesh" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
             <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full bg-[#E8573A]/10 blur-3xl pointer-events-none" />
-            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#3B82F6]/8 blur-3xl pointer-events-none" />
+            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#E8573A]/8 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
               <div className="relative">
                 <img
@@ -837,9 +837,9 @@ function DashboardContent() {
                               {tab === "upcoming" && (
                                 <>
                                   <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-mono tabular-nums ${
-                                    isUrgent ? "border-[#D97706]/20 bg-[#D97706]/5 text-[#D97706]" : "border-border/60 bg-muted/40 text-muted-foreground"
+                                    isUrgent ? "border-coral/25 bg-coral/8 text-coral" : "border-border/60 bg-muted/40 text-muted-foreground"
                                   }`}>
-                                    {isUrgent && <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] animate-pulse" />}
+                                    {isUrgent && <span className="h-1.5 w-1.5 rounded-full bg-coral animate-pulse" />}
                                     <CountdownTimer target={booking.scheduledStartAt} />
                                   </span>
                                   {booking.meetLink && (

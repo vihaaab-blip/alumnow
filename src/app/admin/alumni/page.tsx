@@ -40,7 +40,7 @@ function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
   onViewDetails: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+    <div className="rounded-2xl border border-coral/20 bg-coral/5 p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 min-w-0">
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10">
@@ -204,7 +204,7 @@ export default function AdminAlumniPage() {
             >
               {s === "pending" ? "Pending" : s === "all" ? "All" : s === "approved" ? "Approved" : "Rejected"}
               {s === "pending" && data && (
-                <span className="ml-1.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">
+                <span className="ml-1.5 rounded-full bg-coral/20 px-1.5 py-0.5 text-[10px] font-bold text-coral">
                   {data.items.filter((i) => i.verificationStatus === "pending").length}
                 </span>
               )}
@@ -218,7 +218,7 @@ export default function AdminAlumniPage() {
       {/* Pending review cards */}
       {statusFilter === "pending" && pendingItems.length > 0 && (
         <div className="mt-6 space-y-3">
-          <h2 className="text-sm font-semibold text-amber-400 uppercase tracking-wider">Pending Review ({pendingItems.length})</h2>
+          <h2 className="text-sm font-semibold text-coral uppercase tracking-wider">Pending Review ({pendingItems.length})</h2>
           {pendingItems.map((item) => (
             <PendingReviewCard
               key={item.id}

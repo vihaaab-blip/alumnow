@@ -58,7 +58,7 @@ export function CheckoutSummaryCard({
           </p>
           {alumni.ratingAvg != null && (
             <p className="text-[11px] text-white/30 flex items-center gap-1 mt-0.5">
-              <Star size={10} className="fill-amber-400 text-amber-400" />
+              <Star size={10} className="fill-coral text-coral" />
               {alumni.ratingAvg.toFixed(1)}
               {alumni.ratingCount ? <span>({alumni.ratingCount} reviews)</span> : null}
             </p>
