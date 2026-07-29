@@ -32,7 +32,7 @@ export function ReviewCard({ review, index = 0 }: { review: Review; index?: numb
               size={11}
               className={
                 i < review.rating
-                  ? "fill-amber-400 text-amber-400"
+                  ? "fill-coral text-coral"
                   : "text-white/10 fill-white/10"
               }
             />

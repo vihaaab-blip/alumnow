@@ -89,7 +89,7 @@ export function AlumniCard({
             </span>
             {alumni.ratingAvg != null && (
               <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-white">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
+                <Star size={12} className="fill-coral text-coral" />
                 {alumni.ratingAvg.toFixed(1)}
               </span>
             )}
@@ -156,7 +156,7 @@ export function AlumniCard({
           {/* Rating badge */}
           {alumni.ratingAvg != null && alumni.ratingAvg >= 4.5 && (
             <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 px-2 py-0.5 shadow-sm">
-              <Star size={11} className="fill-amber-400 text-amber-400" />
+              <Star size={11} className="fill-coral text-coral" />
               <span className="text-[11px] font-bold text-white">
                 {alumni.ratingAvg.toFixed(1)}
               </span>
@@ -196,7 +196,7 @@ export function AlumniCard({
             </h3>
             {alumni.ratingAvg != null && (
               <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-white/80">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
+                <Star size={12} className="fill-coral text-coral" />
                 {alumni.ratingAvg.toFixed(1)}
               </span>
             )}

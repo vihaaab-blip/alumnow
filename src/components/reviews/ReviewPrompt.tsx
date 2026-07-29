@@ -113,7 +113,7 @@ export function ReviewPrompt({
                         size={26}
                         className={
                           val <= displayStars
-                            ? "fill-amber-400 text-amber-400"
+                            ? "fill-coral text-coral"
                             : "text-white/15 fill-white/5"
                         }
                         style={{ transition: "color 120ms, fill 120ms" }}

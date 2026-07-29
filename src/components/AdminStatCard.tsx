@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 
-export function AdminStatCard({ label, value, detail, change, changeType, href, icon: Icon, tint = "coral" }: {
+export function AdminStatCard({ label, value, detail, change, changeType, href, icon: Icon }: {
   label: string
   value: string | number
   detail?: string
@@ -12,13 +12,9 @@ export function AdminStatCard({ label, value, detail, change, changeType, href, 
   icon?: LucideIcon
   tint?: "coral" | "blue" | "green" | "amber"
 }) {
-  const tints: Record<string, { bg: string; text: string }> = {
-    coral: { bg: "bg-coral/12", text: "text-coral" },
-    blue: { bg: "bg-[#3B82F6]/12", text: "text-[#60A5FA]" },
-    green: { bg: "bg-[#16A34A]/12", text: "text-[#4ADE80]" },
-    amber: { bg: "bg-[#D97706]/12", text: "text-[#FBBF24]" },
-  };
-  const t = tints[tint] ?? tints.coral!;
+  // Every stat shares the same coral-on-black language — variety comes from
+  // the icon and copy, not a rainbow of hues.
+  const t = { bg: "bg-coral/12", text: "text-coral" };
 
   const inner = (
     <Card
@@ -36,7 +32,7 @@ export function AdminStatCard({ label, value, detail, change, changeType, href, 
       <div className="mt-4 flex items-baseline gap-2">
         <p className="font-mono text-[32px] font-bold leading-none tracking-tight text-white">{value}</p>
         {change && (
-          <span className={`flex items-center gap-0.5 text-xs font-semibold ${changeType === "increase" ? "text-[#4ADE80]" : "text-red-400"}`}>
+          <span className={`flex items-center gap-0.5 text-xs font-semibold ${changeType === "increase" ? "text-white/70" : "text-red-400/80"}`}>
             {changeType === "increase" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
             {change}
           </span>
