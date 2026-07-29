@@ -347,21 +347,21 @@ function DashboardContent() {
   if (status === "loading" || !session) {
     return (
       <div className="min-h-screen bg-[#0D0D0D]">
-        <div className="ml-0 min-h-screen">
-          <div className="p-6 max-w-[1400px] space-y-4">
+        <div className="ml-0 min-h-screen overflow-x-hidden">
+          <div className="p-4 md:p-6 max-w-[1400px] space-y-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
               <Skeleton className="h-[130px] w-full rounded-[14px]" />
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="grid grid-cols-4 gap-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[120px] rounded-[14px]" />)}
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }} className="grid grid-cols-12 gap-4">
-              <Skeleton className="col-span-7 rounded-[14px] h-[300px]" />
-              <Skeleton className="col-span-5 rounded-[14px] h-[300px]" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }} className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+              <Skeleton className="sm:col-span-7 rounded-[14px] h-[300px]" />
+              <Skeleton className="sm:col-span-5 rounded-[14px] h-[300px]" />
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.15 }} className="grid grid-cols-12 gap-4">
-              <Skeleton className="col-span-5 rounded-[14px] h-[300px]" />
-              <Skeleton className="col-span-7 rounded-[14px] h-[300px]" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.15 }} className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+              <Skeleton className="sm:col-span-5 rounded-[14px] h-[300px]" />
+              <Skeleton className="sm:col-span-7 rounded-[14px] h-[300px]" />
             </motion.div>
           </div>
           <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} value="" onChange={(v) => { router.push(`/browse${v ? `?search=${encodeURIComponent(v)}` : ""}`); }} />
@@ -379,7 +379,7 @@ function DashboardContent() {
         <div className="mx-auto max-w-[1440px] px-6 py-6">
           <section className="relative overflow-hidden rounded-[18px] border border-white/8 bg-[#151517]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(232,87,58,0.20),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(99,102,241,0.16),transparent_30%)]" />
-            <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative flex flex-col gap-6 p-4 md:p-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <img
                   src={`https://picsum.photos/seed/${session.user?.id}/100/100`}
@@ -477,14 +477,14 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
-      <div className="ml-0 min-h-screen">
-        <div className="p-6 max-w-[1400px]">
+      <div className="ml-0 min-h-screen overflow-x-hidden">
+        <div className="p-4 md:p-6 max-w-[1400px]">
           {/* ─── Hero Banner ─── */}
           <ScrollReveal
             y={12}
             duration={0.6}
             start="top 95%"
-            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-6 mb-6 block"
+            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-4 md:p-6 mb-6 block"
           >
             <div className="absolute inset-0 aurora-mesh" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
@@ -550,7 +550,7 @@ function DashboardContent() {
           </div>
 
           {/* ─── Stat Cards ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
                 className="rounded-[14px] bg-[#141416] border border-white/[0.07] p-5 flex flex-col transition-[border-color,box-shadow] duration-150 hover:border-white/[0.14] hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
@@ -578,7 +578,7 @@ function DashboardContent() {
           </motion.div>
 
           {/* ─── Charts Row ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-5">
             {/* Weekly Hours */}
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
@@ -665,7 +665,7 @@ function DashboardContent() {
           </motion.div>
 
           {/* ─── Bottom Row ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4">
             {/* Recent Mentors / Students */}
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
@@ -769,9 +769,9 @@ function DashboardContent() {
                     className={`px-3 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all duration-150 ${tab === "past" ? "bg-[#232326] text-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" : "text-white/40 hover:text-white"}`}>Past</button>
                 </div>
               </div>
-              <div className="grid grid-cols-12 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                 {/* Session list */}
-                <div className="col-span-7 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
+                <div className="sm:col-span-7 max-h-[300px] overflow-y-auto pr-1 scrollbar-hide">
                   {loading ? (
                     <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[48px] rounded-[10px]" />)}</div>
                   ) : filtered.length === 0 ? (
@@ -876,7 +876,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Rating donut */}
-                <div className="col-span-5 pl-4 border-l border-white/[0.07]">
+                <div className="sm:col-span-5 pl-4 sm:border-l border-white/[0.07] pt-4 sm:pt-0 border-t sm:border-t-0">
                   <h4 className="text-[10px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
                   <div className="h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">

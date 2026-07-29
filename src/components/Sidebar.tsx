@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "@/hooks/useSession";
 import {
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   CalendarDays,
   Star,
   Users,
+  ChevronRight,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
@@ -22,6 +24,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -30,8 +33,8 @@ export function Sidebar() {
     return pathname.startsWith(href) && href !== "/dashboard";
   };
 
-  return (
-    <aside className="fixed left-0 top-0 z-40 h-full w-[240px] bg-[#0D0D0D] flex flex-col border-r border-white/5">
+  const sidebarInner = (
+    <>
       <div className="h-[72px] flex items-center px-5 border-b border-white/5 shrink-0">
         <Logo className="text-[17px]" />
       </div>
@@ -79,6 +82,35 @@ export function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-4 left-4 z-[60] md:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F2240] text-white shadow-lg"
+        aria-label="Toggle sidebar"
+      >
+        <ChevronRight size={18} className={`transition-transform ${mobileOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 z-[58] h-full w-[240px] bg-[#0D0D0D] flex flex-col border-r border-white/5 transition-transform duration-300 ease-out md:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarInner}
+      </aside>
+    </>
   );
 }

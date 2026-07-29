@@ -279,8 +279,8 @@ function AlumniDashboardContent() {
     return (
       <div className="min-h-screen bg-[#0D0D0D]">
         <Sidebar />
-      <div className="ml-[240px] min-h-screen">
-          <div className="p-6 max-w-[1400px] space-y-4">
+      <div className="ml-0 md:ml-[240px] min-h-screen overflow-x-hidden">
+          <div className="p-4 md:p-6 max-w-[1400px] space-y-4">
             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-[14px]" />)}
           </div>
         </div>
@@ -293,15 +293,15 @@ function AlumniDashboardContent() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
       <Sidebar />
-      <div className="ml-[240px] min-h-screen">
-        <div className="p-6 max-w-[1400px]">
+      <div className="ml-0 md:ml-[240px] min-h-screen overflow-x-hidden">
+        <div className="p-4 md:p-6 max-w-[1400px]">
 
           {/* ─── Hero ─── */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-6 mb-6"
+            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-4 md:p-6 mb-6"
           >
             <div className="absolute inset-0 aurora-mesh" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
@@ -363,7 +363,7 @@ function AlumniDashboardContent() {
           </div>
 
           {/* ─── Stat Cards ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
                 className={`relative overflow-hidden rounded-[14px] border border-white/[0.07] ${s.bg} p-5 transition-all duration-150`}
@@ -388,7 +388,7 @@ function AlumniDashboardContent() {
           </motion.div>
 
           {/* ─── Charts Row ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-5">
 
             {/* Sessions bar chart */}
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
@@ -468,7 +468,7 @@ function AlumniDashboardContent() {
           </motion.div>
 
           {/* ─── Bottom Row: Quick Actions + Earnings + Bookings ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4">
 
             {/* Quick actions */}
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">

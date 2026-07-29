@@ -109,7 +109,7 @@ export default async function AdminDashboardPage() {
           changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"}
           detail="Verified payments, all time"
         />
-        <div className="grid grid-cols-2 gap-4 sm:col-span-1 lg:col-span-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:col-span-1 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-3">
           <AdminStatCard label="Alumni" value={totalAlumni} icon={GraduationCap} change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
           <AdminStatCard label="Bookings" value={totalBookings} icon={CalendarDays} change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
           <AdminStatCard label="Pending reviews" value={pendingReviews} icon={Star} href="/admin/reviews" />
@@ -120,7 +120,7 @@ export default async function AdminDashboardPage() {
         <Card className="p-6">
           <h2 className="text-[13px] font-semibold text-white">Platform snapshot</h2>
           <p className="mt-1 text-xs text-white/40">Registered accounts across the marketplace.</p>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.02] p-4">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Students</p>
               <p className="mt-2 text-2xl font-bold tabular-nums text-white">{totalStudents}</p>
