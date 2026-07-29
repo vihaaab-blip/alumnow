@@ -227,7 +227,16 @@ export async function signupAlumni(input: {
     const parsed = signupAlumniSchema.safeParse(input);
     if (!parsed.success) {
       console.error("signupAlumni validation error:", parsed.error.issues);
-      return { success: false, error: "Please check your details." };
+      const issue = parsed.error.issues[0];
+      const fieldLabel = issue?.path?.[0] ? String(issue.path[0]) : null;
+      return {
+        success: false,
+        error: issue?.message
+          ? fieldLabel
+            ? `${fieldLabel}: ${issue.message}`
+            : issue.message
+          : "Please check your details.",
+      };
     }
     const { data } = parsed;
     const email = data.email.trim().toLowerCase();

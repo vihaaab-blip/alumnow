@@ -7,14 +7,22 @@ const phoneSchema = z.preprocess((value) => {
   return trimmed;
 }, z.string().regex(/^(\+91)?[0-9]{10}$/, "Phone must be 10 digits, or start with +91/91 followed by 10 digits"));
 
+// Emails typed on mobile keyboards frequently pick up a leading/trailing
+// space (autocapitalize, swipe-typing, copy-paste) that z.string().email()
+// rejects outright with no useful message - trim before validating.
+const emailSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.string().email("Invalid email address")
+);
+
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
   password: z.string().min(1, "Password is required"),
 });
 
 export const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
   phone: phoneSchema,
   dateOfBirth: z.coerce.date().optional(),
   currentGrade: z.enum(["AS", "A2", "Other"]),
@@ -29,7 +37,7 @@ export const signupSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: emailSchema,
 });
 
 export const resetPasswordSchema = z.object({
@@ -43,7 +51,7 @@ export const resetPasswordSchema = z.object({
 
 export const alumniApplicationSchema = z.object({
   fullName: z.string().min(2).max(100),
-  email: z.string().email(),
+  email: emailSchema,
   phone: phoneSchema,
   password: z.string().min(8, "Password must be at least 8 characters")
     .regex(/[0-9]/, "Password must contain at least 1 number"),
@@ -109,7 +117,7 @@ export const paymentRefSchema = z.object({
 
 export const signupAlumniSchema = z.object({
   fullName: z.string().min(2).max(100),
-  email: z.string().email(),
+  email: emailSchema,
   phone: phoneSchema,
   password: z.string().min(8, "Password must be at least 8 characters"),
   universityName: z.string().min(2).max(200),
