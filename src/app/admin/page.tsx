@@ -65,11 +65,10 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/[0.06] pb-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-coral">Operations</p>
-          <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Admin overview</h1>
-          <p className="mt-2 text-sm text-white/40">A live view of the alumnow. platform.</p>
+          <h1 className="text-[28px] font-bold tracking-[-0.02em] text-white">Overview</h1>
+          <p className="mt-1.5 text-sm text-white/40">A live view of the alumnow. platform — accounts, bookings, and revenue.</p>
         </div>
         <span className="rounded-full border border-coral/25 bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral">Admin only</span>
       </div>
@@ -78,7 +77,7 @@ export default async function AdminDashboardPage() {
       {pendingApplications > 0 && (
         <Link
           href="/admin/alumni"
-          className="mt-6 flex items-center gap-3 rounded-2xl px-5 py-4 transition-colors hover:opacity-90"
+          className="mt-6 flex items-center gap-3 rounded-[14px] px-5 py-4 transition-colors hover:opacity-90"
           style={{
             background: "linear-gradient(90deg, rgba(232,87,58,0.14) 0%, rgba(232,87,58,0.03) 100%)",
             border: "1px solid rgba(232,87,58,0.25)",
@@ -97,41 +96,54 @@ export default async function AdminDashboardPage() {
         </Link>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <AdminStatCard label="Total Alumni" value={totalAlumni} icon={GraduationCap} tint="coral" change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
-        <AdminStatCard label="Total Bookings" value={totalBookings} icon={CalendarDays} change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
-        <AdminStatCard label="Total Revenue" value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`} icon={IndianRupee} change={revenueChange ?? undefined} changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"} />
-        <AdminStatCard label="Pending Reviews" value={pendingReviews} icon={Star} href="/admin/reviews" />
+      {/* Stat grid: revenue is the headline number the platform runs on, so it
+          carries a distinct featured cell instead of sitting flush with three
+          identical boxes. */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr]">
+        <AdminStatCard
+          featured
+          label="Total Revenue"
+          value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`}
+          icon={IndianRupee}
+          change={revenueChange ?? undefined}
+          changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"}
+          detail="Verified payments, all time"
+        />
+        <div className="grid grid-cols-2 gap-4 sm:col-span-1 lg:col-span-2 lg:grid-cols-3">
+          <AdminStatCard label="Alumni" value={totalAlumni} icon={GraduationCap} change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
+          <AdminStatCard label="Bookings" value={totalBookings} icon={CalendarDays} change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
+          <AdminStatCard label="Pending reviews" value={pendingReviews} icon={Star} href="/admin/reviews" />
+        </div>
       </div>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="p-6">
-          <h2 className="text-sm font-semibold text-white">Platform snapshot</h2>
+          <h2 className="text-[13px] font-semibold text-white">Platform snapshot</h2>
           <p className="mt-1 text-xs text-white/40">Registered accounts across the marketplace.</p>
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Students</p>
-              <p className="mt-2 font-mono text-2xl font-bold text-white">{totalStudents}</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Students</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-white">{totalStudents}</p>
             </div>
-            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Alumni</p>
-              <p className="mt-2 font-mono text-2xl font-bold text-white">{totalAlumni}</p>
+            <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Alumni</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-white">{totalAlumni}</p>
             </div>
-            <div className="rounded-[12px] border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/35">Pending</p>
-              <p className="mt-2 font-mono text-2xl font-bold text-coral">{pendingApplications}</p>
+            <div className="rounded-[10px] border border-coral/15 bg-coral/[0.04] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Pending</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-coral">{pendingApplications}</p>
             </div>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-sm font-semibold text-white">Quick actions</h2>
-          <div className="mt-4 space-y-1.5">
+          <h2 className="text-[13px] font-semibold text-white">Quick actions</h2>
+          <div className="mt-4 space-y-0.5">
             {quickLinks.map(({ label, href, icon: Icon, count }) => (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.04] hover:text-white"
+                className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm text-white/60 transition-colors duration-150 hover:bg-white/[0.04] hover:text-white"
               >
                 <Icon size={16} className="text-white/30" />
                 <span className="flex-1">{label}</span>

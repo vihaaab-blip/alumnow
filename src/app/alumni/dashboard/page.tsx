@@ -146,7 +146,7 @@ function TrendPill({ value, positive }: { value: string; positive: boolean }) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#1A1A1A] border border-white/5 rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+    <div className="bg-[#141416] border border-white/[0.07] rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.1)] shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
       <p className="text-[11px] font-semibold text-white/40 mb-1.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: p.color }}>
@@ -255,7 +255,7 @@ function AlumniDashboardContent() {
     },
     {
       icon: Users, label: "Students Mentored", value: String(totalStudents), unit: "",
-      color: "#16A34A", bg: "bg-[#16A34A]/8",
+      color: "#FFFFFF", bg: "bg-white/[0.06]",
       trend: { value: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`, positive: true }, sparkData: sparkStudents,
       detail: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`,
     },
@@ -267,7 +267,7 @@ function AlumniDashboardContent() {
     },
     {
       icon: Star, label: "Rating", value: avgRating > 0 ? avgRating.toFixed(1) : "—", unit: "",
-      color: "#EC4899", bg: "bg-[#EC4899]/8",
+      color: "#F0744E", bg: "bg-[#F0744E]/8",
       trend: { value: `${totalRatings} reviews`, positive: totalRatings >= 5 }, sparkData: sparkRatings,
       detail: `${totalRatings} total reviews`,
     },
@@ -281,7 +281,7 @@ function AlumniDashboardContent() {
         <Sidebar />
       <div className="ml-[240px] min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
-            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-[16px]" />)}
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-[14px]" />)}
           </div>
         </div>
       </div>
@@ -301,12 +301,12 @@ function AlumniDashboardContent() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="relative overflow-hidden rounded-[16px] bg-gradient-to-br from-[#0F0F10] via-[#0F0F10] to-[#1A0F2E] p-6 mb-6"
+            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-6 mb-6"
           >
             <div className="absolute inset-0 aurora-mesh" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
             <div className="absolute -bottom-10 -right-10 w-56 h-56 rounded-full bg-[#E8573A]/15 blur-3xl pointer-events-none" />
-            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#EC4899]/8 blur-3xl pointer-events-none" />
+            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#E8573A]/8 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
               <div className="relative">
                 <img
@@ -353,10 +353,10 @@ function AlumniDashboardContent() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[15px] font-semibold text-primary">Mentor analytics</h2>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
+              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
                 <Filter size={13} /> This year <ChevronDown size={12} />
               </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <button type="button" className="rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
                 <Download size={13} /> Export
               </button>
             </div>
@@ -366,7 +366,7 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
-                className={`relative overflow-hidden rounded-[16px] border border-white/5 ${s.bg} p-5 transition-all duration-150`}
+                className={`relative overflow-hidden rounded-[14px] border border-white/[0.07] ${s.bg} p-5 transition-all duration-150`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-[10px]`} style={{ backgroundColor: `${s.color}15` }}>
@@ -391,7 +391,7 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
 
             {/* Sessions bar chart */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions per month</h3>
                 <div className="flex items-center gap-2 text-[11px]">
@@ -424,7 +424,7 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Rating donut + overview */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h3>
               <div className="h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -471,7 +471,7 @@ function AlumniDashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
 
             {/* Quick actions */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-4">Quick actions</h3>
               <div className="space-y-1.5">
                 <Link href="/alumni/profile/edit" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
@@ -485,8 +485,8 @@ function AlumniDashboardContent() {
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
                 <Link href="/alumni/profile/availability" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#16A34A]/10">
-                    <CalendarDays size={14} style={{ color: "#16A34A" }} />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
+                    <CalendarDays size={14} className="text-white/60" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-primary">Manage availability</p>
@@ -505,8 +505,8 @@ function AlumniDashboardContent() {
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
                 <Link href="/browse" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#EC4899]/10">
-                    <GraduationCap size={14} style={{ color: "#EC4899" }} />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
+                    <GraduationCap size={14} className="text-white/60" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-primary">View marketplace</p>
@@ -518,7 +518,7 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Earnings chart */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-4 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-4 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Earnings</h3>
                 <span className="text-[13px] font-bold tabular-nums text-primary">₹{(totalEarnings / 100000).toFixed(1)}L</span>
@@ -545,7 +545,7 @@ function AlumniDashboardContent() {
             </motion.div>
 
             {/* Upcoming bookings */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Upcoming bookings</h3>
                 <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] font-medium flex items-center gap-1 transition-colors">
@@ -572,7 +572,7 @@ function AlumniDashboardContent() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.25 }}
-                        className="flex items-center justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0"
+                        className="flex items-center justify-between gap-3 py-2.5 border-b border-white/[0.07] last:border-b-0"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <img src={`https://picsum.photos/seed/${b.studentId}/40/40`}
@@ -604,7 +604,7 @@ function AlumniDashboardContent() {
                     );
                   })}
                   {bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").length > 4 && (
-                    <div className="pt-2 mt-1 border-t border-white/5">
+                    <div className="pt-2 mt-1 border-t border-white/[0.07]">
                       <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
                         View all bookings <ArrowRight size={11} />
                       </Link>
