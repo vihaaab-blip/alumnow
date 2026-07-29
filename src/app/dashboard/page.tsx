@@ -130,7 +130,7 @@ function TrendPill({ value, positive }: { value: string; positive: boolean }) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#1A1A1A] border border-white/5 rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+    <div className="bg-[#141416] border border-white/[0.07] rounded-[10px] px-3 py-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
       <p className="text-[11px] font-semibold text-white/40 mb-1.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: p.color }}>
@@ -350,18 +350,18 @@ function DashboardContent() {
         <div className="ml-0 min-h-screen">
           <div className="p-6 max-w-[1400px] space-y-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              <Skeleton className="h-[130px] w-full rounded-[16px]" />
+              <Skeleton className="h-[130px] w-full rounded-[14px]" />
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="grid grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[120px] rounded-[16px]" />)}
+              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[120px] rounded-[14px]" />)}
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }} className="grid grid-cols-12 gap-4">
-              <Skeleton className="col-span-7 rounded-[16px] h-[300px]" />
-              <Skeleton className="col-span-5 rounded-[16px] h-[300px]" />
+              <Skeleton className="col-span-7 rounded-[14px] h-[300px]" />
+              <Skeleton className="col-span-5 rounded-[14px] h-[300px]" />
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.15 }} className="grid grid-cols-12 gap-4">
-              <Skeleton className="col-span-5 rounded-[16px] h-[300px]" />
-              <Skeleton className="col-span-7 rounded-[16px] h-[300px]" />
+              <Skeleton className="col-span-5 rounded-[14px] h-[300px]" />
+              <Skeleton className="col-span-7 rounded-[14px] h-[300px]" />
             </motion.div>
           </div>
           <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} value="" onChange={(v) => { router.push(`/browse${v ? `?search=${encodeURIComponent(v)}` : ""}`); }} />
@@ -410,7 +410,7 @@ function DashboardContent() {
               { label: "Rating", value: "—", detail: "No ratings yet", icon: Star, color: "#B0B0B8" },
               { label: "Upcoming", value: "0", detail: "Clear schedule", icon: TrendingUp, color: "#F0744E" },
             ].map((item) => (
-              <div key={item.label} className="rounded-[16px] border border-white/8 bg-[#171719] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
+              <div key={item.label} className="rounded-[14px] border border-white/8 bg-[#171719] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.18)]">
                 <div className="mb-5 flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-[11px]" style={{ backgroundColor: `${item.color}18`, color: item.color }}>
                     <item.icon size={17} />
@@ -484,7 +484,7 @@ function DashboardContent() {
             y={12}
             duration={0.6}
             start="top 95%"
-            className="relative overflow-hidden rounded-[16px] bg-[#0F0F10] p-6 mb-6 block"
+            className="relative overflow-hidden rounded-[14px] bg-[#0F0F10] p-6 mb-6 block"
           >
             <div className="absolute inset-0 aurora-mesh" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F0F10]/80 via-transparent to-[#E8573A]/20" />
@@ -540,10 +540,10 @@ function DashboardContent() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[15px] font-semibold text-primary">Analytics overview</h2>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
+              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
                 <Filter size={13} /> Last 30 days <ChevronDown size={12} />
               </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-[#1A1A1A] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+              <button type="button" className="rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
                 <Download size={13} /> Export
               </button>
             </div>
@@ -553,9 +553,7 @@ function DashboardContent() {
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
-                whileHover={{ scale: 1.02, y: -2 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5 flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow duration-200"
+                className="rounded-[14px] bg-[#141416] border border-white/[0.07] p-5 flex flex-col transition-[border-color,box-shadow] duration-150 hover:border-white/[0.14] hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`h-9 w-9 rounded-[10px] ${s.bg} flex items-center justify-center shrink-0`} style={s.color ? { backgroundColor: `${s.color}14` } : {}}>
@@ -582,7 +580,7 @@ function DashboardContent() {
           {/* ─── Charts Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4 mb-5">
             {/* Weekly Hours */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Weekly hours</h3>
                 <button type="button" className="flex items-center gap-1 text-[10px] font-medium text-white/40 hover:text-primary transition-colors">
@@ -607,7 +605,7 @@ function DashboardContent() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.07]">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
@@ -623,7 +621,7 @@ function DashboardContent() {
             </motion.div>
 
             {/* Monthly Sessions */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Monthly sessions</h3>
                 <span className="text-[10px] font-medium text-white/40">{new Date().getFullYear()}</span>
@@ -645,7 +643,7 @@ function DashboardContent() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.07]">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
@@ -669,7 +667,7 @@ function DashboardContent() {
           {/* ─── Bottom Row ─── */}
           <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-12 gap-4">
             {/* Recent Mentors / Students */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">
                   {dashboardMode === "student" ? "Recent mentors" : "Recent students"}
@@ -761,7 +759,7 @@ function DashboardContent() {
             </motion.div>
 
             {/* Sessions + Rating */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[16px] bg-[#1A1A1A] border border-white/5 p-5">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions</h3>
                 <div className="flex gap-0.5 bg-white/[0.04] rounded-[10px] p-0.5">
@@ -811,7 +809,7 @@ function DashboardContent() {
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.03, duration: 0.25 }}
-                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0"
+                            className="flex items-start justify-between gap-3 py-2.5 border-b border-white/[0.07] last:border-b-0"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">
@@ -869,7 +867,7 @@ function DashboardContent() {
                     </div>
                   )}
                   {!loading && filtered.length > 6 && (
-                    <div className="pt-2 mt-1 border-t border-white/5">
+                    <div className="pt-2 mt-1 border-t border-white/[0.07]">
                       <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
                         View all {filtered.length} sessions <ArrowRight size={11} />
                       </Link>
@@ -878,7 +876,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Rating donut */}
-                <div className="col-span-5 pl-4 border-l border-white/5">
+                <div className="col-span-5 pl-4 border-l border-white/[0.07]">
                   <h4 className="text-[10px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h4>
                   <div className="h-[150px]">
                     <ResponsiveContainer width="100%" height="100%">

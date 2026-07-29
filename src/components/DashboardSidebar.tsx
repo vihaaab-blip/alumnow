@@ -62,17 +62,17 @@ export function DashboardSidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                    className={`relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
                       active
-                        ? "bg-white/12 text-white shadow-sm"
-                        : "text-white/45 hover:bg-white/6 hover:text-white/75"
+                        ? "bg-coral/10 text-white"
+                        : "text-white/45 hover:bg-white/[0.05] hover:text-white/80"
                     }`}
                   >
-                    <Icon size={18} className={active ? "text-white" : "text-white/35"} />
-                    <span>{item.label}</span>
                     {active && (
-                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" />
+                      <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-coral" />
                     )}
+                    <Icon size={18} className={active ? "text-coral" : "text-white/35"} />
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
@@ -112,7 +112,7 @@ export function DashboardSidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-[60] lg:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F2240] text-white shadow-lg"
+        className="fixed top-4 left-4 z-[60] lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#141416] text-white shadow-lg"
         aria-label="Toggle sidebar"
       >
         <ChevronRight size={18} className={`transition-transform ${mobileOpen ? "rotate-180" : ""}`} />
@@ -121,7 +121,7 @@ export function DashboardSidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-[55] bg-black/60 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

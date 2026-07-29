@@ -31,9 +31,9 @@ function SidebarNav() {
         </span>
       </div>
 
-      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="mx-4 h-px bg-white/[0.08]" />
 
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-0.5 p-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -41,14 +41,14 @@ function SidebarNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`group relative flex items-center gap-3 rounded-[12px] px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+              className={`group relative flex items-center gap-3 rounded-[10px] px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                 isActive
-                  ? "bg-gradient-to-r from-coral/15 to-coral/[0.03] text-white"
+                  ? "bg-coral/10 text-white"
                   : "text-white/45 hover:bg-white/[0.04] hover:text-white/90"
               }`}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-coral shadow-[0_0_12px_rgba(232,87,58,0.6)]" />
+                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-coral" />
               )}
               <Icon className={`h-[18px] w-[18px] flex-shrink-0 transition-colors ${isActive ? "text-coral" : "text-white/35 group-hover:text-white/70"}`} />
               {item.label}
