@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Star, Clock3, GraduationCap, ChevronDown, Video, Users, MapPin, Award, ShieldCheck } from "lucide-react";
+import { AlumniPhoto } from "@/components/ui/AlumniPhoto";
 import type { AlumniCardData } from "@/types";
 
 interface DetailPanelProps {
@@ -81,10 +82,11 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                 <span className="text-5xl font-bold text-white/15">{initials}</span>
               </div>
             ) : (
-              <img
+              <AlumniPhoto
                 src={src}
                 alt={alumni.fullName}
-                className="h-full w-full object-cover object-top"
+                sizes="440px"
+                className="object-cover object-top"
                 onError={() => setImgError(true)}
               />
             )}
@@ -290,9 +292,18 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                     Reviews are revealed simultaneously once both parties submit or 72 hours pass — preventing bias.
                   </div>
 
-                  <p className="text-[13px] text-white/25 py-8 text-center">
-                    No reviews yet — be the first to book a session.
-                  </p>
+                  <div className="py-8 text-center">
+                    <p className="text-[13px] text-white/25 mb-4">
+                      No reviews yet — be the first to book a session.
+                    </p>
+                    <button
+                      onClick={() => router.push(`/book/new?alumniId=${alumni.id}`)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white transition-all hover:opacity-90"
+                      style={{ background: "linear-gradient(135deg, #f06040, #e8573a, #d14a2e)" }}
+                    >
+                      Be the first to book a session →
+                    </button>
+                  </div>
                 </div>
               );
             })()}

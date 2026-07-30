@@ -32,6 +32,9 @@ export function AlumniGrid({
   onSelect,
   activeFilters,
   onRemoveFilter,
+  compareIds,
+  onCompareToggle,
+  compareLimitReached,
 }: {
   items: AlumniCardData[];
   hasMore: boolean;
@@ -40,6 +43,12 @@ export function AlumniGrid({
   onSelect?: (id: string) => void;
   activeFilters?: Record<string, unknown>;
   onRemoveFilter?: (key: string) => void;
+  /** IDs currently pinned in the comparison tray. */
+  compareIds?: string[];
+  /** Called when a card's compare toggle is clicked. Omit to hide compare toggles. */
+  onCompareToggle?: (id: string) => void;
+  /** True once the compare cap is reached. */
+  compareLimitReached?: boolean;
 }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -105,7 +114,15 @@ export function AlumniGrid({
             className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
           >
             {items.map((item, idx) => (
-              <AlumniCard key={item.id} alumni={item} index={idx} onSelect={onSelect} />
+              <AlumniCard
+                key={item.id}
+                alumni={item}
+                index={idx}
+                onSelect={onSelect}
+                compareChecked={compareIds?.includes(item.id)}
+                onCompareToggle={onCompareToggle}
+                compareDisabled={compareLimitReached}
+              />
             ))}
           </motion.div>
         )}

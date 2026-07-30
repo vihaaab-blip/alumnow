@@ -1,34 +1,13 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X } from "lucide-react";
-import { Keyboard } from "@/components/ui/keyboard";
+import { useRouter } from "next/navigation";
+import { Search, X, GraduationCap, Loader2 } from "lucide-react";
+import { listAlumni } from "@/actions/alumni.actions";
+import type { AlumniCardData } from "@/types";
 
-const KEY_CHAR: Record<string, string> = {
-  KeyA: "a", KeyB: "b", KeyC: "c", KeyD: "d", KeyE: "e", KeyF: "f",
-  KeyG: "g", KeyH: "h", KeyI: "i", KeyJ: "j", KeyK: "k", KeyL: "l",
-  KeyM: "m", KeyN: "n", KeyO: "o", KeyP: "p", KeyQ: "q", KeyR: "r",
-  KeyS: "s", KeyT: "t", KeyU: "u", KeyV: "v", KeyW: "w", KeyX: "x",
-  KeyY: "y", KeyZ: "z",
-  Digit0: "0", Digit1: "1", Digit2: "2", Digit3: "3", Digit4: "4",
-  Digit5: "5", Digit6: "6", Digit7: "7", Digit8: "8", Digit9: "9",
-  Space: " ", Minus: "-", Equal: "=",
-  BracketLeft: "[", BracketRight: "]", Backslash: "\\",
-  Semicolon: ";", Quote: "'",
-  Comma: ",", Period: ".", Slash: "/",
-  Backquote: "`",
-};
-
-const SHIFTED: Record<string, string> = {
-  ...Object.fromEntries([...Array(26)].map((_, i) => [String.fromCharCode(65 + i), String.fromCharCode(65 + i)])),
-  Digit1: "!", Digit2: "@", Digit3: "#", Digit4: "$", Digit5: "%",
-  Digit6: "^", Digit7: "&", Digit8: "*", Digit9: "(", Digit0: ")",
-  Minus: "_", Equal: "+",
-  BracketLeft: "{", BracketRight: "}", Backslash: "|",
-  Semicolon: ":", Quote: "\"",
-  Comma: "<", Period: ">", Slash: "?",
-  Backquote: "~",
-};
+const PREVIEW_LIMIT = 5;
+const DEBOUNCE_MS = 250;
 
 interface Props {
   open: boolean;
@@ -38,19 +17,20 @@ interface Props {
 }
 
 export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(value);
-  const shiftRef = useRef(false);
-  const skipDebounce = useRef(true);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [results, setResults] = useState<AlumniCardData[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const requestId = useRef(0);
 
   useEffect(() => {
     if (open) {
       setInputValue(value);
-      skipDebounce.current = true;
       setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setResults([]);
     }
   }, [open, value]);
 
@@ -61,20 +41,29 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
     } catch {}
   }, []);
 
+  // Live preview: debounced fetch of the top few matching alumni as the user types.
   useEffect(() => {
-    if (skipDebounce.current) {
-      skipDebounce.current = false;
+    const term = inputValue.trim();
+    if (!term) {
+      setResults([]);
+      setPreviewLoading(false);
       return;
     }
+    setPreviewLoading(true);
+    const id = ++requestId.current;
     const timer = setTimeout(() => {
-      onChangeRef.current(inputValue);
-    }, 400);
+      listAlumni({ search: term, pageSize: PREVIEW_LIMIT, sortBy: "relevance" })
+        .then((res) => {
+          if (requestId.current === id) setResults((res.items ?? []) as AlumniCardData[]);
+        })
+        .catch(() => { if (requestId.current === id) setResults([]); })
+        .finally(() => { if (requestId.current === id) setPreviewLoading(false); });
+    }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [inputValue]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Shift") shiftRef.current = e.type === "keydown";
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         onOpenChange(true);
@@ -84,8 +73,7 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
       }
     };
     window.addEventListener("keydown", handler);
-    window.addEventListener("keyup", handler);
-    return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", handler); };
+    return () => window.removeEventListener("keydown", handler);
   }, [open, onOpenChange]);
 
   const saveRecent = useCallback((v: string) => {
@@ -103,43 +91,11 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
     onOpenChange(false);
   }, [onChange, onOpenChange, saveRecent]);
 
-  const handleKeyClick = useCallback((keyCode: string) => {
-    const input = inputRef.current;
-    if (!input) return;
-
-    if (keyCode === "Backspace") {
-      const start = input.selectionStart ?? inputValue.length;
-      const end = input.selectionEnd ?? start;
-      if (start > 0 || end < inputValue.length) {
-        const newVal = inputValue.slice(0, Math.max(0, start - (start === end ? 1 : 0))) + inputValue.slice(end);
-        setInputValue(newVal);
-        requestAnimationFrame(() => {
-          input.focus();
-          input.setSelectionRange(Math.max(0, start - (start === end ? 1 : 0)), Math.max(0, start - (start === end ? 1 : 0)));
-        });
-      }
-      return;
-    }
-
-    if (keyCode === "Enter") {
-      commit(inputValue);
-      return;
-    }
-
-    let char: string | undefined;
-    if (shiftRef.current) char = SHIFTED[keyCode];
-    if (!char) char = KEY_CHAR[keyCode];
-    if (!char) return;
-
-    const start = input.selectionStart ?? inputValue.length;
-    const end = input.selectionEnd ?? start;
-    const newVal = inputValue.slice(0, start) + char + inputValue.slice(end);
-    setInputValue(newVal);
-    requestAnimationFrame(() => {
-      input.focus();
-      input.setSelectionRange(start + char.length, start + char.length);
-    });
-  }, [inputValue, commit]);
+  const goToAlumnus = useCallback((alumnus: AlumniCardData) => {
+    saveRecent(inputValue);
+    onOpenChange(false);
+    router.push(`/browse?search=${encodeURIComponent(alumnus.fullName)}`);
+  }, [inputValue, onOpenChange, router, saveRecent]);
 
   return (
     <AnimatePresence>
@@ -156,12 +112,16 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-4xl mx-4"
+            className="w-full max-w-lg mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="rounded-2xl bg-[#1A1A1A] shadow-2xl ring-1 ring-white/5 overflow-hidden">
               <div className="flex items-center gap-3 px-4 h-14 border-b border-white/5">
-                <Search size={16} className="text-white/25 shrink-0" />
+                {previewLoading ? (
+                  <Loader2 size={16} className="text-white/25 shrink-0 animate-spin" />
+                ) : (
+                  <Search size={16} className="text-white/25 shrink-0" />
+                )}
                 <input
                   ref={inputRef}
                   type="text"
@@ -183,29 +143,64 @@ export function SearchOverlay({ open, onOpenChange, value, onChange }: Props) {
                   </button>
                 </div>
               </div>
-              <div className="px-6 py-5 bg-gradient-to-b from-white/[0.03] to-transparent" onMouseDown={(e) => e.preventDefault()}>
-                <div className="shadow-lg rounded-xl">
-                  <Keyboard onKeyClick={handleKeyClick} />
-                </div>
-                {recentSearches.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-white/5">
-                    <p className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">Recent searches</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {recentSearches.map((s, i) => (
-                        <button key={i}
-                          onClick={() => { setInputValue(s); commit(s); }}
-                          className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white/5 hover:bg-white/10 text-white/50 transition-colors"
+
+              {/* Live result preview */}
+              {inputValue.trim() && (
+                <div className="max-h-80 overflow-y-auto">
+                  {results.length > 0 ? (
+                    results.map((a) => {
+                      const initials = a.fullName.split(" ").map((p) => p[0]).slice(0, 2).join("");
+                      return (
+                        <button
+                          key={a.id}
+                          onClick={() => goToAlumnus(a)}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
                         >
-                          {s}
+                          {a.profilePhotoUrl ? (
+                            <img
+                              src={a.profilePhotoUrl}
+                              alt={a.fullName}
+                              className="h-8 w-8 rounded-full object-cover border border-white/10 shrink-0"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[10px] font-bold text-white/50">
+                              {initials}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-medium text-white truncate">{a.fullName}</p>
+                            <p className="text-[11px] text-white/35 truncate flex items-center gap-1">
+                              <GraduationCap size={10} className="shrink-0" />
+                              {a.universityName}
+                            </p>
+                          </div>
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })
+                  ) : !previewLoading ? (
+                    <p className="px-4 py-4 text-[12px] text-white/25">No alumni match &ldquo;{inputValue.trim()}&rdquo;</p>
+                  ) : null}
+                </div>
+              )}
+
+              {!inputValue.trim() && recentSearches.length > 0 && (
+                <div className="px-4 py-4 border-t border-white/5">
+                  <p className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">Recent searches</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {recentSearches.map((s, i) => (
+                      <button key={i}
+                        onClick={() => { setInputValue(s); commit(s); }}
+                        className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white/5 hover:bg-white/10 text-white/50 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-            <p className="text-center text-xs text-white/60 mt-3">
-              Click keys on the keyboard · Type on your keyboard · Enter to search · Esc to close
+            <p className="text-center text-xs text-white/40 mt-3">
+              Type to see matching alumni · Enter to search · Esc to close
             </p>
           </motion.div>
         </motion.div>

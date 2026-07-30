@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Heart, Star, Loader2, GraduationCap, MapPin, Video, Zap, Clock3, ArrowRight, Award } from "lucide-react";
+import { Heart, Star, Loader2, GraduationCap, MapPin, Video, Zap, Clock3, ArrowRight, Award, GitCompareArrows } from "lucide-react";
 import { motion } from "framer-motion";
 import { saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
+import { AlumniPhoto } from "@/components/ui/AlumniPhoto";
 import type { AlumniCardData } from "@/types";
 
 export function AlumniCard({
@@ -11,12 +12,21 @@ export function AlumniCard({
   onSaved,
   index = 0,
   onSelect,
+  compareChecked,
+  onCompareToggle,
+  compareDisabled,
 }: {
   alumni: AlumniCardData;
   variant?: "grid" | "swipe";
   onSaved?: (saved: boolean) => void;
   index?: number;
   onSelect?: (id: string) => void;
+  /** Whether this alumnus is currently pinned in the comparison tray. */
+  compareChecked?: boolean;
+  /** Called when the compare toggle is clicked. Omit to hide the toggle entirely. */
+  onCompareToggle?: (id: string) => void;
+  /** True when the compare cap is reached and this card isn't already checked. */
+  compareDisabled?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -55,11 +65,11 @@ export function AlumniCard({
               <span className="text-4xl font-bold text-white/20">{initials}</span>
             </div>
           ) : (
-            <img
+            <AlumniPhoto
               src={src}
               alt={alumni.fullName}
-              className="h-full w-full object-cover object-top"
-              loading="lazy"
+              sizes="(max-width: 640px) 100vw, 33vw"
+              className="object-cover object-top"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
             />
@@ -121,11 +131,11 @@ export function AlumniCard({
               <span className="text-4xl font-bold text-white/20">{initials}</span>
             </div>
           ) : (
-            <img
+            <AlumniPhoto
               src={src}
               alt={alumni.fullName}
-              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.05]"
-              loading="lazy"
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.05]"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
             />
@@ -152,6 +162,28 @@ export function AlumniCard({
               />
             )}
           </button>
+
+          {/* Compare toggle */}
+          {onCompareToggle && (
+            <button
+              aria-label={compareChecked ? "Remove from comparison" : "Add to comparison"}
+              aria-pressed={!!compareChecked}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCompareToggle(alumni.id);
+              }}
+              disabled={!compareChecked && compareDisabled}
+              className="absolute top-3 right-12 z-10 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md border shadow-sm transition-all hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={
+                compareChecked
+                  ? { background: "rgba(232,87,58,0.85)", borderColor: "rgba(232,87,58,0.9)" }
+                  : { background: "rgba(0,0,0,0.6)", borderColor: "rgba(255,255,255,0.1)" }
+              }
+            >
+              <GitCompareArrows size={13} className={compareChecked ? "text-white" : "text-white/60"} />
+            </button>
+          )}
 
           {/* Rating badge */}
           {alumni.ratingAvg != null && alumni.ratingAvg >= 4.5 && (

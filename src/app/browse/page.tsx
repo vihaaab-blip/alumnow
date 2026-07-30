@@ -15,6 +15,8 @@ import { X, LayoutGrid, Heart, Sparkles, ArrowUpDown, ChevronDown, Clock } from 
 import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { CompareTray, CompareModal, MAX_COMPARE } from "@/components/CompareTray";
+import { AlumniPhoto } from "@/components/ui/AlumniPhoto";
 
 const ITEMS_PER_PAGE = 18;
 
@@ -127,6 +129,8 @@ function BrowsePageContent() {
   const [error, setError] = useState("");
   const [recentlyViewed, setRecentlyViewed] = useState<AlumniCardData[]>([]);
   const [pendingBooking, setPendingBooking] = useState<{ id: string; alumniName: string } | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const filters = useMemo(() => filtersFromSearchParams(searchParams), [searchParams]);
@@ -237,6 +241,28 @@ function BrowsePageContent() {
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
 
   const activeCat = activeCategoryLabel(searchParams);
+
+  // Pool of every alumnus record seen so far (grid, saved tab, recently
+  // viewed) so a pinned comparison chip keeps rendering correctly even after
+  // the user changes filters/pages and the pinned alumnus scrolls out of `items`.
+  const alumniPool = useMemo(() => {
+    const map = new Map<string, AlumniCardData>();
+    for (const a of [...items, ...savedItems, ...recentlyViewed]) map.set(a.id, a);
+    return map;
+  }, [items, savedItems, recentlyViewed]);
+
+  const compareItems = useMemo(
+    () => compareIds.map((id) => alumniPool.get(id)).filter((a): a is AlumniCardData => !!a),
+    [compareIds, alumniPool]
+  );
+
+  const toggleCompare = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_COMPARE) return prev;
+      return [...prev, id];
+    });
+  }, []);
 
   return (
     <div className="flex flex-col h-[100dvh] text-white">
@@ -488,7 +514,16 @@ function BrowsePageContent() {
                   <Button className="mt-5" variant="outline" onClick={() => router.push("/browse")}>Browse network</Button>
                 </div>
               ) : (
-                <AlumniGrid items={savedItems} hasMore={false} loadMore={() => {}} loading={false} onSelect={handleSelect} />
+                <AlumniGrid
+                  items={savedItems}
+                  hasMore={false}
+                  loadMore={() => {}}
+                  loading={false}
+                  onSelect={handleSelect}
+                  compareIds={compareIds}
+                  onCompareToggle={toggleCompare}
+                  compareLimitReached={compareIds.length >= MAX_COMPARE}
+                />
               )
             ) : !error && tab === "browse" ? (
               <>
@@ -510,11 +545,14 @@ function BrowsePageContent() {
                             minWidth: "180px",
                           }}
                         >
-                          <img
-                            src={alum.profilePhotoUrl ?? `https://picsum.photos/seed/${alum.id}/80/80`}
-                            alt={alum.fullName}
-                            className="h-8 w-8 rounded-full object-cover border border-white/10 flex-shrink-0"
-                          />
+                          <div className="relative h-8 w-8 shrink-0 rounded-full border border-white/10 overflow-hidden">
+                            <AlumniPhoto
+                              src={alum.profilePhotoUrl ?? `https://picsum.photos/seed/${alum.id}/80/80`}
+                              alt={alum.fullName}
+                              sizes="32px"
+                              className="object-cover"
+                            />
+                          </div>
                           <div className="min-w-0">
                             <p className="text-[12px] font-medium text-white/80 truncate">{alum.fullName}</p>
                             <p className="text-[11px] text-white/30 truncate">{alum.universityName}</p>
@@ -532,6 +570,9 @@ function BrowsePageContent() {
                   onSelect={handleSelect}
                   activeFilters={filters as unknown as Record<string, unknown>}
                   onRemoveFilter={removeFilter}
+                  compareIds={compareIds}
+                  onCompareToggle={toggleCompare}
+                  compareLimitReached={compareIds.length >= MAX_COMPARE}
                 />
               </>
             ) : null}
@@ -542,6 +583,17 @@ function BrowsePageContent() {
 
       {/* Slide-in detail panel */}
       <AlumniDetailPanel alumni={selectedAlumni} onClose={() => setSelectedAlumni(null)} />
+
+      {/* Comparison tray + modal */}
+      <CompareTray
+        alumni={compareItems}
+        onRemove={toggleCompare}
+        onCompare={() => setCompareOpen(true)}
+        onClear={() => setCompareIds([])}
+      />
+      {compareOpen && compareItems.length >= 2 && (
+        <CompareModal alumni={compareItems} onClose={() => setCompareOpen(false)} />
+      )}
 
       {/* Search overlay */}
       <SearchOverlay

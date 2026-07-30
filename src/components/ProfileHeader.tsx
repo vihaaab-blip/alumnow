@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CountryFlag } from "./CountryFlag";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { Badge } from "@/components/ui/Badge";
+import { AlumniPhoto } from "@/components/ui/AlumniPhoto";
 
 const QS_LABELS: Record<string, string> = {
   top10: "Top 10",
@@ -39,11 +40,14 @@ export function ProfileHeader({
         <ArrowLeft size={16} /> Back to browse
       </Link>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <img
-          src={alumni.profilePhotoUrl ?? `https://picsum.photos/seed/${alumni.id}/400/400`}
-          alt={alumni.fullName}
-          className="h-28 w-28 rounded-xl object-cover ring-4 ring-white/20"
-        />
+        <div className="relative h-28 w-28 shrink-0 rounded-xl ring-4 ring-white/20 overflow-hidden">
+          <AlumniPhoto
+            src={alumni.profilePhotoUrl ?? `https://picsum.photos/seed/${alumni.id}/400/400`}
+            alt={alumni.fullName}
+            sizes="112px"
+            className="object-cover"
+          />
+        </div>
         <div>
           <p className="text-white/75">
             <CountryFlag country={alumni.country} /> {alumni.universityName}
