@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { AlumniDetailPanel } from "@/components/AlumniDetailPanel";
 import type { AlumniCardData, AlumniFilters } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, LayoutGrid, Heart, Sparkles, ArrowUpDown, ChevronDown, Clock } from "lucide-react";
+import { X, LayoutGrid, Heart, Sparkles, Clock } from "lucide-react";
 import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollReveal } from "@/components/ScrollReveal";
@@ -36,13 +36,6 @@ function activeCategoryLabel(sp: URLSearchParams): string {
   }
   return "All";
 }
-
-const sortOptions = [
-  { value: "relevance", label: "Relevance" },
-  { value: "rating", label: "Rating" },
-  { value: "newest", label: "Newest" },
-  { value: "fastest_response", label: "Fastest response" },
-];
 
 function filtersFromSearchParams(sp: URLSearchParams): AlumniFilters {
   const qsTiers = sp.getAll("qsTier");
@@ -264,6 +257,26 @@ function BrowsePageContent() {
     });
   }, []);
 
+  // Keep the grid/saved-tab state in sync after a heart click persists via
+  // saveAlumni/unsaveAlumni, without waiting on a full refetch.
+  const handleSaveChange = useCallback((id: string, saved: boolean) => {
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((a) => (a.id === id ? { ...a, isSaved: saved } : a)),
+      };
+    });
+    setSavedItems((prev) => {
+      if (saved) {
+        if (prev.some((a) => a.id === id)) return prev;
+        const alum = alumniPool.get(id);
+        return alum ? [{ ...alum, isSaved: true }, ...prev] : prev;
+      }
+      return prev.filter((a) => a.id !== id);
+    });
+  }, [alumniPool]);
+
   return (
     <div className="flex flex-col h-[100dvh] text-white">
 
@@ -376,27 +389,6 @@ function BrowsePageContent() {
                 : "Browse verified alumni mentors"}
             </p>
           </ScrollReveal>
-          <div className="flex items-center gap-1.5 text-xs text-white/35">
-            <ArrowUpDown size={13} />
-            <span>Sort:</span>
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => {
-                  const p = new URLSearchParams(searchParams.toString());
-                  if (e.target.value === "relevance") p.delete("sortBy");
-                  else p.set("sortBy", e.target.value);
-                  router.replace(`/browse${p.toString() ? `?${p.toString()}` : ""}`, { scroll: false });
-                }}
-                className="appearance-none bg-transparent text-xs font-semibold text-white outline-none cursor-pointer pr-4"
-              >
-                {sortOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <ChevronDown size={11} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-white/35" />
-            </div>
-          </div>
         </div>
 
         {/* Active filter pills */}
@@ -523,6 +515,7 @@ function BrowsePageContent() {
                   compareIds={compareIds}
                   onCompareToggle={toggleCompare}
                   compareLimitReached={compareIds.length >= MAX_COMPARE}
+                  onSaved={handleSaveChange}
                 />
               )
             ) : !error && tab === "browse" ? (
@@ -573,6 +566,7 @@ function BrowsePageContent() {
                   compareIds={compareIds}
                   onCompareToggle={toggleCompare}
                   compareLimitReached={compareIds.length >= MAX_COMPARE}
+                  onSaved={handleSaveChange}
                 />
               </>
             ) : null}

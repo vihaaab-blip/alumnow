@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, Star, Loader2, GraduationCap, MapPin, Video, Zap, Clock3, ArrowRight, Award, GitCompareArrows } from "lucide-react";
 import { motion } from "framer-motion";
 import { saveAlumni, unsaveAlumni } from "@/actions/alumni.actions";
@@ -31,14 +31,29 @@ export function AlumniCard({
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!alumni.isSaved);
+  const [justPopped, setJustPopped] = useState(false);
+
+  useEffect(() => {
+    setIsSaved(!!alumni.isSaved);
+  }, [alumni.isSaved]);
 
   const toggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const next = !isSaved;
+    // Optimistic UI: flip immediately and pop, then persist.
+    setIsSaved(next);
+    setJustPopped(true);
+    setTimeout(() => setJustPopped(false), 300);
     setSaving(true);
-    const next = !alumni.isSaved;
     const result = next ? await saveAlumni(alumni.id) : await unsaveAlumni(alumni.id);
-    if (result.success) onSaved?.(next);
+    if (result.success) {
+      onSaved?.(next);
+    } else {
+      // Revert on failure.
+      setIsSaved(!next);
+    }
     setSaving(false);
   };
 
@@ -142,23 +157,28 @@ export function AlumniCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
 
           {/* Heart button */}
-          <button
-            aria-label={alumni.isSaved ? "Remove from saved" : "Save alumni"}
+          <motion.button
+            aria-label={isSaved ? "Remove from saved" : "Save alumni"}
+            aria-pressed={isSaved}
             onClick={toggle}
-            disabled={saving}
-            className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm transition-all hover:scale-110 hover:bg-black/75 disabled:opacity-50"
+            whileTap={{ scale: 0.85 }}
+            className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm transition-all hover:scale-110 hover:bg-black/75"
           >
-            {saving ? (
+            {saving && !justPopped ? (
               <Loader2 size={13} className="animate-spin text-white/50" />
             ) : (
-              <Heart
-                size={13}
-                className={
-                  alumni.isSaved ? "fill-red-500 text-red-500" : "text-white/60"
-                }
-              />
+              <motion.span
+                animate={justPopped ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="flex items-center justify-center"
+              >
+                <Heart
+                  size={13}
+                  className={isSaved ? "fill-[#e8573a] text-[#e8573a]" : "text-white/60"}
+                />
+              </motion.span>
             )}
-          </button>
+          </motion.button>
 
           {/* Compare toggle */}
           {onCompareToggle && (

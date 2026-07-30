@@ -219,9 +219,6 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
       <div className="flex items-center gap-2 w-full pl-8 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg transition-all duration-200 text-white/25 group-hover:border-white/20 group-hover:shadow-[0_0_16px_rgba(232,87,58,0.1)]">
         <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25" />
         <span className="flex-1 text-left">Search alumni...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-white/25 bg-white/5 px-1.5 py-0.5 rounded font-mono">
-          <span>⌘</span>K
-        </kbd>
       </div>
     </button>
   );

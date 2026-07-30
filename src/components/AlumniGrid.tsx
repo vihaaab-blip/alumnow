@@ -35,6 +35,7 @@ export function AlumniGrid({
   compareIds,
   onCompareToggle,
   compareLimitReached,
+  onSaved,
 }: {
   items: AlumniCardData[];
   hasMore: boolean;
@@ -49,6 +50,8 @@ export function AlumniGrid({
   onCompareToggle?: (id: string) => void;
   /** True once the compare cap is reached. */
   compareLimitReached?: boolean;
+  /** Called when a card's save/heart toggle succeeds, with the alumni id and new saved state. */
+  onSaved?: (id: string, saved: boolean) => void;
 }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -122,6 +125,7 @@ export function AlumniGrid({
                 compareChecked={compareIds?.includes(item.id)}
                 onCompareToggle={onCompareToggle}
                 compareDisabled={compareLimitReached}
+                onSaved={(saved) => onSaved?.(item.id, saved)}
               />
             ))}
           </motion.div>

@@ -29,10 +29,14 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
   const src = alumni.profilePhotoUrl ?? `https://picsum.photos/seed/${alumni.id}/800/600`;
   const hasSessions = alumni.sessionTypes?.length > 0;
-  const lowestPrice = hasSessions
-    ? Math.min(...alumni.sessionTypes.map((s) => s.pricePaise))
-    : null;
   const responseTime = alumni.avgResponseTimeHours;
+
+  const sessionTypeLabel = (type: string) => {
+    const match = type.match(/^(call|group)_(\d+)$/);
+    if (!match) return type.replace(/_/g, " ");
+    const [, kind, minutes] = match;
+    return `${minutes}-min ${kind === "group" ? "group session" : "call"}`;
+  };
   const bioLong = (alumni.bio?.length ?? 0) > 150;
   const initials = alumni.fullName
     .split(" ")
@@ -231,7 +235,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                 {hasSessions && (
                   <div>
                     <h3 className="text-[11px] font-semibold uppercase tracking-wider text-white/25 mb-3">
-                      Available Sessions
+                      Select a Session
                     </h3>
                     <div className="space-y-2">
                       {alumni.sessionTypes.map((s) => (
@@ -252,8 +256,8 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                               )}
                             </div>
                             <div>
-                              <p className="text-[13px] font-medium text-white/80 capitalize">
-                                {s.type.replace(/_/g, " ")}
+                              <p className="text-[13px] font-medium text-white/80">
+                                {sessionTypeLabel(s.type)}
                               </p>
                               {s.descriptionOneLiner && (
                                 <p className="text-[11px] text-white/25">{s.descriptionOneLiner}</p>
@@ -340,26 +344,15 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
             borderTop: "1px solid rgba(255,255,255,0.05)",
           }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              {lowestPrice != null && (
-                <p className="text-[20px] font-bold text-white tabular-nums">
-                  ₹{Math.round(lowestPrice / 100)}
-                  <span className="text-[12px] font-normal text-white/30 ml-1">/ session</span>
-                </p>
-              )}
-              <p className="text-[11px] text-white/25">Starting price</p>
+          {alumni.ratingAvg != null && (
+            <div className="flex items-center justify-end gap-1 mb-3 text-[12px] text-white/45">
+              <Star size={11} className="fill-coral text-coral" />
+              {alumni.ratingAvg.toFixed(1)}
+              {alumni.ratingCount ? (
+                <span className="text-white/25">({alumni.ratingCount})</span>
+              ) : null}
             </div>
-            {alumni.ratingAvg != null && (
-              <div className="flex items-center gap-1 text-[12px] text-white/45">
-                <Star size={11} className="fill-coral text-coral" />
-                {alumni.ratingAvg.toFixed(1)}
-                {alumni.ratingCount ? (
-                  <span className="text-white/25">({alumni.ratingCount})</span>
-                ) : null}
-              </div>
-            )}
-          </div>
+          )}
           <button
             className="btn-coral w-full rounded-xl py-3 text-[14px] font-semibold text-white"
             onClick={() => router.push(`/book/new?alumniId=${alumni.id}`)}
