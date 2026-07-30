@@ -1,30 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { SlidersHorizontal, X, ChevronDown, ChevronUp, Book, Globe, Star, BookOpen, Award, Calendar, GraduationCap, Clock } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, Book, Globe, BookOpen, GraduationCap, Clock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { AlumniFilters } from "@/types";
 
 type Options = { universities: string[]; countries: string[]; courses: string[] };
 
 const INITIAL: AlumniFilters = {};
-
-const qsTierOptions = [
-  { value: "top10", label: "Top 10" },
-  { value: "top20", label: "Top 20" },
-  { value: "top50", label: "Top 50" },
-  { value: "top100", label: "Top 100" },
-  { value: "top200", label: "Top 200" },
-  { value: "unranked", label: "Unranked" },
-];
-
-const ratingOptions = [
-  { value: "4", label: "4+ \u2605" },
-  { value: "3", label: "3+ \u2605" },
-  { value: "2", label: "2+ \u2605" },
-];
-
-const GRAD_YEAR_MIN = 2015;
-const GRAD_YEAR_MAX = new Date().getFullYear();
 
 function FilterSection({ title, count, defaultOpen = true, icon, children }: { title: string; count?: number; defaultOpen?: boolean; icon?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -52,25 +34,6 @@ function FilterSection({ title, count, defaultOpen = true, icon, children }: { t
       >
         <div className="pb-3">{children}</div>
       </div>
-    </div>
-  );
-}
-
-function ChipGroup({ options, selected, onChange }: { options: { value: string; label: string }[]; selected?: string[]; onChange: (vals: string[]) => void }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((opt) => {
-        const active = selected?.includes(opt.value) ?? false;
-        return (
-          <button
-            key={opt.value}
-            onClick={() => onChange(active ? selected!.filter((v) => v !== opt.value) : [...(selected ?? []), opt.value])}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 hover:scale-105 ${active ? "chip-active" : "chip-inactive"}`}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -130,67 +93,13 @@ function PillGroup<T extends string>({ options, selected, onChange }: { options:
   );
 }
 
-function DualRangeSlider({ min, max, value, onChange }: { min: number; max: number; value: [number, number] | undefined; onChange: (v: [number, number] | undefined) => void }) {
-  const [local, setLocal] = useState<[number, number]>(value ?? [min, max]);
-  const [minVal, maxVal] = local;
-  const active = value != null;
-
-  const updateMin = (v: number) => {
-    const next: [number, number] = [Math.min(v, maxVal - 1), maxVal];
-    setLocal(next);
-    if (next[0] !== min || next[1] !== max) onChange(next);
-    else onChange(undefined);
-  };
-  const updateMax = (v: number) => {
-    const next: [number, number] = [minVal, Math.max(v, minVal + 1)];
-    setLocal(next);
-    if (next[0] !== min || next[1] !== max) onChange(next);
-    else onChange(undefined);
-  };
-
-  useEffect(() => {
-    setLocal(value ?? [min, max]);
-  }, [value, min, max]);
-
-  const range = max - min;
-  const leftPct = ((minVal - min) / range) * 100;
-  const rightPct = ((max - maxVal) / range) * 100;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-white/50">
-          {minVal} – {maxVal}
-        </span>
-        {active && (
-          <button
-            onClick={() => { setLocal([min, max]); onChange(undefined); }}
-            className="text-[11px] text-coral hover:underline font-medium"
-          >
-            Reset
-          </button>
-        )}
-      </div>
-      <div className="dual-slider">
-        <div className="track" style={{ left: `${leftPct}%`, right: `${rightPct}%` }} />
-        <input type="range" min={min} max={max} value={minVal} onChange={(e) => updateMin(Number(e.target.value))} />
-        <input type="range" min={min} max={max} value={maxVal} onChange={(e) => updateMax(Number(e.target.value))} />
-      </div>
-    </div>
-  );
-}
-
 function countActive(d: AlumniFilters) {
   return [
     d.universities?.length ? "uni" : null,
     d.countries?.length ? "country" : null,
     d.courses?.length ? "course" : null,
     d.studyLevel,
-    d.gradYearMin || d.gradYearMax ? "grad" : null,
-    d.qsTiers?.length ? `qs-${d.qsTiers.length}` : null,
     (d.availability && d.availability !== "any") ? d.availability : null,
-    d.minRating ? "rating" : null,
-    d.topMentorOnly ? "topMentor" : null,
   ].filter(Boolean).length;
 }
 
@@ -223,12 +132,7 @@ export function FilterPanel({
     onChange({
       courses: draft.courses,
       universities: draft.universities,
-      topMentorOnly: draft.topMentorOnly,
       countries: draft.countries,
-      minRating: draft.minRating,
-      qsTiers: draft.qsTiers,
-      gradYearMin: draft.gradYearMin,
-      gradYearMax: draft.gradYearMax,
       studyLevel: draft.studyLevel,
       availability: draft.availability,
       search: draft.search,
@@ -290,37 +194,6 @@ export function FilterPanel({
           />
         </FilterSection>
 
-        {/* Top Mentor */}
-        <FilterSection title="Top Mentor" defaultOpen={true} icon={<Award size={14} className="text-[#e8573a]" />}>
-          <button
-            onClick={() => updateDraft({ topMentorOnly: draft.topMentorOnly ? undefined : true })}
-            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-              draft.topMentorOnly
-                ? "text-white"
-                : "text-white/40 hover:text-white/60"
-            }`}
-            style={{
-              background: draft.topMentorOnly
-                ? "linear-gradient(90deg, rgba(232,87,58,0.15) 0%, rgba(232,87,58,0.06) 100%)"
-                : "rgba(255,255,255,0.03)",
-              border: `1px solid ${draft.topMentorOnly ? "rgba(232,87,58,0.3)" : "rgba(255,255,255,0.06)"}`,
-            }}
-          >
-            <span
-              className="inline-flex items-center justify-center h-5 w-5 rounded-full shrink-0"
-              style={{
-                background: draft.topMentorOnly
-                  ? "linear-gradient(90deg, #FF7A57 0%, #E8573A 100%)"
-                  : "rgba(255,255,255,0.08)",
-              }}
-            >
-              <Award size={10} className="text-white" />
-            </span>
-            Top Mentor only
-            <span className="ml-auto text-[10px] text-white/20">90%+ response · 4.8★ · 10+ sessions</span>
-          </button>
-        </FilterSection>
-
         {/* Country */}
         <FilterSection title="Country" count={draft.countries?.length} icon={<Globe size={14} />}>
           <MultiSelectSearch
@@ -328,26 +201,6 @@ export function FilterPanel({
             selected={draft.countries ?? []}
             onChange={(vals) => updateDraft({ countries: vals.length > 0 ? vals : undefined })}
             placeholder="Filter countries..."
-          />
-        </FilterSection>
-
-        {/* Minimum Rating */}
-        <FilterSection title="Minimum Rating" count={draft.minRating ? 1 : 0} icon={<Star size={14} />}>
-          <PillGroup options={ratingOptions} selected={draft.minRating ?? ""} onChange={(v) => updateDraft({ minRating: v })} />
-        </FilterSection>
-
-        {/* QS Ranking */}
-        <FilterSection title="QS Ranking" count={draft.qsTiers?.length} icon={<Award size={14} />}>
-          <ChipGroup options={qsTierOptions} selected={draft.qsTiers} onChange={(vals) => updateDraft({ qsTiers: vals.length > 0 ? vals : undefined })} />
-        </FilterSection>
-
-        {/* Graduation Year */}
-        <FilterSection title="Graduation Year" count={draft.gradYearMin || draft.gradYearMax ? 1 : 0} icon={<Calendar size={14} />}>
-          <DualRangeSlider
-            min={GRAD_YEAR_MIN}
-            max={GRAD_YEAR_MAX}
-            value={draft.gradYearMin || draft.gradYearMax ? [draft.gradYearMin ?? GRAD_YEAR_MIN, draft.gradYearMax ?? GRAD_YEAR_MAX] : undefined}
-            onChange={(val) => updateDraft({ gradYearMin: val?.[0], gradYearMax: val?.[1] })}
           />
         </FilterSection>
 
