@@ -1,5 +1,11 @@
 import { prisma } from "./prisma";
 
+// Where admin-facing notifications (e.g. "new alumni application") go.
+// Set ADMIN_NOTIFICATION_EMAIL in the environment (Vercel project settings)
+// to point this at a real inbox - it falls back to a placeholder so the
+// notification still logs/records in dev without that var set.
+export const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL ?? "admin@alumnow.app";
+
 interface EmailParams {
   to: string;
   subject: string;
@@ -63,6 +69,13 @@ export const emailTemplates = {
     subject: `Session Cancelled — ${alumnusName}`,
     body: `Your session with ${alumnusName} on ${date} has been cancelled.\n\nIf this was a mistake, please book again at /browse`,
     eventType: "booking_cancelled" as const,
+  }),
+
+  newAlumniApplication: (fullName: string, email: string, universityName: string) => ({
+    to: ADMIN_NOTIFICATION_EMAIL,
+    subject: `New alumni application: ${fullName}`,
+    body: `${fullName} (${email}) just applied as a mentor.\n\nUniversity: ${universityName}\n\nReview it in the admin panel: ${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/admin/alumni`,
+    eventType: "admin_new_alumni_application" as const,
   }),
 
   paymentVerified: (email: string, amount: string) => ({

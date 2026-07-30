@@ -19,6 +19,7 @@ export function AlumniPhoto({
   className,
   onError,
   onLoad,
+  priority,
 }: {
   src: string;
   alt: string;
@@ -26,6 +27,9 @@ export function AlumniPhoto({
   className?: string;
   onError?: () => void;
   onLoad?: () => void;
+  /** Mark above-the-fold cards (first row) so Next preloads them instead of
+   * lazy-loading, cutting LCP for the initial /browse paint. */
+  priority?: boolean;
 }) {
   if (src.startsWith("data:")) {
     // eslint-disable-next-line @next/next/no-img-element -- data: URLs can't be optimized by next/image
@@ -48,6 +52,8 @@ export function AlumniPhoto({
       className={className}
       onError={onError}
       onLoad={onLoad}
+      priority={priority}
+      loading={priority ? undefined : "lazy"}
     />
   );
 }

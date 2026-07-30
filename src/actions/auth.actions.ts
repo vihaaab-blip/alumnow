@@ -284,6 +284,11 @@ export async function signupAlumni(input: {
     } catch (error) {
       console.warn("signupAlumni notification failed", error);
     }
+    try {
+      await sendEmail(emailTemplates.newAlumniApplication(data.fullName, email, data.universityName));
+    } catch (error) {
+      console.warn("signupAlumni admin notification failed", error);
+    }
     return { success: true, data: { redirectTo: "/alumni/application-under-review" } };
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";

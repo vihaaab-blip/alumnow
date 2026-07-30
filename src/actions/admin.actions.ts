@@ -61,6 +61,14 @@ export async function getAdminStats() {
   return { alumni, bookings, revenuePaise: revenue._sum.amountPaise ?? 0, pendingReviews: reviews };
 }
 
+// Lightweight count used to badge the "Alumni" nav item across every admin
+// page (not just /admin/alumni), so pending applications stay visible no
+// matter where the admin currently is.
+export async function getPendingAlumniCount() {
+  await guard();
+  return prisma.alumniProfile.count({ where: { verificationStatus: "pending" } });
+}
+
 export async function getAllAlumni(opts?: {
   page?: number
   pageSize?: number

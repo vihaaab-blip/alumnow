@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, emailTemplates } from "@/lib/email";
 import { alumniApplicationSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ApiResponse } from "@/types";
@@ -59,6 +59,11 @@ export async function applyAsAlumni(input: unknown): Promise<ApiResponse<{ redir
       await sendEmail({ to: email, subject: "Your alumnow mentor application has been submitted", body: `Welcome ${parsed.data.fullName}. Your mentor application has been submitted and is pending review by our team. You will be notified once your profile is approved.`, eventType: "alumni_application_submitted" }, authUserId);
     } catch (error) {
       console.warn("applyAsAlumni notification failed", error);
+    }
+    try {
+      await sendEmail(emailTemplates.newAlumniApplication(parsed.data.fullName, email, parsed.data.universityName));
+    } catch (error) {
+      console.warn("applyAsAlumni admin notification failed", error);
     }
     return { success: true, data: { redirectTo: "/alumni/application-under-review" } };
   } catch (error) {
@@ -133,10 +138,22 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
     else if (filters.sortBy === "newest") params.set("order", "id.desc");
     else params.set("order", "fullName.asc");
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
-      headers: restHeaders({ Prefer: "count=exact" }),
-      next: { revalidate: 15 },
-    });
+    // The alumni fetch and the session lookup are independent - previously
+    // getServerSession() ran only after `await res.json()` resolved, adding a
+    // full extra sequential hop before the (also-sequential) saved-alumni
+    // lookup could even start. Running them together removes that dead time
+    // from the critical path.
+    const [res, session] = await Promise.all([
+      fetch(`${supabaseUrl}/rest/v1/AlumniProfile?${params.toString()}`, {
+        headers: restHeaders({ Prefer: "count=exact" }),
+        // Bumped from 15s: admin mutations now call revalidatePath("/browse")
+        // (see admin.actions.ts revalidateAlumniSurfaces), so approvals/edits
+        // show up immediately regardless of this TTL - it only bounds
+        // staleness for the rare case a write bypasses that path.
+        next: { revalidate: 60 },
+      }),
+      getServerSession(),
+    ]);
     if (!res.ok) throw new Error(`Failed to load alumni: ${res.status} ${await res.text()}`);
 
     let items = (await res.json()) as any[];
@@ -158,7 +175,6 @@ export async function listAlumni(filters: AlumniListFilters = {}) {
       items = items.filter((item) => (item.availability ?? []).length > 0);
     }
 
-    const session = await getServerSession();
     const savedIds = new Set<string>();
     if (session?.user?.id) {
       const savedRes = await fetch(

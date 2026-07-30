@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AdminGuard } from "@/components/AdminGuard";
 import { Logo } from "@/components/Logo";
 import { useSession } from "@/hooks/useSession";
+import { getPendingAlumniCount } from "@/actions/admin.actions";
 import { LayoutDashboard, GraduationCap, CalendarDays, Users, Star, Settings, ArrowLeft, ShieldCheck } from "lucide-react";
 
 const navItems = [
@@ -19,6 +21,22 @@ function SidebarNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const initial = (session?.user?.name ?? session?.user?.email ?? "A").charAt(0).toUpperCase();
+
+  // Pending-application count, badged on the Alumni nav item so it's visible
+  // from any admin page (not just when already on /admin/alumni). Polled
+  // every 60s so a new signup shows up without a manual refresh.
+  const [pendingAlumni, setPendingAlumni] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      getPendingAlumniCount()
+        .then((count) => { if (!cancelled) setPendingAlumni(count); })
+        .catch(() => { /* ignore - badge just stays at last known value */ });
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
 
   return (
     <aside className="hidden w-[268px] flex-shrink-0 border-r border-white/[0.06] bg-[#0A0A0B] text-white md:flex md:flex-col">
@@ -52,6 +70,11 @@ function SidebarNav() {
               )}
               <Icon className={`h-[18px] w-[18px] flex-shrink-0 transition-colors ${isActive ? "text-coral" : "text-white/35 group-hover:text-white/70"}`} />
               {item.label}
+              {item.href === "/admin/alumni" && pendingAlumni > 0 && (
+                <span className="ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-coral px-1 text-[10px] font-bold text-white">
+                  {pendingAlumni}
+                </span>
+              )}
             </Link>
           );
         })}

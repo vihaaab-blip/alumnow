@@ -48,10 +48,6 @@ export function AlumniCard({
     .slice(0, 2)
     .join("");
   const src = alumni.profilePhotoUrl ?? `https://picsum.photos/seed/${alumni.id}/500/400`;
-  const hasSessions = alumni.sessionTypes?.length > 0;
-  const lowestPrice = hasSessions
-    ? Math.min(...alumni.sessionTypes.map((s) => s.pricePaise))
-    : null;
   const responseTime = alumni.avgResponseTimeHours;
 
   /* ─── Swipe variant ──────────────────────────────────────── */
@@ -138,6 +134,7 @@ export function AlumniCard({
               className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.05]"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
+              priority={index < 3}
             />
           )}
 
@@ -284,9 +281,6 @@ export function AlumniCard({
                 <span className="inline-flex items-center gap-0.5 rounded-full bg-white/4 border border-white/6 px-2 py-0.5 text-[10px] font-medium text-white/35">
                   {alumni.responseRate}% replies
                 </span>
-              )}
-              {lowestPrice != null && (
-                <span className="price-badge">₹{Math.round(lowestPrice / 100)}</span>
               )}
             </div>
 
