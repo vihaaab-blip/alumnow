@@ -153,8 +153,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSessionWarning />
       <div className="flex min-h-[calc(100dvh-64px)] bg-[#0D0D0D]">
         <SidebarNav collapsed={collapsed} toggleCollapse={toggleCollapse} />
-        <div className="flex-1 overflow-auto overflow-x-hidden">
-          <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-8 md:py-10">
+        <div className="flex-1 overflow-auto overflow-x-hidden [contain:layout_style]">
+          <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-8 md:py-10 [content-visibility:auto] [contain-intrinsic-size:900px]">
             <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] -translate-x-1/2 rounded-full bg-coral/[0.04] blur-[140px]" />
             <div className="relative"><AdminPageTransition>{children}</AdminPageTransition></div>
           </div>

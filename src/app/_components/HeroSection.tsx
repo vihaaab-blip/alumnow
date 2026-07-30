@@ -46,6 +46,7 @@ export function HeroSection() {
           noiseIntensity={0.5}
           pillarRotation={0}
           interactive={false}
+          quality="medium"
           mixBlendMode="normal"
         />
       </div>

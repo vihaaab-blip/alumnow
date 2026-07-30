@@ -46,6 +46,7 @@ const LightPillar = ({
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const timeRef = useRef(0);
   const rotationSpeedRef = useRef(rotationSpeed);
+  const visibleRef = useRef(true);
   const [webGLSupported, setWebGLSupported] = useState(true);
 
   useEffect(() => {
@@ -79,9 +80,9 @@ const LightPillar = ({
       low: { iterations: 24, waveIterations: 1, pixelRatio: 0.5, precision: "mediump", stepMultiplier: 1.5 },
       medium: { iterations: 40, waveIterations: 2, pixelRatio: 0.65, precision: "mediump", stepMultiplier: 1.2 },
       high: {
-        iterations: 80,
-        waveIterations: 4,
-        pixelRatio: Math.min(window.devicePixelRatio, 2),
+        iterations: 56,
+        waveIterations: 3,
+        pixelRatio: Math.min(window.devicePixelRatio, 1.25),
         precision: "highp",
         stepMultiplier: 1.0,
       },
@@ -260,15 +261,21 @@ const LightPillar = ({
     }
 
     let lastTime = performance.now();
-    const targetFPS = effectiveQuality === "low" ? 30 : 60;
+    const targetFPS = effectiveQuality === "low" ? 24 : 30;
     const frameTime = 1000 / targetFPS;
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => { visibleRef.current = Boolean(entry?.isIntersecting); },
+      { rootMargin: "120px 0px", threshold: 0 },
+    );
+    visibilityObserver.observe(container);
 
     const animate = (currentTime: number) => {
       if (!materialRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
       const deltaTime = currentTime - lastTime;
 
-      if (deltaTime >= frameTime) {
+      if (visibleRef.current && !document.hidden && deltaTime >= frameTime) {
         timeRef.current += 0.016 * rotationSpeedRef.current;
         const t = timeRef.current;
         materialRef.current.uniforms.uTime!.value = t;
@@ -304,6 +311,7 @@ const LightPillar = ({
       if (interactive) {
         container.removeEventListener("mousemove", handleMouseMove);
       }
+      visibilityObserver.disconnect();
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
