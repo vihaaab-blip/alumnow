@@ -199,8 +199,15 @@ function DashboardContent() {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status !== "authenticated") return;
     if (session?.user?.role === "admin") { router.replace("/admin"); return; }
-    getMyBookings().then(setBookings).catch(() => setBookings([]));
-    getAlumniBookings().then(setAlumniBookings).catch(() => setAlumniBookings([])).finally(() => setLoading(false));
+    // Only fetch the bookings list this account actually uses - previously
+    // both getMyBookings (student) and getAlumniBookings (alumnus) fired on
+    // every dashboard load regardless of role, paying for a second full
+    // network round trip whose result was always discarded.
+    if (session?.user?.role === "alumnus") {
+      getAlumniBookings().then(setAlumniBookings).catch(() => setAlumniBookings([])).finally(() => setLoading(false));
+    } else {
+      getMyBookings().then(setBookings).catch(() => setBookings([])).finally(() => setLoading(false));
+    }
   }, [status, router, session]);
 
   const activeBookings = dashboardMode === "student" ? bookings : alumniBookings;

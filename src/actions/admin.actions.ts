@@ -1,7 +1,11 @@
 "use server";
 import { randomBytes } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
+import { alumniAdminEditSchema } from "@/lib/validation";
+import type { ApiResponse } from "@/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -19,6 +23,31 @@ async function guard() {
   const session = await getServerSession();
   if (!session?.user?.id || session.user.role !== "admin") throw new Error("Admin access required.");
   return session.user.id;
+}
+
+// Service-role Supabase client for admin-only operations (e.g. updating another
+// user's Auth email/metadata) that the cookie-scoped server client can't do -
+// createServerSupabaseClient() is bound to the requesting admin's own session,
+// not a general-purpose admin API client.
+function adminAuthClient() {
+  return createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+// Mutations below change data read by the public network (/browse), the
+// alumni detail page, and this admin table - all of which read through
+// fetch() calls cached via Next's data cache (see alumni.actions.ts,
+// next: { revalidate: 15/60 }). Without an explicit revalidatePath here,
+// those cached entries only naturally expire after their TTL, which is
+// exactly the "have to hard reload to see my change" symptom: a soft
+// navigation back to /browse can still be served the stale cached fetch
+// response. Hard-reloading doesn't actually bypass that cache either - it's
+// really the client-side pages' own state that only refetches on remount -
+// but explicitly revalidating here removes the server-side staleness so the
+// data is correct the moment either page fetches again.
+function revalidateAlumniSurfaces(id?: string) {
+  revalidatePath("/browse");
+  revalidatePath("/admin/alumni");
+  if (id) revalidatePath(`/alumni/${id}`);
 }
 
 export async function getAdminStats() {
@@ -89,6 +118,7 @@ export async function updateAlumniProfile(id: string, data: {
   });
   if (!res.ok) throw new Error(`Failed to update alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
+  revalidateAlumniSurfaces(id);
   return rows[0];
 }
 
@@ -138,6 +168,7 @@ export async function createAlumniProfile(data: {
       },
     });
   }
+  revalidateAlumniSurfaces(user.alumniProfile!.id);
   return user;
 }
 
@@ -150,6 +181,7 @@ export async function toggleAlumniActive(id: string, isActive: boolean) {
   });
   if (!res.ok) throw new Error(`Failed to update alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
+  revalidateAlumniSurfaces(id);
   return rows[0];
 }
 
@@ -177,7 +209,67 @@ export async function deleteAlumniProfile(id: string) {
   });
   if (!res.ok) throw new Error(`Failed to delete alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
+  revalidateAlumniSurfaces(id);
   return rows[0];
+}
+
+// Full admin edit of an alumni profile - unlike updateAlumniProfile above
+// (status/verification only), this covers every editable field admins need
+// to correct incorrect submissions or complete missing details (e.g. a
+// missing photo). Email changes also update the linked Supabase Auth user
+// via the service-role admin API, following the same
+// supabase.auth.updateUser pattern account.actions.ts uses for self-service
+// email edits, but through auth.admin.updateUserById since this is another
+// user's account, not the caller's own session.
+export async function editAlumniProfileAdmin(
+  id: string,
+  input: unknown
+): Promise<ApiResponse<Record<string, never>>> {
+  await guard();
+  const parsed = alumniAdminEditSchema.safeParse(input);
+  if (!parsed.success) return { success: false, errors: { form: parsed.error.issues.map((i) => i.message) } };
+  const { email, phone, languages, ...profileFields } = parsed.data;
+
+  const userRes = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}&select=userId`, {
+    headers: restHeaders(),
+  });
+  if (!userRes.ok) return { success: false, error: "Alumni profile not found." };
+  const userRows = (await userRes.json()) as { userId: string }[];
+  const userId = userRows[0]?.userId;
+  if (!userId) return { success: false, error: "Alumni profile not found." };
+
+  if (email) {
+    const admin = adminAuthClient();
+    const { error: authError } = await admin.auth.admin.updateUserById(userId, { email });
+    if (authError) return { success: false, error: `Failed to update login email: ${authError.message}` };
+    const userUpdateRes = await fetch(`${supabaseUrl}/rest/v1/User?id=eq.${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      headers: restHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    if (!userUpdateRes.ok) return { success: false, error: `Failed to sync email: ${await userUpdateRes.text()}` };
+  }
+  if (phone) {
+    const phoneRes = await fetch(`${supabaseUrl}/rest/v1/User?id=eq.${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      headers: restHeaders(),
+      body: JSON.stringify({ phone }),
+    });
+    if (!phoneRes.ok) return { success: false, error: `Failed to update phone: ${await phoneRes.text()}` };
+  }
+
+  const payload: Record<string, unknown> = { ...profileFields, updatedAt: new Date().toISOString() };
+  if (languages) payload.languages = JSON.stringify(languages);
+
+  const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: restHeaders({ Prefer: "return=representation" }),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return { success: false, error: `Failed to update alumni: ${await res.text()}` };
+
+  revalidateAlumniSurfaces(id);
+  return { success: true };
 }
 
 export async function getAllBookings(opts?: {
@@ -282,6 +374,7 @@ export async function moderateReview(id: string, moderationStatus: "approved" | 
       where: { id: review.alumnusId },
       data: { ratingAvg: agg._avg.rating ?? 0, ratingCount: agg._count.rating },
     });
+    revalidateAlumniSurfaces(review.alumnusId);
   }
   return review;
 }

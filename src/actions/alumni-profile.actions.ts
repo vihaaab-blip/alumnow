@@ -4,7 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/supabase-auth";
 import { alumniProfileSchema, sessionTypeSchema } from "@/lib/validation";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import type { ApiResponse } from "@/types";
+
+// See admin.actions.ts revalidateAlumniSurfaces for why this is needed: the
+// public network/alumni-detail pages read through a short-TTL Next data
+// cache, so self-service edits here need the same explicit invalidation as
+// admin edits or the change won't show until that cache naturally expires.
+function revalidateAlumniSurfaces(id: string) {
+  revalidatePath("/browse");
+  revalidatePath(`/alumni/${id}`);
+}
 
 async function guard() {
   const session = await getServerSession();
@@ -29,6 +39,7 @@ export async function updateProfile(input: unknown): Promise<ApiResponse<Record<
       },
     });
 
+    revalidateAlumniSurfaces(profile.id);
     return { success: true };
   } catch (error) {
     console.error("updateProfile error:", error);
@@ -57,6 +68,7 @@ export async function updateProfilePhoto(formData: FormData): Promise<ApiRespons
     const url = `/uploads/${filename}`;
     await prisma.alumniProfile.update({ where: { id: profile.id }, data: { profilePhotoUrl: url } });
 
+    revalidateAlumniSurfaces(profile.id);
     return { success: true, data: { url } };
   } catch (error) {
     console.error("updateProfilePhoto error:", error);
@@ -85,6 +97,7 @@ export async function updateSessionPricing(input: unknown): Promise<ApiResponse<
       });
     }
 
+    revalidateAlumniSurfaces(profile.id);
     return { success: true };
   } catch (error) {
     console.error("updateSessionPricing error:", error);
@@ -100,6 +113,7 @@ export async function deleteSessionType(offeringId: string): Promise<ApiResponse
     });
     if (!offering) return { success: false, error: "Session type not found." };
     await prisma.sessionTypeOffering.delete({ where: { id: offeringId } });
+    revalidateAlumniSurfaces(profile.id);
     return { success: true };
   } catch (error) {
     console.error("deleteSessionType error:", error);

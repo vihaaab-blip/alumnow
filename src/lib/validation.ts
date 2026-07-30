@@ -83,6 +83,25 @@ export const alumniProfileSchema = z.object({
   linkedinUrl: z.string().url().optional().or(z.literal("")),
 });
 
+// Admin editing an alumni profile can touch fields alumniProfileSchema
+// deliberately excludes (email/phone live on User, not AlumniProfile; photo
+// is only ever set client-side elsewhere) - and every field is optional
+// since admins send a partial patch of only what they changed.
+export const alumniAdminEditSchema = z.object({
+  fullName: z.string().min(2).max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(6).max(20).optional().or(z.literal("")),
+  universityName: z.string().min(2).max(200).optional(),
+  course: z.string().min(2).max(200).optional(),
+  country: z.string().min(2).max(100).optional(),
+  graduationYearJbcn: z.number().int().min(1990).max(2030).optional(),
+  currentStudyLevel: z.enum(["undergraduate", "postgraduate"]).optional(),
+  bio: z.string().max(750).optional().or(z.literal("")),
+  languages: z.array(z.string()).max(10).optional(),
+  linkedinUrl: z.string().url().optional().or(z.literal("")),
+  profilePhotoUrl: z.string().optional(),
+});
+
 export const studentProfileSchema = z.object({
   fullName: z.string().min(2).max(100),
   dateOfBirth: z.string().optional(),

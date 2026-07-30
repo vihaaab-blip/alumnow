@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { getAllAlumni, updateAlumniProfile, createAlumniProfile, toggleAlumniActive, deleteAlumniProfile } from "@/actions/admin.actions";
+import { getAllAlumni, updateAlumniProfile, createAlumniProfile, toggleAlumniActive, deleteAlumniProfile, editAlumniProfileAdmin } from "@/actions/admin.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "@/components/ui/Toaster";
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/Dialog";
+import { resizeImageToDataUrl } from "@/lib/image";
 import type { PaginatedResult } from "@/types";
 
 type AdminAlumniExtended = {
@@ -33,11 +34,186 @@ type AdminAlumniExtended = {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
+type EditForm = {
+  fullName: string;
+  email: string;
+  phone: string;
+  universityName: string;
+  course: string;
+  country: string;
+  graduationYearJbcn: string;
+  currentStudyLevel: string;
+  bio: string;
+  linkedinUrl: string;
+  profilePhotoUrl: string;
+};
+
+function toEditForm(item: AdminAlumniExtended): EditForm {
+  return {
+    fullName: item.fullName,
+    email: item.user.email,
+    phone: item.user.phone ?? "",
+    universityName: item.universityName,
+    course: item.course,
+    country: item.country,
+    graduationYearJbcn: String(item.graduationYearJbcn),
+    currentStudyLevel: item.currentStudyLevel,
+    bio: item.bio ?? "",
+    linkedinUrl: item.linkedinUrl ?? "",
+    profilePhotoUrl: item.profilePhotoUrl ?? "",
+  };
+}
+
+function EditAlumniDialog({ item, onClose, onSaved }: {
+  item: AdminAlumniExtended | null;
+  onClose: () => void;
+  onSaved: (id: string, patch: Partial<AdminAlumniExtended> & { user?: { email: string; phone: string | null } }) => void;
+}) {
+  const [form, setForm] = useState<EditForm | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setForm(item ? toEditForm(item) : null); }, [item]);
+
+  const handlePhoto = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setForm((f) => (f ? { ...f, profilePhotoUrl: dataUrl } : f));
+    } catch {
+      toast({ title: "Could not process photo", variant: "error" });
+    }
+  };
+
+  const handleSave = async () => {
+    if (!item || !form) return;
+    setSaving(true);
+    try {
+      const result = await editAlumniProfileAdmin(item.id, {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone || undefined,
+        universityName: form.universityName,
+        course: form.course,
+        country: form.country,
+        graduationYearJbcn: Number(form.graduationYearJbcn),
+        currentStudyLevel: form.currentStudyLevel,
+        bio: form.bio,
+        linkedinUrl: form.linkedinUrl,
+        profilePhotoUrl: form.profilePhotoUrl || undefined,
+      });
+      if (!result.success) {
+        toast({ title: "Failed to save changes", description: result.error ?? result.errors?.form?.join(", "), variant: "error" });
+        return;
+      }
+      onSaved(item.id, {
+        fullName: form.fullName,
+        universityName: form.universityName,
+        course: form.course,
+        country: form.country,
+        graduationYearJbcn: Number(form.graduationYearJbcn),
+        currentStudyLevel: form.currentStudyLevel,
+        bio: form.bio,
+        linkedinUrl: form.linkedinUrl,
+        profilePhotoUrl: form.profilePhotoUrl || null,
+        user: { email: form.email, phone: form.phone || null },
+      });
+      toast({ title: "Alumni details updated", variant: "success" });
+      onClose();
+    } catch (e) {
+      toast({ title: "Failed to save changes", description: e instanceof Error ? e.message : "Unknown error", variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <DialogRoot open={!!item} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit alumni details</DialogTitle>
+          <DialogDescription>Correct or complete this alumnus's profile. Changes are visible on the network immediately.</DialogDescription>
+        </DialogHeader>
+        {form && (
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
+                {form.profilePhotoUrl ? (
+                  <img src={form.profilePhotoUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-white/30 text-lg font-bold">{form.fullName.charAt(0)}</div>
+                )}
+              </div>
+              <label className="text-sm font-semibold">
+                Photo
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => handlePhoto(e.target.files?.[0] ?? null)}
+                  className="mt-1 block text-xs text-white/50"
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block text-sm font-semibold">Full Name
+                <Input value={form.fullName} onChange={(e) => setForm((f) => f && { ...f, fullName: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Email
+                <Input type="email" value={form.email} onChange={(e) => setForm((f) => f && { ...f, email: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Phone
+                <Input value={form.phone} onChange={(e) => setForm((f) => f && { ...f, phone: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Graduation Year
+                <Input type="number" value={form.graduationYearJbcn} onChange={(e) => setForm((f) => f && { ...f, graduationYearJbcn: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">University
+                <Input value={form.universityName} onChange={(e) => setForm((f) => f && { ...f, universityName: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Course
+                <Input value={form.course} onChange={(e) => setForm((f) => f && { ...f, course: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Country
+                <Input value={form.country} onChange={(e) => setForm((f) => f && { ...f, country: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold">Study Level
+                <select
+                  value={form.currentStudyLevel}
+                  onChange={(e) => setForm((f) => f && { ...f, currentStudyLevel: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-background px-3 py-2 text-sm"
+                >
+                  <option value="undergraduate">Undergraduate</option>
+                  <option value="postgraduate">Postgraduate</option>
+                </select>
+              </label>
+              <label className="block text-sm font-semibold col-span-2">LinkedIn URL
+                <Input value={form.linkedinUrl} onChange={(e) => setForm((f) => f && { ...f, linkedinUrl: e.target.value })} className="mt-1" />
+              </label>
+              <label className="block text-sm font-semibold col-span-2">Bio
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm((f) => f && { ...f, bio: e.target.value })}
+                  rows={4}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-background px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button className="flex-1" onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+              <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </DialogRoot>
+  );
+}
+
+function PendingReviewCard({ item, onApprove, onReject, onViewDetails, onEdit }: {
   item: AdminAlumniExtended;
   onApprove: () => void;
   onReject: () => void;
   onViewDetails: () => void;
+  onEdit: () => void;
 }) {
   return (
     <div
@@ -74,6 +250,7 @@ function PendingReviewCard({ item, onApprove, onReject, onViewDetails }: {
         </div>
         <div className="flex shrink-0 gap-2">
           <Button size="sm" onClick={onViewDetails} variant="outline">Details</Button>
+          <Button size="sm" onClick={onEdit} variant="outline">Edit</Button>
           <Button size="sm" onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white">Accept</Button>
           <Button size="sm" variant="outline" onClick={onReject} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny</Button>
         </div>
@@ -93,6 +270,7 @@ export default function AdminAlumniPage() {
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", bio: "", pricePaise: "" });
   const [loading, setLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<AdminAlumniExtended | null>(null);
+  const [editItem, setEditItem] = useState<AdminAlumniExtended | null>(null);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -164,6 +342,11 @@ export default function AdminAlumniPage() {
     } catch (e) { console.error("Delete error:", e); toast({ title: "Failed to delete", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
   };
+
+  const handleEditSaved = useCallback((id: string, patch: Partial<AdminAlumniExtended> & { user?: { email: string; phone: string | null } }) => {
+    setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, ...patch } as AdminAlumniExtended : row) } : prev);
+    setDetailItem((prev) => prev && prev.id === id ? { ...prev, ...patch } as AdminAlumniExtended : prev);
+  }, []);
 
   const pendingItems = data?.items.filter((i) => i.verificationStatus === "pending") ?? [];
   const otherItems = data?.items.filter((i) => i.verificationStatus !== "pending") ?? [];
@@ -243,6 +426,7 @@ export default function AdminAlumniPage() {
               onApprove={() => setConfirmAction({ id: item.id, action: "approve" })}
               onReject={() => setConfirmAction({ id: item.id, action: "reject" })}
               onViewDetails={() => setDetailItem(item)}
+              onEdit={() => setEditItem(item)}
             />
           ))}
         </div>
@@ -281,6 +465,7 @@ export default function AdminAlumniPage() {
                   <td>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>Details</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditItem(item)}>Edit</Button>
                       {item.verificationStatus === "approved" && (
                         <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "toggle" })}>
                           {item.isActive ? "Deactivate" : "Activate"}
@@ -409,12 +594,15 @@ export default function AdminAlumniPage() {
                   </div>
                 </div>
               )}
-              {detailItem.verificationStatus === "pending" && (
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={() => setConfirmAction({ id: detailItem.id, action: "approve" })} className="bg-green-600 hover:bg-green-700 text-white">Accept — Approve Profile</Button>
-                  <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny — Reject Profile</Button>
-                </div>
-              )}
+              <div className="flex gap-3 pt-4 border-t border-border">
+                <Button variant="outline" onClick={() => setEditItem(detailItem)}>Edit Details</Button>
+                {detailItem.verificationStatus === "pending" && (
+                  <>
+                    <Button onClick={() => setConfirmAction({ id: detailItem.id, action: "approve" })} className="bg-green-600 hover:bg-green-700 text-white">Accept — Approve Profile</Button>
+                    <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny — Reject Profile</Button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
@@ -425,6 +613,8 @@ export default function AdminAlumniPage() {
       <ConfirmDialog open={confirmAction?.action === "reject"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleReject(confirmAction.id)} title="Reject this alumni?" description="They will not appear on the network. This action can be reversed later." confirmLabel="Reject" variant="destructive" />
       <ConfirmDialog open={confirmAction?.action === "toggle"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleToggleActive(confirmAction.id)} title="Toggle alumni status" description="Are you sure you want to change this alumni's active status?" confirmLabel="Confirm" variant="destructive" />
       <ConfirmDialog open={confirmAction?.action === "delete"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleDelete(confirmAction.id)} title="Delete this alumni permanently?" description="This removes them from the network everywhere — including past booking history views. This cannot be undone from the admin UI." confirmLabel="Delete" variant="destructive" />
+
+      <EditAlumniDialog item={editItem} onClose={() => setEditItem(null)} onSaved={handleEditSaved} />
     </div>
   );
 }
