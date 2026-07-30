@@ -13,10 +13,17 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 export async function AdminActivityFeed() {
-  const logs = await prisma.adminAuditLog.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 8,
-  });
+  // Keep the dashboard usable while a deployment catches up with the
+  // optional audit-log migration. Older databases do not have this table yet.
+  let logs: Awaited<ReturnType<typeof prisma.adminAuditLog.findMany>> = [];
+  try {
+    logs = await prisma.adminAuditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+  } catch (error) {
+    console.warn("Admin activity feed unavailable:", error);
+  }
 
   return (
     <Card className="p-6">
