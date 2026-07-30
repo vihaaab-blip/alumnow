@@ -6,7 +6,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useSession } from "@/hooks/useSession";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { getMyBookings, getAlumniBookings } from "@/actions/booking.actions";
+import { getMyBookings } from "@/actions/booking.actions";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ReviewForm } from "@/components/ReviewForm";
 import { Button } from "@/components/ui/Button";
@@ -184,33 +184,25 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
-  const [alumniBookings, setAlumniBookings] = useState<any[]>([]);
-  const [dashboardMode, setDashboardMode] = useState<"student" | "alumnus">("student");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [searchOpen, setSearchOpen] = useState(false);
   const [showInsight, setShowInsight] = useState(true);
 
   useEffect(() => {
-    if (session?.user?.role === "alumnus") setDashboardMode("alumnus");
-  }, [session]);
-
-  useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status !== "authenticated") return;
     if (session?.user?.role === "admin") { router.replace("/admin"); return; }
-    // Only fetch the bookings list this account actually uses - previously
-    // both getMyBookings (student) and getAlumniBookings (alumnus) fired on
-    // every dashboard load regardless of role, paying for a second full
-    // network round trip whose result was always discarded.
-    if (session?.user?.role === "alumnus") {
-      getAlumniBookings().then(setAlumniBookings).catch(() => setAlumniBookings([])).finally(() => setLoading(false));
-    } else {
-      getMyBookings().then(setBookings).catch(() => setBookings([])).finally(() => setLoading(false));
-    }
+    // This page is student-only now. Alumni have their own dedicated
+    // dashboard (/alumni/dashboard) with alumni-specific stats and no
+    // "Getting started" / student-oriented empty states - previously alumni
+    // could land here too via a same-page mode toggle, which is why the
+    // alumni dashboard sometimes showed student-flavored copy and nav items.
+    if (session?.user?.role === "alumnus") { router.replace("/alumni/dashboard"); return; }
+    getMyBookings().then(setBookings).catch(() => setBookings([])).finally(() => setLoading(false));
   }, [status, router, session]);
 
-  const activeBookings = dashboardMode === "student" ? bookings : alumniBookings;
+  const activeBookings = bookings;
   const now = Date.now();
   const filtered = activeBookings.filter((b) =>
     tab === "upcoming"
@@ -281,11 +273,6 @@ function DashboardContent() {
     const seen = new Set<string>();
     return bookings.filter((b) => { const id = b.alumni?.id || b.alumniId; if (seen.has(id)) return false; seen.add(id); return true; }).slice(0, 4);
   }, [bookings]);
-
-  const recentStudents = useMemo(() => {
-    const seen = new Set<string>();
-    return alumniBookings.filter((b) => { const id = b.student?.id || b.studentId; if (seen.has(id)) return false; seen.add(id); return true; }).slice(0, 4);
-  }, [alumniBookings]);
 
   /* Sparkline data from real metrics */
   const sparklineCompleted = useMemo(() => monthlyData.map((d) => d.completed), [monthlyData]);
@@ -511,19 +498,9 @@ function DashboardContent() {
                 <p className="text-[13px] text-white/50 mt-0.5">
                   {realUpcomingCount > 0
                     ? `${realUpcomingCount} upcoming session${realUpcomingCount !== 1 ? "s" : ""}`
-                    : dashboardMode === "student"
-                      ? "Ready to connect with alumni mentors?"
-                      : "Ready for your upcoming mentoring sessions?"}
+                    : "Ready to connect with alumni mentors?"}
                 </p>
               </div>
-              {session.user?.role === "alumnus" && (
-                <div className="flex bg-white/10 p-0.5 rounded-[10px] mr-2">
-                  <button onClick={() => setDashboardMode("alumnus")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "alumnus" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Alumni view</button>
-                  <button onClick={() => setDashboardMode("student")}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-[8px] transition-all duration-150 ${dashboardMode === "student" ? "bg-white text-[#0D0D0D] shadow-sm" : "text-white/60 hover:text-white"}`}>Student view</button>
-                </div>
-              )}
               <SearchTrigger onClick={() => setSearchOpen(true)} />
             </div>
           </ScrollReveal>
@@ -677,13 +654,11 @@ function DashboardContent() {
             <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">
-                  {dashboardMode === "student" ? "Recent mentors" : "Recent students"}
+                  Recent mentors
                 </h3>
-                {dashboardMode === "student" && (
-                  <Link href="/browse" className="text-[11px] font-medium text-[#E8573A] hover:text-[#D44A2E] transition-colors">View all</Link>
-                )}
+                <Link href="/browse" className="text-[11px] font-medium text-[#E8573A] hover:text-[#D44A2E] transition-colors">View all</Link>
               </div>
-              {dashboardMode === "student" ? (
+              {(
                 recentMentors.length === 0 ? (
                   <div className="py-10 text-center">
                     <motion.div
@@ -715,43 +690,6 @@ function DashboardContent() {
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-semibold text-white truncate">{b.alumni?.fullName || b.alumni?.user?.name || "Mentor"}</p>
                             <p className="text-[11px] text-white/40">{b.alumni?.universityName || "University"}</p>
-                          </div>
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
-                            {statusInfo.icon && <statusInfo.icon size={10} />}
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )
-              ) : (
-                recentStudents.length === 0 ? (
-                  <div className="py-10 text-center">
-                    <motion.div
-                      animate={{ y: [0, -6, 0] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="h-14 w-14 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3"
-                    >
-                      <GraduationCap size={24} className="text-[#E8573A]/30" />
-                    </motion.div>
-                    <p className="text-[14px] font-semibold text-white">Your mentoring starts here</p>
-                    <p className="text-[12px] text-white/40 mt-1">Students will appear here once they book a session.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {recentStudents.map((b) => {
-                      const statusInfo = formatBadge(b.status);
-                      return (
-                        <div key={b.id} className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors duration-150 cursor-pointer group">
-                          <div className="relative shrink-0">
-                            <img src={b.student?.image ?? `https://picsum.photos/seed/${b.studentId}/80/80`}
-                              alt={b.student?.studentProfile?.fullName || "Student"} className="h-9 w-9 rounded-full object-cover" />
-                            <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(b.status), opacity: 0.6 }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-white truncate">{b.student?.studentProfile?.fullName || b.student?.name || "Student"}</p>
-                            <p className="text-[11px] text-white/40">{b.student?.email || "Student"}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${statusInfo.classes}`}>
                             {statusInfo.icon && <statusInfo.icon size={10} />}
@@ -795,10 +733,10 @@ function DashboardContent() {
                       </p>
                       <p className="text-[12px] text-white/40 mt-1">
                         {tab === "upcoming"
-                          ? (dashboardMode === "student" ? "Book a session with a mentor to get started." : "Your upcoming scheduled sessions will appear here.")
+                          ? "Book a session with a mentor to get started."
                           : "Your completed sessions will appear here."}
                       </p>
-                      {tab === "upcoming" && dashboardMode === "student" && (
+                      {tab === "upcoming" && (
                         <Link href="/browse">
                           <Button className="mt-4 bg-[#E8573A] text-white hover:bg-[#D44A2E] rounded-[10px] text-[13px] h-9 px-4 transition-all duration-150">
                             <Sparkles size={14} className="mr-1.5" /> Browse mentors
@@ -820,16 +758,14 @@ function DashboardContent() {
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="relative shrink-0">
-                                <img src={dashboardMode === "student"
-                                  ? (booking.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${booking.alumniId}/80/80`)
-                                  : (booking.student?.image ?? `https://picsum.photos/seed/${booking.studentId}/80/80`)}
-                                  alt={dashboardMode === "student" ? (booking.alumni?.fullName || "Mentor") : (booking.student?.studentProfile?.fullName || "Student")}
+                                <img src={booking.alumni?.profilePhotoUrl ?? `https://picsum.photos/seed/${booking.alumniId}/80/80`}
+                                  alt={booking.alumni?.fullName || "Mentor"}
                                   className="h-8 w-8 rounded-full object-cover" />
                                 <span className="absolute -inset-0.5 rounded-full border-2" style={{ borderColor: statusRingColor(booking.status), opacity: 0.5 }} />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-[13px] font-semibold text-white truncate">
-                                  {dashboardMode === "student" ? (booking.alumni?.fullName || "Mentor") : (booking.student?.studentProfile?.fullName || "Student")}
+                                  {booking.alumni?.fullName || "Mentor"}
                                 </p>
                                 <p className="text-[11px] text-white/40">
                                   {new Date(booking.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}

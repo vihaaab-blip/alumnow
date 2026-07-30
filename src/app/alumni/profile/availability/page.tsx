@@ -1,23 +1,44 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerSession } from "@/lib/supabase-auth";
-import { prisma } from "@/lib/prisma";
 import { AvailabilityEditor } from "@/components/AvailabilityEditor";
 import { ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function restHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
 export default async function AlumniProfileAvailabilityPage() {
   const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
 
-  const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });
+  // REST, not Prisma - see alumni/profile/page.tsx for why: the pooled
+  // Prisma connection has been the recurring cause of "page not loaded"
+  // failures on these self-service pages.
+  const profileRes = await fetch(
+    `${supabaseUrl}/rest/v1/AlumniProfile?select=id&userId=eq.${encodeURIComponent(session.user.id)}&limit=1`,
+    { headers: restHeaders(), cache: "no-store" }
+  );
+  if (!profileRes.ok) throw new Error(`Failed to load profile: ${profileRes.status} ${await profileRes.text()}`);
+  const profile = ((await profileRes.json()) as { id: string }[])[0];
   if (!profile) redirect("/apply");
 
-  const allSlots = await prisma.alumniAvailability.findMany({
-    where: { alumniId: profile.id },
-    orderBy: [{ dayOfWeek: "asc" }, { specificDate: "asc" }],
-  });
+  const slotsRes = await fetch(
+    `${supabaseUrl}/rest/v1/AlumniAvailability?select=*&alumniId=eq.${encodeURIComponent(profile.id)}&order=dayOfWeek.asc,specificDate.asc`,
+    { headers: restHeaders(), cache: "no-store" }
+  );
+  if (!slotsRes.ok) throw new Error(`Failed to load availability: ${slotsRes.status} ${await slotsRes.text()}`);
+  const allSlots = (await slotsRes.json()) as any[];
 
   const recurringSlots = allSlots
     .filter((s) => s.isRecurring)
@@ -25,7 +46,7 @@ export default async function AlumniProfileAvailabilityPage() {
 
   const oneOffSlots = allSlots
     .filter((s) => !s.isRecurring)
-    .map((s) => ({ id: s.id, specificDate: s.specificDate?.toISOString() ?? "", startTime: s.startTime, endTime: s.endTime }));
+    .map((s) => ({ id: s.id, specificDate: s.specificDate ?? "", startTime: s.startTime, endTime: s.endTime }));
 
   return (
     <div className="min-h-screen bg-[#0D0D0D]">

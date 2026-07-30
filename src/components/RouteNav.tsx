@@ -13,7 +13,12 @@ function DockNavFallback() {
 
 export function RouteNav() {
   const pathname = usePathname();
-  if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/account"))
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/alumni/dashboard")
+  )
     return null;
   return (
     <Suspense fallback={<DockNavFallback />}>

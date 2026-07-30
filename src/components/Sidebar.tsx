@@ -5,33 +5,28 @@ import { useState } from "react";
 import { useSession } from "@/hooks/useSession";
 import {
   LayoutDashboard,
-  Search,
   CalendarDays,
-  Star,
-  Users,
+  Clock,
+  UserRound,
   ChevronRight,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/browse", icon: Search, label: "Network" },
+  { href: "/alumni/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/bookings", icon: CalendarDays, label: "Bookings" },
-  { href: "/browse?view=saved", icon: Star, label: "Saved" },
-  { href: "/alumni/profile", icon: Users, label: "Profile" },
+  { href: "/alumni/profile/availability", icon: Clock, label: "Availability" },
+  { href: "/alumni/profile", icon: UserRound, label: "Profile" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ photoUrl, name }: { photoUrl?: string | null; name?: string | null }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isActive = (href: string) => {
-    if (href === "/dashboard") return pathname === "/dashboard";
-    if (href.includes("?"))
-      return pathname === href.split("?")[0] && pathname !== "/dashboard";
-    return pathname.startsWith(href) && href !== "/dashboard";
-  };
+  const isActive = (href: string) => pathname.startsWith(href);
+  const displayName = name ?? session?.user?.name ?? "";
+  const initial = displayName.charAt(0).toUpperCase() || "A";
 
   const sidebarInner = (
     <>
@@ -66,14 +61,20 @@ export function Sidebar() {
       <div className="px-3 pb-4 space-y-1 border-t border-white/5 pt-3 shrink-0">
         {session?.user && (
           <div className="flex items-center gap-3 px-3 py-2.5">
-            <img
-              src={`https://picsum.photos/seed/${session.user.id}/80/80`}
-              alt={session.user.name ?? ""}
-              className="h-7 w-7 rounded-[6px] object-cover shrink-0"
-            />
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={displayName}
+                className="h-7 w-7 rounded-[6px] object-cover shrink-0"
+              />
+            ) : (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] bg-coral/15 text-[11px] font-bold text-coral">
+                {initial}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold text-white/80 truncate">
-                {session.user.name}
+                {displayName}
               </p>
               <p className="text-[10px] text-white/30 truncate">
                 {session.user.email}
@@ -90,7 +91,7 @@ export function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-[60] md:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-[#0F2240] text-white shadow-lg"
+        className="fixed top-4 left-4 z-[60] md:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-[#141416] border border-white/10 text-white shadow-lg"
         aria-label="Toggle sidebar"
       >
         <ChevronRight size={18} className={`transition-transform ${mobileOpen ? "rotate-180" : ""}`} />
@@ -99,7 +100,7 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-[55] bg-black/60 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}

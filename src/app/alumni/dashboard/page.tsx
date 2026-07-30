@@ -8,20 +8,18 @@ import { motion } from "framer-motion";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { getAlumniBookings } from "@/actions/booking.actions";
 import { getCurrentAlumniReviewStatus } from "@/actions/alumni-status.actions";
-import { SearchOverlay, SearchTrigger } from "@/components/SearchOverlay";
+import { getAccountData } from "@/actions/account.actions";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Sidebar } from "@/components/Sidebar";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Button } from "@/components/ui/Button";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Label,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  CalendarDays, ArrowRight, Star, GraduationCap,
+  CalendarDays, ArrowRight,
   Award, Sparkles, Users,
-  DollarSign, Edit3, ChevronDown,
-  Download, Filter,
+  DollarSign, Clock,
 } from "lucide-react";
 
 const ACCENT = "#E8573A";
@@ -94,22 +92,6 @@ function generateEarnings(bookings: any[]) {
   });
 }
 
-function generateRatingDist(bookings: any[]) {
-  const dist = [5, 4, 3, 2, 1].map((r) => ({
-    rating: `${r}★`,
-    count: bookings.filter((b) => b.review?.rating === r).length,
-    color: r === 5 ? "#16A34A" : r === 4 ? "#65A30D" : r === 3 ? "#B0B0B8" : r === 2 ? "#DC2626" : "#EF4444",
-  }));
-  return dist;
-}
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
-
 const STATUS_MAP: Record<string, { label: string; classes: string }> = {
   pending_payment: { label: "Pending Payment", classes: "bg-[#B0B0B8]/10 text-[#B0B0B8] border-[#B0B0B8]/20" },
   payment_submitted: { label: "Payment Submitted", classes: "bg-white/8 text-white/70 border-white/15" },
@@ -171,12 +153,15 @@ function AlumniDashboardContent() {
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [profile, setProfile] = useState<{ name: string; profilePhotoUrl: string | null } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status !== "authenticated") return;
     if (session?.user?.role !== "alumnus") { router.push("/dashboard"); return; }
+    getAccountData().then((res) => {
+      if (res.success && res.data) setProfile({ name: res.data.name, profilePhotoUrl: res.data.profilePhotoUrl });
+    });
     getCurrentAlumniReviewStatus()
       .then((review) => {
         if (review.status !== "approved") {
@@ -197,16 +182,10 @@ function AlumniDashboardContent() {
   const sessionsData = useMemo(() => generateMonthlySessions(bookings), [bookings]);
   const studentsData = useMemo(() => generateWeeklyStudents(bookings), [bookings]);
   const earningsData = useMemo(() => generateEarnings(bookings), [bookings]);
-  const ratingData = useMemo(() => generateRatingDist(bookings), [bookings]);
 
   const totalSessions = useMemo(() => sessionsData.reduce((a, d) => a + d.sessions, 0), [sessionsData]);
   const totalStudents = useMemo(() => new Set(bookings.map((b) => b.studentId)).size, [bookings]);
   const totalEarnings = useMemo(() => earningsData.reduce((a, d) => a + d.amount, 0), [earningsData]);
-  const totalRatings = useMemo(() => ratingData.reduce((s, r) => s + r.count, 0), [ratingData]);
-  const avgRating = useMemo(() => {
-    const weighted = ratingData.reduce((s, r) => s + parseInt(r.rating) * r.count, 0);
-    return totalRatings ? weighted / totalRatings : 0;
-  }, [ratingData, totalRatings]);
 
   const upcomingCount = useMemo(
     () => bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").length,
@@ -234,12 +213,12 @@ function AlumniDashboardContent() {
   const sparkSessions = useMemo(() => sessionsData.map((d) => d.sessions), [sessionsData]);
   const sparkStudents = useMemo(() => studentsData.map((d) => d.students), [studentsData]);
   const sparkEarnings = useMemo(() => earningsData.map((d) => d.amount / 1000), [earningsData]);
-  const sparkRatings = useMemo(() => ratingData.map((d) => d.count), [ratingData]);
 
-  const peakMonth = useMemo(() => [...sessionsData].sort((a, b) => b.sessions - a.sessions)[0], [sessionsData]);
-  const peakEarningsMonth = useMemo(() => [...earningsData].sort((a, b) => b.amount - a.amount)[0], [earningsData]);
+  const peakMonth = useMemo(() => (totalSessions > 0 ? [...sessionsData].sort((a, b) => b.sessions - a.sessions)[0] : null), [sessionsData, totalSessions]);
+  const peakEarningsMonth = useMemo(() => (totalEarnings > 0 ? [...earningsData].sort((a, b) => b.amount - a.amount)[0] : null), [earningsData, totalEarnings]);
 
   const insight = useMemo(() => {
+    if (totalSessions === 0) return "Set your availability so students can start booking sessions with you.";
     const avg = sessionsData.reduce((a, d) => a + d.sessions, 0) / sessionsData.length;
     const latest = sessionsData[sessionsData.length - 1]?.sessions ?? 0;
     if (latest > avg) return `You're trending up! ${Math.round((latest / avg - 1) * 100)}% more sessions this month than your average.`;
@@ -248,30 +227,24 @@ function AlumniDashboardContent() {
 
   const statCards = useMemo(() => [
     {
-      icon: Award, label: "Total Sessions", value: String(totalSessions), unit: "",
+      icon: DollarSign, label: "Total Earnings", value: `₹${(totalEarnings / 100000).toFixed(1)}`, unit: "L",
       color: "#E8573A", bg: "bg-[#E8573A]/8",
+      trend: earningsTrend, sparkData: sparkEarnings,
+      detail: peakEarningsMonth ? `Best month: ${peakEarningsMonth.month} · ₹${(peakEarningsMonth.amount / 100).toFixed(0)}K` : "No earnings yet",
+    },
+    {
+      icon: Award, label: "Total Sessions", value: String(totalSessions), unit: "",
+      color: "#FFFFFF", bg: "bg-white/[0.06]",
       trend: sessionsTrend, sparkData: sparkSessions,
-      detail: `${sessionsData[sessionsData.length - 1]?.sessions ?? 0} this month · peak in ${peakMonth?.month}`,
+      detail: peakMonth ? `${sessionsData[sessionsData.length - 1]?.sessions ?? 0} this month · peak in ${peakMonth.month}` : "No sessions yet",
     },
     {
       icon: Users, label: "Students Mentored", value: String(totalStudents), unit: "",
-      color: "#FFFFFF", bg: "bg-white/[0.06]",
+      color: "#B0B0B8", bg: "bg-[#B0B0B8]/8",
       trend: { value: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`, positive: true }, sparkData: sparkStudents,
       detail: `${studentsData[studentsData.length - 1]?.students ?? 0} this week`,
     },
-    {
-      icon: DollarSign, label: "Total Earnings", value: `₹${(totalEarnings / 100000).toFixed(1)}`, unit: "L",
-      color: "#B0B0B8", bg: "bg-[#B0B0B8]/8",
-      trend: earningsTrend, sparkData: sparkEarnings,
-      detail: `Best month: ${peakEarningsMonth?.month} · ₹${peakEarningsMonth ? (peakEarningsMonth.amount / 100).toFixed(0) : 0}K`,
-    },
-    {
-      icon: Star, label: "Rating", value: avgRating > 0 ? avgRating.toFixed(1) : "—", unit: "",
-      color: "#F0744E", bg: "bg-[#F0744E]/8",
-      trend: { value: `${totalRatings} reviews`, positive: totalRatings >= 5 }, sparkData: sparkRatings,
-      detail: `${totalRatings} total reviews`,
-    },
-  ], [totalSessions, totalStudents, totalEarnings, avgRating, totalRatings, sessionsTrend, earningsTrend, sparkSessions, sparkStudents, sparkEarnings, sparkRatings, sessionsData, studentsData, peakMonth, peakEarningsMonth]);
+  ], [totalSessions, totalStudents, totalEarnings, sessionsTrend, earningsTrend, sparkSessions, sparkStudents, sparkEarnings, sessionsData, studentsData, peakMonth, peakEarningsMonth]);
 
   const formatBadge = (s: string) => STATUS_MAP[s] ?? { label: s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), classes: "bg-[#6E6E76]/10 text-[#6E6E76] border-[#6E6E76]/20" };
 
@@ -288,11 +261,11 @@ function AlumniDashboardContent() {
     );
   }
 
-  const userName = session.user?.name?.split(" ")[0] || "there";
+  const userName = (profile?.name ?? session.user?.name)?.split(" ")[0] || "there";
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] transition-colors duration-150">
-      <Sidebar />
+      <Sidebar photoUrl={profile?.profilePhotoUrl} name={profile?.name} />
       <div className="ml-0 md:ml-[240px] min-h-screen overflow-x-hidden">
         <div className="p-4 md:p-6 max-w-[1400px]">
 
@@ -308,30 +281,28 @@ function AlumniDashboardContent() {
             <div className="absolute -bottom-10 -right-10 w-56 h-56 rounded-full bg-[#E8573A]/15 blur-3xl pointer-events-none" />
             <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-[#E8573A]/8 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
-              <div className="relative">
-                <img
-                  src={`https://picsum.photos/seed/${session.user.id}/100/100`}
-                  alt={session.user?.name ?? "Profile"}
-                  className="h-[52px] w-[52px] rounded-[12px] border-2 border-white/[0.12] object-cover shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
-                />
+              <div className="relative shrink-0">
+                {profile?.profilePhotoUrl ? (
+                  <img
+                    src={profile.profilePhotoUrl}
+                    alt={userName}
+                    className="h-[52px] w-[52px] rounded-[12px] border-2 border-white/[0.12] object-cover shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
+                  />
+                ) : (
+                  <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[12px] border-2 border-white/[0.12] bg-coral/15 text-[18px] font-bold text-coral shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-[13px] h-[13px] rounded-full bg-[#16A34A] border-[2.5px] border-[#0F0F10] shadow-[0_0_6px_rgba(22,163,74,0.5)]" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#E8573A]">Alumni dashboard</p>
-                <h1 className="text-[24px] font-bold text-white tracking-[-0.02em] mt-0.5">{getGreeting()}, {userName}</h1>
+                <h1 className="text-[24px] font-bold text-white tracking-[-0.02em] mt-0.5 truncate">Welcome back, {userName}</h1>
                 <p className="text-[13px] text-white/50 mt-0.5">
                   {upcomingCount > 0
                     ? `You have ${upcomingCount} upcoming session${upcomingCount !== 1 ? "s" : ""}`
                     : "Your mentoring dashboard — manage sessions, earnings & more"}
                 </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Link href="/alumni/profile">
-                  <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-[12px] h-9 rounded-[10px]">
-                    <Edit3 size={13} className="mr-1.5" /> Profile
-                  </Button>
-                </Link>
-                <SearchTrigger onClick={() => setSearchOpen(true)} />
               </div>
             </div>
           </motion.div>
@@ -349,21 +320,78 @@ function AlumniDashboardContent() {
             </div>
           </motion.div>
 
-          {/* ─── Controls ─── */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-primary">Mentor analytics</h2>
-            <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors">
-                <Filter size={13} /> This year <ChevronDown size={12} />
-              </button>
-              <button type="button" className="rounded-[10px] border border-border/60 bg-[#141416] px-3 h-8 text-[12px] font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
-                <Download size={13} /> Export
-              </button>
+          {/* ─── Upcoming bookings — the thing an alumnus actually needs to act on first ─── */}
+          <motion.div variants={FADE_UP} initial="hidden" animate="show" className="rounded-[14px] bg-[#141416] border border-white/[0.07] p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[15px] font-semibold text-primary">Upcoming bookings</h2>
+              <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] font-medium flex items-center gap-1 transition-colors">
+                View all <ArrowRight size={11} />
+              </Link>
             </div>
-          </div>
+            {loading ? (
+              <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[48px] rounded-[10px]" />)}</div>
+            ) : bookings.length === 0 ? (
+              <div className="py-8 text-center">
+                <div className="h-12 w-12 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3">
+                  <CalendarDays size={22} className="text-[#E8573A]/30" />
+                </div>
+                <p className="text-[14px] font-semibold text-primary">No bookings yet</p>
+                <p className="text-[12px] text-muted-foreground mt-1">
+                  Students can only book you once you&apos;ve set your availability.
+                </p>
+                <Link href="/alumni/profile/availability" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-coral px-4 py-2 text-[12px] font-semibold text-white hover:bg-coral-light transition-colors">
+                  <Clock size={13} /> Set your availability
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-x-6 gap-y-0.5 sm:grid-cols-2">
+                {bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").slice(0, 6).map((b, i) => {
+                  const statusInfo = formatBadge(b.status);
+                  const isUrgent = b.status === "confirmed" && new Date(b.scheduledStartAt).getTime() - now < 86400000;
+                  return (
+                    <motion.div key={b.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03, duration: 0.25 }}
+                      className="flex items-center justify-between gap-3 py-2.5 border-b border-white/[0.07]"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[11px] font-bold text-white/50">
+                          {(b.student?.studentProfile?.fullName || b.student?.name || "S").charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold text-primary truncate">
+                            {b.student?.studentProfile?.fullName || b.student?.name || "Student"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {new Date(b.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            {" · "}
+                            {new Date(b.scheduledStartAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        {isUrgent ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B0B0B8]/20 bg-[#B0B0B8]/5 text-[#B0B0B8] px-2.5 py-0.5 text-[10px] font-mono tabular-nums">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#B0B0B8] animate-pulse" />
+                            <CountdownTimer target={b.scheduledStartAt} />
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusInfo.classes}`}>
+                            {statusInfo.label}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
 
           {/* ─── Stat Cards ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
+          <h2 className="text-[15px] font-semibold text-primary mb-4">Mentor analytics</h2>
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
             {statCards.map((s) => (
               <motion.div key={s.label} variants={FADE_UP}
                 className={`relative overflow-hidden rounded-[14px] border border-white/[0.07] ${s.bg} p-5 transition-all duration-150`}
@@ -387,21 +415,13 @@ function AlumniDashboardContent() {
             ))}
           </motion.div>
 
-          {/* ─── Charts Row ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-5">
+          {/* ─── Charts + Quick actions ─── */}
+          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4">
 
             {/* Sessions bar chart */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-7 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Sessions per month</h3>
-                <div className="flex items-center gap-2 text-[11px]">
-                  <span className="flex items-center gap-1 text-white/40">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ACCENT }} />
-                    Completed
-                  </span>
-                </div>
-              </div>
-              <div className="h-[200px]">
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
+              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-4">Sessions per month</h3>
+              <div className="h-[180px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sessionsData} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-white/10" strokeWidth={1} vertical={false} />
@@ -410,110 +430,9 @@ function AlumniDashboardContent() {
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "transparent" }} />
                     <Bar dataKey="sessions" name="Sessions" radius={[4, 4, 0, 0]} fill={ACCENT}
                       animationBegin={200} animationDuration={600}
-                      label={({ x, y, width, value }: any) =>
-                        value === peakMonth?.sessions ? (
-                          <text x={x + width / 2} y={y - 8} textAnchor="middle" fill={ACCENT} fontSize={9} fontWeight={600}>
-                            ▲ Peak
-                          </text>
-                        ) : null
-                      }
                     />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Rating donut + overview */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
-              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-3">Rating breakdown</h3>
-              <div className="h-[140px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={ratingData} cx="50%" cy="50%" innerRadius={32} outerRadius={58} paddingAngle={2} dataKey="count"
-                      animationBegin={400} animationDuration={600}
-                    >
-                      {ratingData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color}
-                          className="transition-all duration-150 hover:opacity-80"
-                          style={{ filter: "drop-shadow(0 0 4px rgba(0,0,0,0.05))" }}
-                        />
-                      ))}
-                      <Label value={`${avgRating > 0 ? avgRating.toFixed(1) : "—"}`}
-                        position="center"
-                        fill="#0F0F10"
-                        className="text-[20px] font-bold tabular-nums"
-                        style={{ fontSize: 20, fontWeight: 700, dominantBaseline: "central" }}
-                      />
-                    </Pie>
-                    <Tooltip content={<ChartTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-2 mt-2">
-                {ratingData.map((r) => {
-                  const pct = totalRatings ? Math.round((r.count / totalRatings) * 100) : 0;
-                  return (
-                    <div key={r.rating} className="flex items-center gap-2 text-[10px]">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                      <span className="text-white/40 w-[20px]">{r.rating}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: r.color }} />
-                      </div>
-                      <span className="text-white font-medium tabular-nums w-[24px] text-right">{pct}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* ─── Bottom Row: Quick Actions + Earnings + Bookings ─── */}
-          <motion.div variants={CONTAINER} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-
-            {/* Quick actions */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
-              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-4">Quick actions</h3>
-              <div className="space-y-1.5">
-                <Link href="/alumni/profile/edit" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
-                    <Edit3 size={14} style={{ color: ACCENT }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-primary">Edit profile</p>
-                    <p className="text-[10px] text-muted-foreground">Update bio, photo & details</p>
-                  </div>
-                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                </Link>
-                <Link href="/alumni/profile/availability" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
-                    <CalendarDays size={14} className="text-white/60" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-primary">Manage availability</p>
-                    <p className="text-[10px] text-muted-foreground">Set your weekly schedule</p>
-                  </div>
-                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                </Link>
-                <Link href="/alumni/profile/pricing" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#B0B0B8]/10">
-                    <DollarSign size={14} style={{ color: "#B0B0B8" }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-primary">Pricing & session types</p>
-                    <p className="text-[10px] text-muted-foreground">Configure session offerings</p>
-                  </div>
-                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                </Link>
-                <Link href="/browse" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
-                    <GraduationCap size={14} className="text-white/60" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-primary">View network</p>
-                    <p className="text-[10px] text-muted-foreground">See how students see you</p>
-                  </div>
-                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                </Link>
               </div>
             </motion.div>
 
@@ -523,7 +442,7 @@ function AlumniDashboardContent() {
                 <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Earnings</h3>
                 <span className="text-[13px] font-bold tabular-nums text-primary">₹{(totalEarnings / 100000).toFixed(1)}L</span>
               </div>
-              <div className="h-[170px]">
+              <div className="h-[180px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={earningsData} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-white/10" strokeWidth={1} vertical={false} />
@@ -535,8 +454,8 @@ function AlumniDashboardContent() {
                     />
                     <defs>
                       <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#B0B0B8" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#B0B0B8" stopOpacity={0.3} />
+                        <stop offset="0%" stopColor="#E8573A" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#E8573A" stopOpacity={0.3} />
                       </linearGradient>
                     </defs>
                   </BarChart>
@@ -544,79 +463,45 @@ function AlumniDashboardContent() {
               </div>
             </motion.div>
 
-            {/* Upcoming bookings */}
-            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-5 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em]">Upcoming bookings</h3>
-                <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] font-medium flex items-center gap-1 transition-colors">
-                  View all <ArrowRight size={11} />
+            {/* Quick actions */}
+            <motion.div variants={FADE_UP} className="col-span-12 sm:col-span-3 rounded-[14px] bg-[#141416] border border-white/[0.07] p-5">
+              <h3 className="text-[11px] font-semibold text-white/40 uppercase tracking-[0.06em] mb-4">Quick actions</h3>
+              <div className="space-y-1.5">
+                <Link href="/alumni/profile/availability" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#E8573A]/10">
+                    <Clock size={14} style={{ color: ACCENT }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-primary">Manage availability</p>
+                    <p className="text-[10px] text-muted-foreground">Set your weekly schedule</p>
+                  </div>
+                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                </Link>
+                <Link href="/alumni/profile/pricing" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
+                    <DollarSign size={14} className="text-white/60" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-primary">Pricing & session types</p>
+                    <p className="text-[10px] text-muted-foreground">Configure session offerings</p>
+                  </div>
+                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                </Link>
+                <Link href="/alumni/profile" className="flex items-center gap-3 p-2.5 -mx-2.5 rounded-[10px] hover:bg-white/[0.03] transition-colors group">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white/[0.06]">
+                    <Users size={14} className="text-white/60" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-primary">View your profile</p>
+                    <p className="text-[10px] text-muted-foreground">See how students see you</p>
+                  </div>
+                  <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                 </Link>
               </div>
-              {loading ? (
-                <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[48px] rounded-[10px]" />)}</div>
-              ) : bookings.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="h-12 w-12 rounded-full bg-[#E8573A]/6 flex items-center justify-center mx-auto mb-3">
-                    <CalendarDays size={22} className="text-[#E8573A]/30" />
-                  </div>
-                  <p className="text-[14px] font-semibold text-primary">No bookings yet</p>
-                  <p className="text-[12px] text-muted-foreground mt-1">When students book sessions, they will appear here.</p>
-                </div>
-              ) : (
-                <div className="space-y-0.5">
-                  {bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").slice(0, 4).map((b, i) => {
-                    const statusInfo = formatBadge(b.status);
-                    const isUrgent = b.status === "confirmed" && new Date(b.scheduledStartAt).getTime() - now < 86400000;
-                    return (
-                      <motion.div key={b.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03, duration: 0.25 }}
-                        className="flex items-center justify-between gap-3 py-2.5 border-b border-white/[0.07] last:border-b-0"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img src={`https://picsum.photos/seed/${b.studentId}/40/40`}
-                            alt="Student" className="h-8 w-8 rounded-full object-cover" />
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-semibold text-primary truncate">
-                              {b.student?.studentProfile?.fullName || b.student?.name || "Student"}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {new Date(b.scheduledStartAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              {" · "}
-                              {new Date(b.scheduledStartAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="shrink-0 flex items-center gap-2">
-                          {isUrgent ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B0B0B8]/20 bg-[#B0B0B8]/5 text-[#B0B0B8] px-2.5 py-0.5 text-[10px] font-mono tabular-nums">
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#B0B0B8] animate-pulse" />
-                              <CountdownTimer target={b.scheduledStartAt} />
-                            </span>
-                          ) : (
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusInfo.classes}`}>
-                              {statusInfo.label}
-                            </span>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                  {bookings.filter((b) => new Date(b.scheduledStartAt).getTime() >= now && b.status !== "cancelled").length > 4 && (
-                    <div className="pt-2 mt-1 border-t border-white/[0.07]">
-                      <Link href="/bookings" className="text-[11px] text-[#E8573A] hover:text-[#D44A2E] transition-colors flex items-center gap-1 justify-center font-medium py-1">
-                        View all bookings <ArrowRight size={11} />
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
             </motion.div>
           </motion.div>
         </div>
       </div>
-      <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} value="" onChange={(v) => { router.push(`/browse${v ? `?search=${encodeURIComponent(v)}` : ""}`); }} />
     </div>
   );
 }

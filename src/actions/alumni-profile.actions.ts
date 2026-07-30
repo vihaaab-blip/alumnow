@@ -7,6 +7,18 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { ApiResponse } from "@/types";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function restHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
 // See admin.actions.ts revalidateAlumniSurfaces for why this is needed: the
 // public network/alumni-detail pages read through a short-TTL Next data
 // cache, so self-service edits here need the same explicit invalidation as
@@ -16,10 +28,18 @@ function revalidateAlumniSurfaces(id: string) {
   revalidatePath(`/alumni/${id}`);
 }
 
+// REST, not Prisma - the pooled connection has repeatedly failed silently
+// in production (see alumni.actions.ts listAlumni history), which is what
+// caused "page not loaded" failures on these self-service pages.
 async function guard() {
   const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
-  const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/AlumniProfile?select=id&userId=eq.${encodeURIComponent(session.user.id)}&limit=1`,
+    { headers: restHeaders(), cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`Failed to load profile: ${res.status} ${await res.text()}`);
+  const profile = ((await res.json()) as { id: string }[])[0];
   if (!profile) redirect("/apply");
   return { session, profile };
 }
@@ -82,19 +102,27 @@ export async function updateSessionPricing(input: unknown): Promise<ApiResponse<
     const parsed = sessionTypeSchema.safeParse(input);
     if (!parsed.success) return { success: false, errors: { form: parsed.error.issues.map(i => i.message) } };
 
-    const existing = await prisma.sessionTypeOffering.findFirst({
-      where: { alumniId: profile.id, type: parsed.data.type },
-    });
+    const existingRes = await fetch(
+      `${supabaseUrl}/rest/v1/SessionTypeOffering?select=id&alumniId=eq.${encodeURIComponent(profile.id)}&type=eq.${encodeURIComponent(parsed.data.type)}&limit=1`,
+      { headers: restHeaders(), cache: "no-store" }
+    );
+    if (!existingRes.ok) throw new Error(`Failed to look up session type: ${existingRes.status} ${await existingRes.text()}`);
+    const existing = ((await existingRes.json()) as { id: string }[])[0];
 
     if (existing) {
-      await prisma.sessionTypeOffering.update({
-        where: { id: existing.id },
-        data: { pricePaise: parsed.data.pricePaise, maxParticipants: parsed.data.maxParticipants },
+      const res = await fetch(`${supabaseUrl}/rest/v1/SessionTypeOffering?id=eq.${encodeURIComponent(existing.id)}`, {
+        method: "PATCH",
+        headers: restHeaders({ Prefer: "return=minimal" }),
+        body: JSON.stringify({ pricePaise: parsed.data.pricePaise, maxParticipants: parsed.data.maxParticipants }),
       });
+      if (!res.ok) throw new Error(`Failed to update session type: ${res.status} ${await res.text()}`);
     } else {
-      await prisma.sessionTypeOffering.create({
-        data: { alumniId: profile.id, ...parsed.data, descriptionOneLiner: null },
+      const res = await fetch(`${supabaseUrl}/rest/v1/SessionTypeOffering`, {
+        method: "POST",
+        headers: restHeaders({ Prefer: "return=minimal" }),
+        body: JSON.stringify({ id: crypto.randomUUID(), alumniId: profile.id, ...parsed.data, descriptionOneLiner: null }),
       });
+      if (!res.ok) throw new Error(`Failed to create session type: ${res.status} ${await res.text()}`);
     }
 
     revalidateAlumniSurfaces(profile.id);
@@ -108,11 +136,14 @@ export async function updateSessionPricing(input: unknown): Promise<ApiResponse<
 export async function deleteSessionType(offeringId: string): Promise<ApiResponse<Record<string, never>>> {
   try {
     const { profile } = await guard();
-    const offering = await prisma.sessionTypeOffering.findFirst({
-      where: { id: offeringId, alumniId: profile.id },
+    const params = new URLSearchParams({ id: `eq.${offeringId}`, alumniId: `eq.${profile.id}` });
+    const res = await fetch(`${supabaseUrl}/rest/v1/SessionTypeOffering?${params.toString()}`, {
+      method: "DELETE",
+      headers: restHeaders({ Prefer: "return=representation" }),
     });
-    if (!offering) return { success: false, error: "Session type not found." };
-    await prisma.sessionTypeOffering.delete({ where: { id: offeringId } });
+    if (!res.ok) throw new Error(`Failed to delete session type: ${res.status} ${await res.text()}`);
+    const deleted = (await res.json()) as any[];
+    if (deleted.length === 0) return { success: false, error: "Session type not found." };
     revalidateAlumniSurfaces(profile.id);
     return { success: true };
   } catch (error) {

@@ -1,32 +1,41 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerSession } from "@/lib/supabase-auth";
-import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, Edit3 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function restHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
 
 export default async function AlumniProfileViewPage() {
   const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
 
-  const profile = await prisma.alumniProfile.findUnique({
-    where: { userId: session.user.id },
-    include: { sessionTypes: true, availability: true },
-  });
+  // Read via Supabase REST rather than the pooled Prisma connection - see
+  // alumni.actions.ts listAlumni for why: Prisma reads have repeatedly
+  // failed silently in this production environment, which is exactly what
+  // produced the "page not loaded" failures reported on this route.
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/AlumniProfile?select=*&userId=eq.${encodeURIComponent(session.user.id)}&limit=1`,
+    { headers: restHeaders(), cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`Failed to load profile: ${res.status} ${await res.text()}`);
+  const rows = (await res.json()) as any[];
+  const profile = rows[0];
   if (!profile) redirect("/apply");
-
-  const languages = (() => {
-    try {
-      const parsed = JSON.parse(profile.languages);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  })();
 
   return (
     <div className="min-h-screen bg-[#0D0D0D]">
@@ -45,12 +54,9 @@ export default async function AlumniProfileViewPage() {
               <h1 className="mt-2 font-heading text-3xl font-bold tracking-[-0.03em] text-white sm:text-4xl">{profile.fullName}</h1>
               <p className="mt-1.5 text-sm text-white/45">{profile.universityName} · {profile.course}</p>
             </div>
-            <Link href="/alumni/profile/edit">
-              <Button variant="accent">
-                <Edit3 className="mr-2 h-4 w-4" />
-                Edit profile
-              </Button>
-            </Link>
+            <p className="text-xs text-white/30 max-w-[220px] text-right">
+              To correct any of your details, contact an admin.
+            </p>
           </div>
         </div>
 
@@ -108,23 +114,9 @@ export default async function AlumniProfileViewPage() {
               </div>
             </Card>
 
-            {languages.length > 0 && (
-              <Card className="p-6">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">Languages</h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {languages.map((lang: string) => (
-                    <Badge key={lang} className="bg-white/5 text-white/70 border-white/10">{lang}</Badge>
-                  ))}
-                </div>
-              </Card>
-            )}
-
             <Card className="p-6">
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">Quick links</h2>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link href="/alumni/profile/edit">
-                  <Button variant="outline" size="sm"><Edit3 className="mr-1.5 h-3.5 w-3.5" />Edit profile</Button>
-                </Link>
                 <Link href="/alumni/profile/availability">
                   <Button variant="outline" size="sm">Manage availability</Button>
                 </Link>

@@ -6,10 +6,31 @@ import { redirect } from "next/navigation";
 import { availabilitySchema } from "@/lib/validation";
 import type { ApiResponse } from "@/types";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function restHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
+// REST, not Prisma, for the same reliability reason documented across this
+// codebase (see alumni.actions.ts): the pooled connection has repeatedly
+// failed silently in production, which is what caused availability saves
+// to appear broken.
 async function guard() {
   const session = await getServerSession();
   if (!session?.user?.id) redirect("/login");
-  const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/AlumniProfile?select=id&userId=eq.${encodeURIComponent(session.user.id)}&limit=1`,
+    { headers: restHeaders(), cache: "no-store" }
+  );
+  if (!res.ok) throw new Error(`Failed to load profile: ${res.status} ${await res.text()}`);
+  const profile = ((await res.json()) as { id: string }[])[0];
   if (!profile) redirect("/apply");
   return { session, profile };
 }
@@ -55,20 +76,25 @@ export async function setRecurringSlots(slots: { dayOfWeek: number; startTime: s
       if (!parsed.success) return { success: false, error: `Invalid slot: ${parsed.error.issues[0]?.message}` };
     }
 
-    await prisma.alumniAvailability.deleteMany({
-      where: { alumniId: profile.id, isRecurring: true },
-    });
+    const delRes = await fetch(
+      `${supabaseUrl}/rest/v1/AlumniAvailability?alumniId=eq.${encodeURIComponent(profile.id)}&isRecurring=eq.true`,
+      { method: "DELETE", headers: restHeaders({ Prefer: "return=minimal" }) }
+    );
+    if (!delRes.ok) throw new Error(`Failed to clear recurring slots: ${delRes.status} ${await delRes.text()}`);
 
     if (slots.length > 0) {
-      await prisma.alumniAvailability.createMany({
-        data: slots.map((s) => ({
+      const insertRes = await fetch(`${supabaseUrl}/rest/v1/AlumniAvailability`, {
+        method: "POST",
+        headers: restHeaders({ Prefer: "return=minimal" }),
+        body: JSON.stringify(slots.map((s) => ({
           alumniId: profile.id,
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
           endTime: s.endTime,
           isRecurring: true,
-        })),
+        }))),
       });
+      if (!insertRes.ok) throw new Error(`Failed to save recurring slots: ${insertRes.status} ${await insertRes.text()}`);
     }
 
     return { success: true };
@@ -88,15 +114,18 @@ export async function setOneOffSlots(slots: { specificDate: string; startTime: s
     }
 
     if (slots.length > 0) {
-      await prisma.alumniAvailability.createMany({
-        data: slots.map((s) => ({
+      const insertRes = await fetch(`${supabaseUrl}/rest/v1/AlumniAvailability`, {
+        method: "POST",
+        headers: restHeaders({ Prefer: "return=minimal" }),
+        body: JSON.stringify(slots.map((s) => ({
           alumniId: profile.id,
-          specificDate: new Date(s.specificDate),
+          specificDate: s.specificDate,
           startTime: s.startTime,
           endTime: s.endTime,
           isRecurring: false,
-        })),
+        }))),
       });
+      if (!insertRes.ok) throw new Error(`Failed to save one-off slots: ${insertRes.status} ${await insertRes.text()}`);
     }
 
     return { success: true };
@@ -109,11 +138,14 @@ export async function setOneOffSlots(slots: { specificDate: string; startTime: s
 export async function deleteSlot(slotId: string): Promise<ApiResponse<Record<string, never>>> {
   try {
     const { profile } = await guard();
-    const slot = await prisma.alumniAvailability.findFirst({
-      where: { id: slotId, alumniId: profile.id },
+    const params = new URLSearchParams({ id: `eq.${slotId}`, alumniId: `eq.${profile.id}` });
+    const res = await fetch(`${supabaseUrl}/rest/v1/AlumniAvailability?${params.toString()}`, {
+      method: "DELETE",
+      headers: restHeaders({ Prefer: "return=representation" }),
     });
-    if (!slot) return { success: false, error: "Slot not found." };
-    await prisma.alumniAvailability.delete({ where: { id: slotId } });
+    if (!res.ok) throw new Error(`Failed to delete slot: ${res.status} ${await res.text()}`);
+    const deleted = (await res.json()) as any[];
+    if (deleted.length === 0) return { success: false, error: "Slot not found." };
     return { success: true };
   } catch (error) {
     console.error("deleteSlot error:", error);
