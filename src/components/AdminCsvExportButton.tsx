@@ -9,6 +9,16 @@ export function AdminCsvExportButton() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    const url = new URL(window.location.origin + "/admin/bookings");
+    if (startDate) url.searchParams.set("start", startDate);
+    if (endDate) url.searchParams.set("end", endDate);
+    navigator.clipboard.writeText(url.toString());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleExport = async (filtered: boolean) => {
     setLoading(true);
@@ -40,6 +50,7 @@ export function AdminCsvExportButton() {
       </label>
       <Button variant="outline" size="sm" disabled={loading} onClick={() => handleExport(true)}>Export filtered</Button>
       <Button variant="outline" size="sm" disabled={loading} onClick={() => handleExport(false)}>Export all</Button>
+      <Button variant="ghost" size="sm" onClick={handleCopyLink}>{copied ? "Copied" : "Copy filtered link"}</Button>
     </div>
   );
 }

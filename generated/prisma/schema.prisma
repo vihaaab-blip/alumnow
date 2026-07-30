@@ -52,6 +52,7 @@ model AlumniProfile {
   avgResponseTimeHours  Float?
   isVerifiedJbcnAlumnus Boolean               @default(false)
   isActive              Boolean               @default(true)
+  version               Int                   @default(0)
   ratingAvg             Float?
   ratingCount           Int                   @default(0)
   createdAt             DateTime              @default(now())
@@ -185,4 +186,16 @@ model NotificationLog {
   sentAt    DateTime @default(now())
   status    String   @default("logged")
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String // e.g. "alumni.approve", "alumni.delete", "review.reject"
+  targetId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([targetId])
+  @@index([createdAt])
 }

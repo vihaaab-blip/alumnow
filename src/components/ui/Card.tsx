@@ -1,13 +1,15 @@
+import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 
-export function Card({
+export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & { interactive?: boolean }>(function Card({
   className,
   interactive = false,
   ...props
-}: HTMLAttributes<HTMLDivElement> & { interactive?: boolean }) {
+}, ref) {
   return (
     <div
+      ref={ref}
       className={cn(
         "rounded-[14px] border border-white/[0.07] bg-[#141416] shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
         interactive &&
@@ -17,4 +19,4 @@ export function Card({
       {...props}
     />
   );
-}
+});

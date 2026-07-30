@@ -13,7 +13,7 @@ export default async function AdminReviewsPage() {
       <h1 className="mt-2 text-[32px] font-bold tracking-tight text-white">Review moderation</h1>
       <p className="mt-2 text-sm text-white/40">Approve useful, safe feedback before it appears publicly.</p>
       <div className="mt-8">
-        <AdminReviewModeration reviews={reviews as any} />
+        <AdminReviewModeration reviews={reviews} />
       </div>
     </div>
   );

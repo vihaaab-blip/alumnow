@@ -1,13 +1,16 @@
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
+import { AdminSparkline } from "./AdminSparkline";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 
-export function AdminStatCard({ label, value, detail, change, changeType, href, icon: Icon, featured = false }: {
+export function AdminStatCard({ label, value, detail, change, changeType, trend, href, icon: Icon, featured = false }: {
   label: string
   value: string | number
   detail?: string
   change?: string
   changeType?: "increase" | "decrease"
+  trend?: number[]
   href?: string
   icon?: LucideIcon
   tint?: "coral" | "blue" | "green" | "amber"
@@ -33,7 +36,7 @@ export function AdminStatCard({ label, value, detail, change, changeType, href, 
 
       <div className="relative mt-4 flex items-baseline gap-2.5">
         <p className={`font-semibold leading-none tracking-[-0.02em] text-white tabular-nums ${featured ? "text-[40px]" : "text-[26px]"}`}>
-          {value}
+          {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
         </p>
         {change && (
           <span className={`flex items-center gap-0.5 text-[11px] font-semibold ${changeType === "increase" ? "text-[#4ADE80]" : "text-[#F87171]"}`}>
@@ -41,6 +44,7 @@ export function AdminStatCard({ label, value, detail, change, changeType, href, 
             {change}
           </span>
         )}
+        {trend && <AdminSparkline data={trend} positive={changeType === "increase"} />}
       </div>
       {detail && <p className="relative mt-2 text-xs text-white/35">{detail}</p>}
     </Card>

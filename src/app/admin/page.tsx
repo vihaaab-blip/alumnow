@@ -1,15 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
+import { GlowCard } from "@/components/ui/GlowCard";
 import { AdminStatCard } from "@/components/AdminStatCard";
+import { StaggerReveal } from "@/components/StaggerReveal";
 import Link from "next/link";
 import { Users, CalendarDays, IndianRupee, Star, ArrowUpRight, GraduationCap, ClipboardList } from "lucide-react";
+import { getDailyRevenueSeries, getRevenueSeries } from "@/actions/admin.actions";
+import { AdminPeriodSelector } from "@/components/AdminPeriodSelector";
+import { AdminRevenueChart } from "@/components/AdminRevenueChart";
+import { AdminActivityFeed } from "@/components/AdminActivityFeed";
 
 export const dynamic = "force-dynamic";
 
 const monthAgo = () => new Date(new Date().setMonth(new Date().getMonth() - 1));
 
 async function getStats() {
-  const [totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue] = await Promise.all([
+  const [totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue, dailyRevenue, revenueSeries] = await Promise.all([
     prisma.alumniProfile.count().catch(() => 0),
     prisma.booking.count().catch(() => 0),
     prisma.payment.aggregate({ _sum: { amountPaise: true }, where: { status: "verified" } }).catch(() => ({ _sum: { amountPaise: null } })),
@@ -19,8 +25,10 @@ async function getStats() {
     prisma.alumniProfile.count({ where: { createdAt: { lt: monthAgo() } } }).catch(() => 0),
     prisma.booking.count({ where: { createdAt: { lt: monthAgo() } } }).catch(() => 0),
     prisma.payment.aggregate({ _sum: { amountPaise: true }, where: { status: "verified", createdAt: { lt: monthAgo() } } }).catch(() => ({ _sum: { amountPaise: null } })),
+    getDailyRevenueSeries().catch(() => []),
+    getRevenueSeries(30).catch(() => []),
   ]);
-  return { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue };
+  return { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue, dailyRevenue, revenueSeries };
 }
 
 export default async function AdminDashboardPage() {
@@ -42,9 +50,10 @@ export default async function AdminDashboardPage() {
     );
   }
 
-  const { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue } = statsData;
+  const { totalAlumni, totalBookings, totalRevenueResult, pendingReviews, pendingApplications, totalStudents, prevMonthAlumni, prevMonthBookings, prevMonthRevenue, dailyRevenue, revenueSeries } = statsData;
   const totalRevenuePaise = totalRevenueResult._sum.amountPaise ?? 0;
   const prevRevenuePaise = prevMonthRevenue._sum.amountPaise ?? 0;
+  const revenueTrend = dailyRevenue.map((d) => d.totalPaise);
 
   const calcChange = (current: number, prev: number) => {
     if (prev === 0) return current > 0 ? "+100%" : null;
@@ -100,23 +109,37 @@ export default async function AdminDashboardPage() {
           carries a distinct featured cell instead of sitting flush with three
           identical boxes. */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.1fr_1fr_1fr]">
-        <AdminStatCard
+        <StaggerReveal>
+          <GlowCard>
+          <AdminStatCard
           featured
           label="Total Revenue"
           value={`₹${(totalRevenuePaise / 100).toLocaleString("en-IN")}`}
           icon={IndianRupee}
           change={revenueChange ?? undefined}
           changeType={totalRevenuePaise >= prevRevenuePaise ? "increase" : "decrease"}
+          trend={revenueTrend}
           detail="Verified payments, all time"
         />
+          </GlowCard>
         <div className="grid grid-cols-1 gap-4 sm:col-span-1 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-3">
           <AdminStatCard label="Alumni" value={totalAlumni} icon={GraduationCap} change={alumniChange ?? undefined} changeType={totalAlumni >= prevMonthAlumni ? "increase" : "decrease"} href="/admin/alumni" />
           <AdminStatCard label="Bookings" value={totalBookings} icon={CalendarDays} change={bookingsChange ?? undefined} changeType={totalBookings >= prevMonthBookings ? "increase" : "decrease"} href="/admin/bookings" />
           <AdminStatCard label="Pending reviews" value={pendingReviews} icon={Star} href="/admin/reviews" />
         </div>
+        </StaggerReveal>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      {/* Revenue chart */}
+      <Card className="mt-8 p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[13px] font-semibold text-white">Revenue</h2>
+          <AdminPeriodSelector />
+        </div>
+        <AdminRevenueChart data={revenueSeries} />
+      </Card>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <Card className="p-6">
           <h2 className="text-[13px] font-semibold text-white">Platform snapshot</h2>
           <p className="mt-1 text-xs text-white/40">Registered accounts across the network.</p>
@@ -135,6 +158,8 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
         </Card>
+
+        <AdminActivityFeed />
 
         <Card className="p-6">
           <h2 className="text-[13px] font-semibold text-white">Quick actions</h2>

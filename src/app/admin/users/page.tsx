@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { getAllUsers } from "@/actions/admin.actions";
+import { getAllUsers, updateUserRole } from "@/actions/admin.actions";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { toast } from "@/components/ui/Toaster";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserActivitySummary } from "@/components/UserActivitySummary";
 import type { AdminUserItem, PaginatedResult } from "@/types";
 
 export default function AdminUsersPage() {
@@ -15,12 +16,26 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{ id: string; newRole: string } | null>(null);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+
+  const handleRoleChange = async () => {
+    if (!roleChangeTarget) return;
+    try {
+      await updateUserRole(roleChangeTarget.id, roleChangeTarget.newRole);
+      setData((prev) => prev ? { ...prev, items: prev.items.map((u) => u.id === roleChangeTarget.id ? { ...u, role: roleChangeTarget.newRole } as any : u) } : prev);
+      toast({ title: "Role updated", variant: "success" });
+    } catch {
+      toast({ title: "Failed to update role", variant: "error" });
+    }
+    setRoleChangeTarget(null);
+  };
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
       const result = await getAllUsers({ page: p, pageSize: 20, search: debouncedSearch, role: roleFilter });
-      setData(result as any);
+      setData(result);
     } catch {
       toast({ title: "Failed to load users", variant: "error" });
     } finally {
@@ -83,24 +98,45 @@ export default function AdminUsersPage() {
           </thead>
           <tbody>
             {data?.items.map((user) => (
-              <tr key={user.id} className="border-b border-white/[0.06] last:border-0 transition-colors hover:bg-white/[0.02]">
+              <><tr onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)} className="border-b border-white/[0.06] last:border-0 transition-colors hover:bg-white/[0.02] cursor-pointer">
                 <td className="p-4 font-semibold text-white">
                   {user.studentProfile?.fullName ?? user.alumniProfile?.fullName ?? "—"}
                 </td>
                 <td className="text-white/50">{user.email}</td>
                 <td>
-                  <Badge tone={user.role === "admin" ? "accent" : user.role === "alumnus" ? "success" : "neutral"}>
-                    {user.role}
-                  </Badge>
+                  <select
+                    value={user.role}
+                    onChange={(e) => setRoleChangeTarget({ id: user.id, newRole: e.target.value })}
+                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-white"
+                  >
+                    <option value="student">Student</option>
+                    <option value="alumnus">Alumni</option>
+                    <option value="admin">Admin</option>
+                  </select>
                 </td>
                 <td className="text-white/50">{new Date(user.createdAt).toLocaleDateString()}</td>
               </tr>
-            ))}
-            {(!data || data.items.length === 0) && (
-              <tr>
-                <td colSpan={4} className="p-8 text-center text-sm text-white/40">
-                  {loading ? "Loading..." : "No users found."}
+            {expandedUser === user.id && (
+              <tr className="border-b border-white/[0.06] bg-white/[0.015]">
+                <td colSpan={4} className="p-4">
+                  <UserActivitySummary userId={user.id} />
                 </td>
+              </tr>
+            )}
+              </>
+            ))}
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="border-b border-white/[0.06]">
+                  <td className="p-4"><div className="h-4 w-28 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-4 w-40 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-5 w-20 rounded-full bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-4 w-24 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                </tr>
+              ))
+            ) : (!data || data.items.length === 0) && (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-sm text-white/40">No users found.</td>
               </tr>
             )}
           </tbody>
@@ -120,6 +156,15 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!roleChangeTarget}
+        onOpenChange={() => setRoleChangeTarget(null)}
+        onConfirm={handleRoleChange}
+        title="Change user role?"
+        description={`This grants ${roleChangeTarget?.newRole} permissions immediately.`}
+        confirmLabel="Confirm"
+        variant="destructive"
+      />
     </div>
   );
 }

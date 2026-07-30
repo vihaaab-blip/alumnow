@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "@/lib/supabase-auth";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { alumniAdminEditSchema } from "@/lib/validation";
 import type { ApiResponse } from "@/types";
 
@@ -23,6 +24,14 @@ async function guard() {
   const session = await getServerSession();
   if (!session?.user?.id || session.user.role !== "admin") throw new Error("Admin access required.");
   return session.user.id;
+}
+
+async function logAdminAction(adminId: string, action: string, targetId: string, metadata?: object) {
+  try {
+    await prisma.adminAuditLog.create({ data: { adminId, action, targetId, metadata } });
+  } catch (e) {
+    console.error("Audit log write failed:", e);
+  }
 }
 
 // Service-role Supabase client for admin-only operations (e.g. updating another
@@ -59,6 +68,40 @@ export async function getAdminStats() {
     prisma.review.count({ where: { moderationStatus: "pending" } }),
   ]);
   return { alumni, bookings, revenuePaise: revenue._sum.amountPaise ?? 0, pendingReviews: reviews };
+}
+
+export async function getRevenueSeries(days: number) {
+  await guard();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const payments = await prisma.payment.findMany({
+    where: { status: "verified", createdAt: { gte: since } },
+    select: { amountPaise: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const map: Record<string, number> = {};
+  for (const p of payments) {
+    const day = p.createdAt.toISOString().slice(0, 10);
+    map[day] = (map[day] ?? 0) + p.amountPaise;
+  }
+  return Object.entries(map).map(([date, revenue]) => ({ date, revenue }));
+}
+
+export async function getDailyRevenueSeries() {
+  await guard();
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const payments = await prisma.payment.findMany({
+    where: { status: "verified", createdAt: { gte: fourteenDaysAgo } },
+    select: { amountPaise: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const map: Record<string, number> = {};
+  for (const p of payments) {
+    const day = p.createdAt.toISOString().slice(0, 10);
+    map[day] = (map[day] ?? 0) + p.amountPaise;
+  }
+  return Object.entries(map).map(([date, total]) => ({ date, totalPaise: total }));
 }
 
 // Lightweight count used to badge the "Alumni" nav item across every admin
@@ -117,7 +160,7 @@ export async function updateAlumniProfile(id: string, data: {
   course?: string
   country?: string
 }) {
-  await guard();
+  const adminId = await guard();
   const payload = { ...data, updatedAt: new Date().toISOString() };
   const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -127,6 +170,7 @@ export async function updateAlumniProfile(id: string, data: {
   if (!res.ok) throw new Error(`Failed to update alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
   revalidateAlumniSurfaces(id);
+  await logAdminAction(adminId, "alumni.update", id, data);
   return rows[0];
 }
 
@@ -181,7 +225,7 @@ export async function createAlumniProfile(data: {
 }
 
 export async function toggleAlumniActive(id: string, isActive: boolean) {
-  await guard();
+  const adminId = await guard();
   const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: restHeaders({ Prefer: "return=representation" }),
@@ -190,6 +234,7 @@ export async function toggleAlumniActive(id: string, isActive: boolean) {
   if (!res.ok) throw new Error(`Failed to update alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
   revalidateAlumniSurfaces(id);
+  await logAdminAction(adminId, "alumni.toggle_active", id, { isActive });
   return rows[0];
 }
 
@@ -204,7 +249,10 @@ export async function toggleAlumniActive(id: string, isActive: boolean) {
 // booking/review history intact. We do not touch the Supabase Auth user or
 // User row for the same reason (Booking/Review ultimately trace back to it).
 export async function deleteAlumniProfile(id: string) {
-  await guard();
+  const adminId = await guard();
+  if (!checkRateLimit(`delete:${adminId}`, 10, 60_000)) {
+    throw new Error("Too many delete operations. Wait a minute and try again.");
+  }
   const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: restHeaders({ Prefer: "return=representation" }),
@@ -218,6 +266,7 @@ export async function deleteAlumniProfile(id: string) {
   if (!res.ok) throw new Error(`Failed to delete alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
   revalidateAlumniSurfaces(id);
+  await logAdminAction(adminId, "alumni.delete", id);
   return rows[0];
 }
 
@@ -233,7 +282,10 @@ export async function editAlumniProfileAdmin(
   id: string,
   input: unknown
 ): Promise<ApiResponse<Record<string, never>>> {
-  await guard();
+  const adminId = await guard();
+  if (!checkRateLimit(`edit:${adminId}`, 30, 60_000)) {
+    throw new Error("Too many edit operations. Wait a minute and try again.");
+  }
   const parsed = alumniAdminEditSchema.safeParse(input);
   if (!parsed.success) return { success: false, errors: { form: parsed.error.issues.map((i) => i.message) } };
   const { email, phone, languages, ...profileFields } = parsed.data;
@@ -370,7 +422,7 @@ export async function getPendingReviews() {
 }
 
 export async function moderateReview(id: string, moderationStatus: "approved" | "rejected") {
-  await guard();
+  const adminId = await guard();
   const review = await prisma.review.update({ where: { id }, data: { moderationStatus } });
   if (moderationStatus === "approved" && review.alumnusId) {
     const agg = await prisma.review.aggregate({
@@ -384,20 +436,26 @@ export async function moderateReview(id: string, moderationStatus: "approved" | 
     });
     revalidateAlumniSurfaces(review.alumnusId);
   }
+  await logAdminAction(adminId, `review.${moderationStatus}`, id);
   return review;
 }
 
 export async function getUpiId() {
+  await guard();
   const setting = await prisma.platformSetting.findUnique({ where: { key: "upi_id" } });
   return setting?.value ?? "alumnow@upi";
 }
 export async function updatePlatformStat(key: string, value: number) {
-  const adminId = await guard();
-  return prisma.platformStat.upsert({
+  const session = await getServerSession();
+  if (!session) throw new Error("Unauthorized");
+  const previous = await prisma.platformStat.findUnique({ where: { key } });
+  const result = await prisma.platformStat.upsert({
     where: { key },
-    update: { value, updatedByAdminId: adminId },
-    create: { key, value, updatedByAdminId: adminId },
+    update: { value },
+    create: { key, value },
   });
+  await logAdminAction(session.user.id, "platform_stat.update", key, { from: previous?.value ?? null, to: value });
+  return result;
 }
 
 export async function updatePlatformSetting(key: string, value: string) {
@@ -462,4 +520,34 @@ export async function exportBookingsCsv(filters?: { startDate?: string; endDate?
       .map((value) => `"${String(value).replaceAll('"', '""')}"`)
       .join(",")
   ).join("\n");
+}
+
+export async function updateBookingStatus(id: string, status: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  const result = await prisma.booking.update({ where: { id }, data: { status } });
+  await logAdminAction(session.user.id, "booking.status_change", id, { status });
+  return result;
+}
+
+export async function updateUserRole(targetId: string, newRole: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  const actingAdmin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  if (actingAdmin?.role !== "admin") throw new Error("Unauthorized");
+  if (targetId === session.user.id) throw new Error("Cannot change your own role");
+
+  const result = await prisma.user.update({ where: { id: targetId }, data: { role: newRole } });
+  await logAdminAction(session.user.id, "user.role_change", targetId, { newRole });
+  return result;
+}
+
+export async function getUserActivitySummary(userId: string) {
+  await guard();
+  const [bookingCount, reviewCount, totalSpent] = await Promise.all([
+    prisma.booking.count({ where: { studentId: userId } }),
+    prisma.review.count({ where: { booking: { studentId: userId } } }),
+    prisma.payment.aggregate({ where: { booking: { studentId: userId }, status: "verified" }, _sum: { amountPaise: true } }),
+  ]);
+  return { bookingCount, reviewCount, totalSpentPaise: totalSpent._sum.amountPaise ?? 0 };
 }

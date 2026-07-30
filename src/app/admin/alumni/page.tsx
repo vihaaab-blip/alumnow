@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { AnimatedListItem } from "@/components/AnimatedListItem";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "@/components/ui/Toaster";
 import { DialogRoot, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/Dialog";
 import { resizeImageToDataUrl } from "@/lib/image";
 import type { PaginatedResult } from "@/types";
+import { GraduationCap } from "lucide-react";
+import { AdminEmptyState } from "@/components/AdminEmptyState";
 
 type AdminAlumniExtended = {
   id: string;
@@ -75,8 +78,19 @@ function EditAlumniDialog({ item, onClose, onSaved }: {
 
   useEffect(() => { setForm(item ? toEditForm(item) : null); }, [item]);
 
+  const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
   const handlePhoto = async (file: File | null) => {
     if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({ title: "Unsupported file type", description: "Use JPEG, PNG, or WebP.", variant: "error" });
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      toast({ title: "File too large", description: "Max size is 4MB.", variant: "error" });
+      return;
+    }
     try {
       const dataUrl = await resizeImageToDataUrl(file);
       setForm((f) => (f ? { ...f, profilePhotoUrl: dataUrl } : f));
@@ -214,12 +228,14 @@ function EditAlumniDialog({ item, onClose, onSaved }: {
   );
 }
 
-function PendingReviewCard({ item, onApprove, onReject, onViewDetails, onEdit }: {
+function PendingReviewCard({ item, onApprove, onReject, onViewDetails, onEdit, selected, onToggle }: {
   item: AdminAlumniExtended;
   onApprove: () => void;
   onReject: () => void;
   onViewDetails: () => void;
   onEdit: () => void;
+  selected?: boolean;
+  onToggle?: () => void;
 }) {
   return (
     <div
@@ -231,6 +247,15 @@ function PendingReviewCard({ item, onApprove, onReject, onViewDetails, onEdit }:
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4 min-w-0">
+          {onToggle && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggle}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-white/5 text-coral focus:ring-coral/30"
+            />
+          )}
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
             {item.profilePhotoUrl ? (
               <img src={item.profilePhotoUrl} alt="" className="h-full w-full object-cover" />
@@ -277,12 +302,46 @@ export default function AdminAlumniPage() {
   const [loading, setLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<AdminAlumniExtended | null>(null);
   const [editItem, setEditItem] = useState<AdminAlumniExtended | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkApprove = async () => {
+    const ids = [...selected];
+    try {
+      await Promise.all(ids.map((id) => updateAlumniProfile(id, { verificationStatus: "approved", isVerifiedJbcnAlumnus: true })));
+      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => ids.includes(row.id) ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as AdminAlumniExtended : row) } : prev);
+      toast({ title: `${ids.length} alumni approved`, variant: "success" });
+      setSelected(new Set());
+    } catch (e) {
+      toast({ title: "Bulk approval failed", variant: "error" });
+    }
+  };
+
+  const handleBulkReject = async () => {
+    const ids = [...selected];
+    try {
+      await Promise.all(ids.map((id) => updateAlumniProfile(id, { verificationStatus: "rejected", isVerifiedJbcnAlumnus: false })));
+      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => ids.includes(row.id) ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as AdminAlumniExtended : row) } : prev);
+      toast({ title: `${ids.length} alumni rejected`, variant: "success" });
+      setSelected(new Set());
+    } catch (e) {
+      toast({ title: "Bulk rejection failed", variant: "error" });
+    }
+  };
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
       const result = await getAllAlumni({ page: p, pageSize: 20, search: debouncedSearch, status: statusFilter });
-      setData(result as any);
+      setData(result as PaginatedResult<AdminAlumniExtended>);
     } catch (e) {
       console.error("Failed to load alumni:", e);
       toast({ title: "Failed to load alumni", description: e instanceof Error ? e.message : "Unknown error", variant: "error" });
@@ -294,6 +353,20 @@ export default function AdminAlumniPage() {
   useEffect(() => { load(page); }, [page, load]);
   useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
   useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!detailItem) return;
+      if (e.key === "a" && detailItem.verificationStatus === "pending") {
+        setConfirmAction({ id: detailItem.id, action: "approve" });
+      }
+      if (e.key === "r" && detailItem.verificationStatus === "pending") {
+        setConfirmAction({ id: detailItem.id, action: "reject" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [detailItem]);
 
   const handleCreate = async () => {
     try {
@@ -308,8 +381,8 @@ export default function AdminAlumniPage() {
   const handleApprove = async (id: string) => {
     try {
       await updateAlumniProfile(id, { verificationStatus: "approved", isVerifiedJbcnAlumnus: true });
-      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as any : row) } : prev);
-      toast({ title: "Alumni approved — now visible on network", variant: "success" });
+      setRemovingIds((prev) => new Set(prev).add(id));
+      toast({ title: "Alumni approved", description: "Undo available for 6 seconds.", variant: "success" });
       setDetailItem(null);
     } catch (e) {
       console.error("Approve error:", e);
@@ -318,11 +391,20 @@ export default function AdminAlumniPage() {
     setConfirmAction(null);
   };
 
+  const handleRemoved = useCallback((id: string) => {
+    setData((prev) => prev ? { ...prev, items: prev.items.filter((row) => row.id !== id), total: prev.total - 1 } : prev);
+    setRemovingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
   const handleReject = async (id: string) => {
     try {
       await updateAlumniProfile(id, { verificationStatus: "rejected", isVerifiedJbcnAlumnus: false });
-      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as any : row) } : prev);
-      toast({ title: "Alumni rejected — will not appear on network", variant: "success" });
+      setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as AdminAlumniExtended : row) } : prev);
+      toast({ title: "Alumni rejected", description: "Undo available for 6 seconds.", variant: "success" });
       setDetailItem(null);
     } catch (e) { console.error("Reject error:", e); toast({ title: "Failed to reject", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
@@ -333,7 +415,7 @@ export default function AdminAlumniPage() {
     if (!item) return;
     try {
       await toggleAlumniActive(id, !item.isActive);
-      setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as any : i) } : prev);
+      setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as AdminAlumniExtended : i) } : prev);
       toast({ title: item.isActive ? "Alumni deactivated" : "Alumni activated", variant: "success" });
     } catch (e) { console.error("Toggle active error:", e); toast({ title: "Failed to update", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
@@ -419,6 +501,15 @@ export default function AdminAlumniPage() {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div className="sticky top-4 z-10 mt-4 flex items-center gap-3 rounded-[12px] border border-coral/25 bg-[#1A1A1A] px-4 py-3 shadow-lg">
+          <span className="text-sm font-semibold text-white">{selected.size} selected</span>
+          <Button size="sm" onClick={handleBulkApprove} className="bg-green-600 hover:bg-green-700 text-white">Approve all</Button>
+          <Button size="sm" variant="outline" onClick={handleBulkReject} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Reject all</Button>
+          <Button size="sm" variant="outline" onClick={() => setSelected(new Set())}>Clear</Button>
+        </div>
+      )}
+
       {loading && <p className="mt-4 text-sm text-white/40">Loading...</p>}
 
       {/* Pending review cards */}
@@ -426,14 +517,17 @@ export default function AdminAlumniPage() {
         <div className="mt-6 space-y-3">
           <h2 className="text-[11px] font-semibold text-white/35 uppercase tracking-wider">Pending review ({pendingItems.length})</h2>
           {pendingItems.map((item) => (
-            <PendingReviewCard
-              key={item.id}
-              item={item}
-              onApprove={() => setConfirmAction({ id: item.id, action: "approve" })}
-              onReject={() => setConfirmAction({ id: item.id, action: "reject" })}
-              onViewDetails={() => setDetailItem(item)}
-              onEdit={() => setEditItem(item)}
-            />
+            <AnimatedListItem key={item.id} isRemoving={removingIds.has(item.id)} onRemoved={() => handleRemoved(item.id)}>
+              <PendingReviewCard
+                item={item}
+                selected={selected.has(item.id)}
+                onToggle={() => toggleSelect(item.id)}
+                onApprove={() => setConfirmAction({ id: item.id, action: "approve" })}
+                onReject={() => setConfirmAction({ id: item.id, action: "reject" })}
+                onViewDetails={() => setDetailItem(item)}
+                onEdit={() => setEditItem(item)}
+              />
+            </AnimatedListItem>
           ))}
         </div>
       )}
@@ -454,7 +548,7 @@ export default function AdminAlumniPage() {
             </thead>
             <tbody>
               {otherItems.map((item) => (
-                <tr key={item.id} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.02] transition-colors">
+                <tr key={item.id} className="group border-b border-white/[0.06] last:border-0 hover:bg-white/[0.02] transition-colors">
                   <td className="p-4">
                     <p className="font-semibold text-white">{item.fullName}</p>
                     <p className="text-xs text-white/40">{item.user.email}</p>
@@ -469,7 +563,7 @@ export default function AdminAlumniPage() {
                     </Badge>
                   </td>
                   <td>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150">
                       <Button size="sm" variant="outline" onClick={() => setDetailItem(item)}>Details</Button>
                       <Button size="sm" variant="outline" onClick={() => setEditItem(item)}>Edit</Button>
                       {item.verificationStatus === "approved" && (
@@ -493,12 +587,11 @@ export default function AdminAlumniPage() {
 
       {/* Empty state */}
       {!loading && data && data.items.length === 0 && (
-        <div className="mt-12 text-center">
-          <p className="text-lg text-white/30">No alumni found</p>
-          <p className="mt-1 text-sm text-white/20">
-            {statusFilter === "pending" ? "No pending applications to review." : "Try adjusting your filters."}
-          </p>
-        </div>
+        <AdminEmptyState
+          icon={GraduationCap}
+          title={statusFilter === "pending" ? "Queue is clear" : "No alumni found"}
+          description={statusFilter === "pending" ? "All pending applications have been reviewed." : "Try adjusting your filters."}
+        />
       )}
 
       {/* Pagination */}
@@ -608,6 +701,7 @@ export default function AdminAlumniPage() {
                     <Button variant="outline" onClick={() => setConfirmAction({ id: detailItem.id, action: "reject" })} className="border-red-500/30 text-red-400 hover:bg-red-500/10">Deny — Reject Profile</Button>
                   </>
                 )}
+              <p className="text-[11px] text-white/25 mt-2">Press A to approve, R to reject</p>
               </div>
             </div>
           )}

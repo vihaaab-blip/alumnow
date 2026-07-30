@@ -1,22 +1,14 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { getAllBookings } from "@/actions/admin.actions";
+import { getAllBookings, updateBookingStatus } from "@/actions/admin.actions";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { AdminCsvExportButton } from "@/components/AdminCsvExportButton";
 import { toast } from "@/components/ui/Toaster";
 import type { AdminBookingItem, PaginatedResult } from "@/types";
 
-const STATUS_BADGE: Record<string, "neutral" | "accent" | "success" | "danger"> = {
-  pending_payment: "neutral",
-  payment_submitted: "accent",
-  confirmed: "success",
-  completed: "success",
-  cancelled: "danger",
-  no_show: "danger",
-};
+const STATUS_OPTIONS = ["pending_payment", "payment_submitted", "confirmed", "completed", "cancelled", "no_show"];
 
 export default function AdminBookingsPage() {
   const [data, setData] = useState<PaginatedResult<AdminBookingItem> | null>(null);
@@ -25,6 +17,10 @@ export default function AdminBookingsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isStale = (booking: AdminBookingItem) =>
+    booking.status === "payment_submitted" &&
+    Date.now() - new Date((booking as any).updatedAt ?? booking.scheduledStartAt).getTime() > 24 * 60 * 60 * 1000;
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -36,7 +32,7 @@ export default function AdminBookingsPage() {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
       });
-      setData(result as any);
+      setData(result);
     } catch {
       toast({ title: "Failed to load bookings", variant: "error" });
     } finally {
@@ -84,6 +80,7 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
+      <p className="mt-2 text-xs text-white/30">Rows highlighted in amber have pending payment confirmation older than 24 hours.</p>
       <div className="mt-5 overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02]">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-white/35">
@@ -97,7 +94,7 @@ export default function AdminBookingsPage() {
           </thead>
           <tbody>
             {data?.items.map((booking) => (
-              <tr key={booking.id} className="border-b border-white/[0.06] last:border-0 transition-colors hover:bg-white/[0.02]">
+              <tr key={booking.id} className={`border-b border-white/[0.06] last:border-0 transition-colors hover:bg-white/[0.02] ${isStale(booking) ? "bg-amber-500/[0.04]" : ""}`}>
                 <td className="p-4 font-semibold text-white">
                   {booking.alumni.fullName}
                   <p className="text-xs font-normal text-white/40">{booking.sessionType.type}</p>
@@ -106,17 +103,38 @@ export default function AdminBookingsPage() {
                 <td className="text-white/50">{new Date(booking.scheduledStartAt).toLocaleString()}</td>
                 <td className="font-mono text-white/70">₹{((booking.payment?.amountPaise ?? 0) / 100).toLocaleString("en-IN")}</td>
                 <td>
-                  <Badge tone={STATUS_BADGE[booking.status] ?? "neutral"}>
-                    {booking.status.replaceAll("_", " ")}
-                  </Badge>
+                  <select
+                    value={booking.status}
+                    onChange={async (e) => {
+                      const newStatus = e.target.value;
+                      try {
+                        await updateBookingStatus(booking.id, newStatus);
+                        setData((prev) => prev ? { ...prev, items: prev.items.map((b) => b.id === booking.id ? { ...b, status: newStatus } as any : b) } : prev);
+                        toast({ title: "Booking status updated", variant: "success" });
+                      } catch {
+                        toast({ title: "Failed to update booking", variant: "error" });
+                      }
+                    }}
+                    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-white outline-none focus:border-coral/40"
+                  >
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}
+                  </select>
                 </td>
               </tr>
             ))}
-            {(!data || data.items.length === 0) && (
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="border-b border-white/[0.06]">
+                  <td className="p-4"><div className="h-4 w-32 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-4 w-40 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-4 w-28 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-4 w-16 rounded-[6px] bg-white/10 animate-pulse" /></td>
+                  <td><div className="h-5 w-20 rounded-full bg-white/10 animate-pulse" /></td>
+                </tr>
+              ))
+            ) : (!data || data.items.length === 0) && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-sm text-white/40">
-                  {loading ? "Loading..." : "No bookings found."}
-                </td>
+                <td colSpan={5} className="p-8 text-center text-sm text-white/40">No bookings found.</td>
               </tr>
             )}
           </tbody>

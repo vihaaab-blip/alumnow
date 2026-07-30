@@ -50,7 +50,7 @@ function ToastPrimitiveConsumer() {
   return (
     <>
       {items.map((item) => (
-        <Toast key={item.id} className={cn(item.variant === "success" && "border-l-4 border-l-green-500", item.variant === "error" && "border-l-4 border-l-red-500")}>
+        <Toast key={item.id} className={cn("animate-[toast-in_var(--dur-base)_var(--ease-out-expo)_both]", item.variant === "success" && "border-l-4 border-l-green-500", item.variant === "error" && "border-l-4 border-l-red-500")}>
           <div className="flex flex-col gap-1">
             {item.title && <ToastTitle>{item.title}</ToastTitle>}
             {item.description && <ToastDescription>{item.description}</ToastDescription>}

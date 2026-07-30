@@ -24,12 +24,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 7.8.0
- * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
+ * Prisma Client JS version: 7.9.0
+ * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 Prisma.prismaVersion = {
-  client: "7.8.0",
-  engine: "3c6e192761c0362d496ed980de936e2f3cebcd3a"
+  client: "7.9.0",
+  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -157,6 +157,7 @@ exports.Prisma.AlumniProfileScalarFieldEnum = {
   avgResponseTimeHours: 'avgResponseTimeHours',
   isVerifiedJbcnAlumnus: 'isVerifiedJbcnAlumnus',
   isActive: 'isActive',
+  version: 'version',
   ratingAvg: 'ratingAvg',
   ratingCount: 'ratingCount',
   createdAt: 'createdAt',
@@ -262,9 +263,23 @@ exports.Prisma.NotificationLogScalarFieldEnum = {
   status: 'status'
 };
 
+exports.Prisma.AdminAuditLogScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  action: 'action',
+  targetId: 'targetId',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -275,6 +290,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 
@@ -292,7 +313,8 @@ exports.Prisma.ModelName = {
   PlatformStat: 'PlatformStat',
   PlatformSetting: 'PlatformSetting',
   AdminUser: 'AdminUser',
-  NotificationLog: 'NotificationLog'
+  NotificationLog: 'NotificationLog',
+  AdminAuditLog: 'AdminAuditLog'
 };
 
 /**

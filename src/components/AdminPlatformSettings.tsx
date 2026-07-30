@@ -1,7 +1,9 @@
 "use client";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useState, useRef } from "react";
 import { updatePlatformStat, updateUpiSettings, updatePlatformSetting } from "@/actions/admin.actions";
 import { Button } from "@/components/ui/Button";
+import { AsyncButton } from "@/components/ui/AsyncButton";
 import { Input } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toaster";
 
@@ -15,18 +17,21 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
   const [upi, setUpi] = useState(initialUpi);
   const [stats, setStats] = useState<Record<string, number>>(initialStats);
   const [qrCode, setQrCode] = useState<string | null>(initialQrCode);
-  const [saving, setSaving] = useState<string | null>(null);
+  const [pendingUpi, setPendingUpi] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const UPI_REGEX = /^[\w.+-]{2,256}@[a-zA-Z]{2,64}$/;
+
   const handleSaveUpi = async () => {
-    setSaving("upi");
+    if (!UPI_REGEX.test(upi)) {
+      toast({ title: "Invalid UPI ID format", description: "Expected format: name@bank", variant: "error" });
+      return;
+    }
     try {
       await updateUpiSettings(upi);
       toast({ title: "UPI settings saved", variant: "success" });
     } catch {
       toast({ title: "Failed to save UPI settings", variant: "error" });
-    } finally {
-      setSaving(null);
     }
   };
 
@@ -42,9 +47,19 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
     }
   };
 
+  const MAX_QR_BYTES = 2 * 1024 * 1024;
+
   const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast({ title: "Unsupported file type", variant: "error" });
+      return;
+    }
+    if (file.size > MAX_QR_BYTES) {
+      toast({ title: "File too large", description: "Max size is 2MB.", variant: "error" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
@@ -77,9 +92,9 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
           UPI ID
           <Input value={upi} onChange={(e) => setUpi(e.target.value)} className="mt-2" />
         </label>
-        <Button className="mt-4" disabled={saving === "upi"} onClick={handleSaveUpi}>
-          {saving === "upi" ? "Saving..." : "Save UPI settings"}
-        </Button>
+        <AsyncButton className="mt-4" onAction={async () => setPendingUpi(upi)}>
+          Save UPI settings
+        </AsyncButton>
       </div>
 
       <div className="rounded-2xl border border-border bg-[#1A1A1A] p-6">
@@ -108,6 +123,15 @@ export function AdminPlatformSettings({ initialUpi, initialStats, initialQrCode 
           </label>
         ))}
       </div>
+      <ConfirmDialog
+        open={!!pendingUpi}
+        onOpenChange={() => setPendingUpi(null)}
+        onConfirm={handleSaveUpi}
+        title="Update UPI ID?"
+        description={`This changes the payment ID shown to every student at checkout, to "${pendingUpi}". Double-check it before confirming.`}
+        confirmLabel="Confirm and save"
+        variant="destructive"
+      />
     </div>
   );
 }
