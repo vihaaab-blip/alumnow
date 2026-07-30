@@ -23,6 +23,7 @@ type AdminAlumniExtended = {
   bio: string | null;
   languages: string;
   linkedinUrl: string | null;
+  qsRankingTier: string | null;
   verificationStatus: string;
   isVerifiedJbcnAlumnus: boolean;
   isActive: boolean;
@@ -44,7 +45,7 @@ type EditForm = {
   graduationYearJbcn: string;
   currentStudyLevel: string;
   bio: string;
-  linkedinUrl: string;
+  qsRankingTier: string;
   profilePhotoUrl: string;
 };
 
@@ -59,7 +60,7 @@ function toEditForm(item: AdminAlumniExtended): EditForm {
     graduationYearJbcn: String(item.graduationYearJbcn),
     currentStudyLevel: item.currentStudyLevel,
     bio: item.bio ?? "",
-    linkedinUrl: item.linkedinUrl ?? "",
+    qsRankingTier: item.qsRankingTier ?? "",
     profilePhotoUrl: item.profilePhotoUrl ?? "",
   };
 }
@@ -98,7 +99,7 @@ function EditAlumniDialog({ item, onClose, onSaved }: {
         graduationYearJbcn: Number(form.graduationYearJbcn),
         currentStudyLevel: form.currentStudyLevel,
         bio: form.bio,
-        linkedinUrl: form.linkedinUrl,
+        qsRankingTier: form.qsRankingTier || undefined,
         profilePhotoUrl: form.profilePhotoUrl || undefined,
       });
       if (!result.success) {
@@ -113,7 +114,7 @@ function EditAlumniDialog({ item, onClose, onSaved }: {
         graduationYearJbcn: Number(form.graduationYearJbcn),
         currentStudyLevel: form.currentStudyLevel,
         bio: form.bio,
-        linkedinUrl: form.linkedinUrl,
+        qsRankingTier: form.qsRankingTier || null,
         profilePhotoUrl: form.profilePhotoUrl || null,
         user: { email: form.email, phone: form.phone || null },
       });
@@ -185,8 +186,13 @@ function EditAlumniDialog({ item, onClose, onSaved }: {
                   <option value="postgraduate">Postgraduate</option>
                 </select>
               </label>
-              <label className="block text-sm font-semibold col-span-2">LinkedIn URL
-                <Input value={form.linkedinUrl} onChange={(e) => setForm((f) => f && { ...f, linkedinUrl: e.target.value })} className="mt-1" />
+              <label className="block text-sm font-semibold col-span-2">QS Ranking
+                <Input
+                  value={form.qsRankingTier}
+                  onChange={(e) => setForm((f) => f && { ...f, qsRankingTier: e.target.value })}
+                  placeholder="e.g. 179, 1201-1400, or Unranked"
+                  className="mt-1"
+                />
               </label>
               <label className="block text-sm font-semibold col-span-2">Bio
                 <textarea

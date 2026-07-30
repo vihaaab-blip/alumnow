@@ -100,6 +100,7 @@ export const alumniAdminEditSchema = z.object({
   languages: z.array(z.string()).max(10).optional(),
   linkedinUrl: z.string().url().optional().or(z.literal("")),
   profilePhotoUrl: z.string().optional(),
+  qsRankingTier: z.string().max(50).optional().or(z.literal("")),
 });
 
 export const studentProfileSchema = z.object({

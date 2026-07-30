@@ -208,8 +208,8 @@ export function FilterPanel({
         <FilterSection title="Study Level" icon={<GraduationCap size={14} />}>
           <PillGroup
             options={[
-              { value: "undergraduate" as const, label: "Undergrad" },
-              { value: "postgraduate" as const, label: "Postgrad" },
+              { value: "undergraduate" as const, label: "Undergraduate" },
+              { value: "postgraduate" as const, label: "Postgraduate" },
             ]}
             selected={draft.studyLevel ?? ""}
             onChange={(v) => updateDraft({ studyLevel: v })}

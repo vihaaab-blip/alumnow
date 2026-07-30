@@ -14,15 +14,6 @@ export default async function AlumniProfileEditPage() {
   const profile = await prisma.alumniProfile.findUnique({ where: { userId: session.user.id } });
   if (!profile) redirect("/apply");
 
-  const languages = (() => {
-    try {
-      const parsed = JSON.parse(profile.languages);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  })();
-
   return (
     <div className="min-h-screen bg-[#0D0D0D]">
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -50,7 +41,6 @@ export default async function AlumniProfileEditPage() {
             graduationYearJbcn: profile.graduationYearJbcn,
             currentStudyLevel: profile.currentStudyLevel,
             bio: profile.bio,
-            languages,
             linkedinUrl: profile.linkedinUrl,
             profilePhotoUrl: profile.profilePhotoUrl,
           }}

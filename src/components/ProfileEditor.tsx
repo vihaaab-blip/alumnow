@@ -19,7 +19,6 @@ interface ProfileEditorProps {
     graduationYearJbcn: number;
     currentStudyLevel: string;
     bio: string | null;
-    languages: string[];
     linkedinUrl: string | null;
     profilePhotoUrl: string | null;
   };
@@ -37,7 +36,6 @@ export function ProfileEditor({ initial }: ProfileEditorProps) {
     graduationYearJbcn: initial.graduationYearJbcn,
     currentStudyLevel: initial.currentStudyLevel,
     bio: initial.bio ?? "",
-    languages: initial.languages.join(", "),
     linkedinUrl: initial.linkedinUrl ?? "",
   });
   const [photoUrl, setPhotoUrl] = useState(initial.profilePhotoUrl);
@@ -47,7 +45,6 @@ export function ProfileEditor({ initial }: ProfileEditorProps) {
     setLoading(true);
     const result = await updateProfile({
       ...form,
-      languages: form.languages.split(",").map((s) => s.trim()).filter(Boolean),
       graduationYearJbcn: Number(form.graduationYearJbcn),
     });
     setLoading(false);
@@ -159,10 +156,6 @@ export function ProfileEditor({ initial }: ProfileEditorProps) {
               maxLength={750}
               className="h-24 w-full resize-none rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Languages (comma-separated)</label>
-            <Input value={form.languages} onChange={(e) => setForm({ ...form, languages: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">LinkedIn URL</label>

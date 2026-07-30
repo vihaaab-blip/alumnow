@@ -13,7 +13,7 @@ interface DetailPanelProps {
 export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
-  const [tab, setTab] = useState<"overview" | "reviews" | "details">("overview");
+  const [tab, setTab] = useState<"overview" | "reviews">("overview");
   const [showFullBio, setShowFullBio] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -125,7 +125,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
 
           {/* Tab bar */}
           <div className="flex border-b border-white/5 px-5">
-            {(["overview", "reviews", "details"] as const).map((key) => (
+            {(["overview", "reviews"] as const).map((key) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
@@ -213,11 +213,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                   {[
                     { label: "Country", value: alumni.country },
                     { label: "Course", value: alumni.course },
-                    { label: "QS Tier", value: alumni.qsRankingTier },
-                    {
-                      label: "Languages",
-                      value: alumni.languages?.join(", ") || "—",
-                    },
+                    { label: "QS Ranking", value: alumni.qsRankingTier },
                   ].map(({ label, value }) => (
                     <div
                       key={label}
@@ -311,28 +307,6 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
                 </div>
               );
             })()}
-
-            {tab === "details" && (
-              <div className="space-y-4">
-                <p className="text-[13px] leading-[22px] text-white/45">
-                  {alumni.bio ?? "No additional details available."}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {alumni.languages?.map((lang) => (
-                    <span
-                      key={lang}
-                      className="rounded-full px-3 py-1 text-[12px] font-medium text-white/50"
-                      style={{
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

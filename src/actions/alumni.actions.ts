@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import { alumniApplicationSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
@@ -274,11 +273,12 @@ export async function saveAlumni(alumniId: string) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Please sign in." };
-    await prisma.savedAlumni.upsert({
-      where: { studentId_alumniId: { studentId: session.user.id, alumniId } },
-      update: {},
-      create: { studentId: session.user.id, alumniId },
+    const res = await fetch(`${supabaseUrl}/rest/v1/SavedAlumni`, {
+      method: "POST",
+      headers: restHeaders({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+      body: JSON.stringify({ studentId: session.user.id, alumniId }),
     });
+    if (!res.ok) throw new Error(`SavedAlumni insert failed: ${res.status} ${await res.text()}`);
     return { success: true };
   } catch (error) {
     console.error("saveAlumni error:", error);
@@ -290,7 +290,15 @@ export async function unsaveAlumni(alumniId: string) {
   try {
     const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Please sign in." };
-    await prisma.savedAlumni.deleteMany({ where: { studentId: session.user.id, alumniId } });
+    const params = new URLSearchParams({
+      studentId: `eq.${session.user.id}`,
+      alumniId: `eq.${alumniId}`,
+    });
+    const res = await fetch(`${supabaseUrl}/rest/v1/SavedAlumni?${params.toString()}`, {
+      method: "DELETE",
+      headers: restHeaders({ Prefer: "return=minimal" }),
+    });
+    if (!res.ok) throw new Error(`SavedAlumni delete failed: ${res.status} ${await res.text()}`);
     return { success: true };
   } catch (error) {
     console.error("unsaveAlumni error:", error);
