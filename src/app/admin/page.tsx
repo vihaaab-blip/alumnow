@@ -119,7 +119,7 @@ export default async function AdminDashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="p-6">
           <h2 className="text-[13px] font-semibold text-white">Platform snapshot</h2>
-          <p className="mt-1 text-xs text-white/40">Registered accounts across the marketplace.</p>
+          <p className="mt-1 text-xs text-white/40">Registered accounts across the network.</p>
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.02] p-4">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">Students</p>

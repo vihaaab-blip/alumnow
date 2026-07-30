@@ -509,7 +509,7 @@ function AlumniDashboardContent() {
                     <GraduationCap size={14} className="text-white/60" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-primary">View marketplace</p>
+                    <p className="text-[13px] font-semibold text-primary">View network</p>
                     <p className="text-[10px] text-muted-foreground">See how students see you</p>
                   </div>
                   <ArrowRight size={13} className="text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />

@@ -470,7 +470,7 @@ export default function AccountPage() {
                     <BookOpen size={14} className="text-white/40" />
                   </div>
                   <div>
-                    <p className="text-[13px] font-medium text-white">Browse marketplace</p>
+                    <p className="text-[13px] font-medium text-white">Browse network</p>
                     <p className="text-[11px] text-white/30">Find alumni mentors</p>
                   </div>
                 </div>

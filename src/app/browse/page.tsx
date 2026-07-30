@@ -142,7 +142,7 @@ function BrowsePageContent() {
     setLoading(true);
     setError("");
     // Called directly as a server action rather than via a /api/alumni fetch
-    // hop - one fewer network round trip per marketplace load, and it lets
+    // hop - one fewer network round trip per network load, and it lets
     // the request ride through middleware's auth-header fast path (the /api
     // prefix is excluded from middleware, so a fetch to /api/alumni would
     // always fall back to a full Supabase Auth re-check).
@@ -343,7 +343,7 @@ function BrowsePageContent() {
         {/* Header row */}
         <div className="flex items-center justify-between mb-5">
           <ScrollReveal y={16} duration={0.6} start="top 95%">
-            <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-white leading-none">Marketplace</h1>
+            <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-white leading-none">Network</h1>
             <p className="text-[13px] text-white/35 mt-1">
               {totalItems > 0 ? (
                 <><span className="text-white/65 font-medium tabular-nums">{totalItems}</span> verified alumni</>)
@@ -485,7 +485,7 @@ function BrowsePageContent() {
                   <Heart size={36} className="mx-auto text-[var(--color-text-tertiary)]" />
                   <h2 className="mt-4 text-lg font-semibold text-white">No saved alumni yet</h2>
                   <p className="mt-2 text-sm text-white/30">Click the heart icon to save alumni you&apos;re interested in.</p>
-                  <Button className="mt-5" variant="outline" onClick={() => router.push("/browse")}>Browse marketplace</Button>
+                  <Button className="mt-5" variant="outline" onClick={() => router.push("/browse")}>Browse network</Button>
                 </div>
               ) : (
                 <AlumniGrid items={savedItems} hasMore={false} loadMore={() => {}} loading={false} onSelect={handleSelect} />

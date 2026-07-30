@@ -84,7 +84,7 @@ export function AlumniDetailPanel({ alumni, onClose }: DetailPanelProps) {
               <img
                 src={src}
                 alt={alumni.fullName}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
                 onError={() => setImgError(true)}
               />
             )}

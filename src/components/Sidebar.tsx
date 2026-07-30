@@ -15,7 +15,7 @@ import { Logo } from "@/components/Logo";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/browse", icon: Search, label: "Marketplace" },
+  { href: "/browse", icon: Search, label: "Network" },
   { href: "/bookings", icon: CalendarDays, label: "Bookings" },
   { href: "/browse?view=saved", icon: Star, label: "Saved" },
   { href: "/alumni/profile", icon: Users, label: "Profile" },

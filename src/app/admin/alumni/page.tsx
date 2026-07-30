@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { getAllAlumni, updateAlumniProfile, createAlumniProfile, toggleAlumniActive } from "@/actions/admin.actions";
+import { getAllAlumni, updateAlumniProfile, createAlumniProfile, toggleAlumniActive, deleteAlumniProfile } from "@/actions/admin.actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -88,7 +88,7 @@ export default function AdminAlumniPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" | "approve" | "reject" } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ id: string; action: "toggle" | "approve" | "reject" | "delete" } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", bio: "", pricePaise: "" });
   const [loading, setLoading] = useState(false);
@@ -125,7 +125,7 @@ export default function AdminAlumniPage() {
     try {
       await updateAlumniProfile(id, { verificationStatus: "approved", isVerifiedJbcnAlumnus: true });
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "approved", isVerifiedJbcnAlumnus: true } as any : row) } : prev);
-      toast({ title: "Alumni approved — now visible on marketplace", variant: "success" });
+      toast({ title: "Alumni approved — now visible on network", variant: "success" });
       setDetailItem(null);
     } catch (e) {
       console.error("Approve error:", e);
@@ -138,7 +138,7 @@ export default function AdminAlumniPage() {
     try {
       await updateAlumniProfile(id, { verificationStatus: "rejected", isVerifiedJbcnAlumnus: false });
       setData((prev) => prev ? { ...prev, items: prev.items.map((row) => row.id === id ? { ...row, verificationStatus: "rejected", isVerifiedJbcnAlumnus: false } as any : row) } : prev);
-      toast({ title: "Alumni rejected — will not appear on marketplace", variant: "success" });
+      toast({ title: "Alumni rejected — will not appear on network", variant: "success" });
       setDetailItem(null);
     } catch (e) { console.error("Reject error:", e); toast({ title: "Failed to reject", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
@@ -152,6 +152,16 @@ export default function AdminAlumniPage() {
       setData((prev) => prev ? { ...prev, items: prev.items.map((i) => i.id === id ? { ...i, isActive: !i.isActive } as any : i) } : prev);
       toast({ title: item.isActive ? "Alumni deactivated" : "Alumni activated", variant: "success" });
     } catch (e) { console.error("Toggle active error:", e); toast({ title: "Failed to update", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
+    setConfirmAction(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAlumniProfile(id);
+      setData((prev) => prev ? { ...prev, items: prev.items.filter((row) => row.id !== id), total: prev.total - 1 } : prev);
+      toast({ title: "Alumni deleted", description: "They no longer appear anywhere on the platform.", variant: "success" });
+      setDetailItem(null);
+    } catch (e) { console.error("Delete error:", e); toast({ title: "Failed to delete", description: e instanceof Error ? e.message : "Unknown error", variant: "error" }); }
     setConfirmAction(null);
   };
 
@@ -274,6 +284,11 @@ export default function AdminAlumniPage() {
                       {item.verificationStatus === "approved" && (
                         <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "toggle" })}>
                           {item.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                      )}
+                      {statusFilter === "all" && (
+                        <Button size="sm" variant="outline" onClick={() => setConfirmAction({ id: item.id, action: "delete" })} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                          Delete
                         </Button>
                       )}
                     </div>
@@ -406,9 +421,10 @@ export default function AdminAlumniPage() {
       </DialogRoot>
 
       {/* Confirmations */}
-      <ConfirmDialog open={confirmAction?.action === "approve"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleApprove(confirmAction.id)} title="Approve this alumni?" description="They will appear on the public marketplace and students can book sessions with them." confirmLabel="Approve" />
-      <ConfirmDialog open={confirmAction?.action === "reject"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleReject(confirmAction.id)} title="Reject this alumni?" description="They will not appear on the marketplace. This action can be reversed later." confirmLabel="Reject" variant="destructive" />
+      <ConfirmDialog open={confirmAction?.action === "approve"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleApprove(confirmAction.id)} title="Approve this alumni?" description="They will appear on the public network and students can book sessions with them." confirmLabel="Approve" />
+      <ConfirmDialog open={confirmAction?.action === "reject"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleReject(confirmAction.id)} title="Reject this alumni?" description="They will not appear on the network. This action can be reversed later." confirmLabel="Reject" variant="destructive" />
       <ConfirmDialog open={confirmAction?.action === "toggle"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleToggleActive(confirmAction.id)} title="Toggle alumni status" description="Are you sure you want to change this alumni's active status?" confirmLabel="Confirm" variant="destructive" />
+      <ConfirmDialog open={confirmAction?.action === "delete"} onOpenChange={() => setConfirmAction(null)} onConfirm={() => confirmAction && handleDelete(confirmAction.id)} title="Delete this alumni permanently?" description="This removes them from the network everywhere — including past booking history views. This cannot be undone from the admin UI." confirmLabel="Delete" variant="destructive" />
     </div>
   );
 }

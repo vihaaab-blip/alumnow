@@ -12,7 +12,7 @@ const ALUMNI_PENDING_ALLOWED = new Set(["/alumni/application-under-review", "/lo
 // session once. getServerSession() reads these instead of re-verifying the
 // session against Supabase Auth on every server action/route handler call -
 // that redundant re-verification (one full network round trip per call) was
-// the single biggest contributor to marketplace load latency, since a single
+// the single biggest contributor to network load latency, since a single
 // page view fires several server actions in parallel, each previously paying
 // its own auth round trip. Any of these headers arriving on the incoming
 // request are stripped first so a client can never spoof them.

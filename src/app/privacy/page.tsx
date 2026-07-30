@@ -59,7 +59,7 @@ export default function PrivacyPage() {
               <h2 className="text-lg font-semibold text-white mb-3">4. Data Sharing</h2>
               <p>
                 Your profile information is visible to other users of the platform as part of the
-                marketplace experience. We share data with payment processors solely to complete
+                network experience. We share data with payment processors solely to complete
                 transactions. We may disclose information if required by law.
               </p>
             </section>

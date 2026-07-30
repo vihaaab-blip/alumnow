@@ -101,7 +101,7 @@ const pgInList = (values: string[]) =>
 // Reads go straight against the Supabase REST API rather than through the pooled
 // Prisma connection: that pool has proven unreliable in production (see prisma.ts
 // history), and listAlumni previously swallowed those failures into an empty list,
-// which is why approved alumni silently failed to show up on the marketplace.
+// which is why approved alumni silently failed to show up on the network.
 export async function listAlumni(filters: AlumniListFilters = {}) {
   try {
     const page = Math.max(1, filters.page ?? 1);
@@ -223,7 +223,7 @@ export async function getAlumniById(id: string) {
 }
 
 // Distinct university/country/course values across approved+active alumni —
-// this is what backs the marketplace filter dropdowns. It needs no separate
+// this is what backs the network filter dropdowns. It needs no separate
 // "options" table or sync step: as soon as an admin approves a new alumnus,
 // their university/course/country become selectable here automatically
 // (deduped for free by the DISTINCT-style Set), and once nobody approved has

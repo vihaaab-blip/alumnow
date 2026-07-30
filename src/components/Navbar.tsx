@@ -30,7 +30,7 @@ export function Navbar() {
   }, []);
 
   const links = [
-    { href: "/browse" as const, label: "Marketplace" },
+    { href: "/browse" as const, label: "Network" },
     { href: "/dashboard" as const, label: "Dashboard" },
     { href: "/about" as const, label: "About" },
   ];

@@ -30,7 +30,7 @@ export default function AlumniApplicationUnderReviewPage() {
           <p className="mt-3 text-sm leading-6 text-white/55">
             {rejected
               ? "Your alumni mentor application has been reviewed. Please contact the team if you think this needs another look."
-              : "Your alumni mentor account has been created, but it is not active yet. An admin needs to review the full application and approve it before you can use the alumni dashboard or appear on the marketplace."}
+              : "Your alumni mentor account has been created, but it is not active yet. An admin needs to review the full application and approve it before you can use the alumni dashboard or appear on the network."}
           </p>
 
           <div className="mt-8 space-y-3">

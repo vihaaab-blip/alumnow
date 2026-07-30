@@ -6,7 +6,7 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 
 /**
  * Routes that scroll as one plain document (marketing/content pages) get GSAP
- * ScrollSmoother's inertia-smoothed scrolling. App-shell routes (marketplace,
+ * ScrollSmoother's inertia-smoothed scrolling. App-shell routes (network,
  * dashboard, admin, account, auth forms) intentionally build their own
  * fixed-viewport layouts with internal scroll containers — hijacking the
  * document scroll there would fight those layouts, so they're left on native

@@ -36,7 +36,7 @@ function restHeaders(extra?: HeadersInit): HeadersInit {
 
 // Account reads/writes go straight against the Supabase REST API rather than
 // through the pooled Prisma connection - that pool has proven unreliable in
-// production (see prisma.ts history and the marketplace fixes), and unlike
+// production (see prisma.ts history and the network fixes), and unlike
 // listAlumni this file had no try/catch-triggered fallback UI, so a hung
 // Prisma call here just left the account page spinning forever for every
 // role (admin, alumni, student all hit the same getAccountData call).

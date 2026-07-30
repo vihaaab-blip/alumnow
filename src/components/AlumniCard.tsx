@@ -58,7 +58,7 @@ export function AlumniCard({
             <img
               src={src}
               alt={alumni.fullName}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover object-top"
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}
@@ -124,7 +124,7 @@ export function AlumniCard({
             <img
               src={src}
               alt={alumni.fullName}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.05]"
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
               onError={() => setImgError(true)}

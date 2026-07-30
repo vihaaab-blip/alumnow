@@ -24,7 +24,7 @@ export function DockNav() {
 
   const isAdmin = (session?.user as any)?.role === "admin";
   const links = [
-    { href: "/browse", label: "Marketplace" },
+    { href: "/browse", label: "Network" },
     { href: isAdmin ? "/admin" : "/dashboard", label: "Dashboard" },
   ];
 

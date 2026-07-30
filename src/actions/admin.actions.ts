@@ -49,6 +49,10 @@ export async function getAllAlumni(opts?: {
   });
   if (opts?.status && opts.status.toLowerCase() !== "all") {
     params.set("verificationStatus", `eq.${opts.status.toLowerCase()}`);
+  } else {
+    // "all" still excludes soft-deleted alumni — deleted profiles should
+    // never resurface anywhere in the admin UI, including this tab.
+    params.set("verificationStatus", "neq.deleted");
   }
   if (opts?.search?.trim()) {
     const term = opts.search.trim().replaceAll("%", "\\%");
@@ -145,6 +149,33 @@ export async function toggleAlumniActive(id: string, isActive: boolean) {
     body: JSON.stringify({ isActive, updatedAt: new Date().toISOString() }),
   });
   if (!res.ok) throw new Error(`Failed to update alumni: ${res.status} ${await res.text()}`);
+  const rows = await res.json();
+  return rows[0];
+}
+
+// Soft-deletes an alumni profile. We deliberately avoid a hard delete here:
+// Booking.alumniId and Review.alumnusId reference AlumniProfile.id without
+// ON DELETE CASCADE, so a real row delete would either violate those FK
+// constraints (if the alumnus ever had bookings/reviews) or silently orphan
+// booking/review history (if it succeeded via a cascading migration we don't
+// have). Marking the profile "deleted" hides it everywhere — the public
+// network already only queries verificationStatus="approved", and
+// getAllAlumni above excludes "deleted" from the "all" tab — while keeping
+// booking/review history intact. We do not touch the Supabase Auth user or
+// User row for the same reason (Booking/Review ultimately trace back to it).
+export async function deleteAlumniProfile(id: string) {
+  await guard();
+  const res = await fetch(`${supabaseUrl}/rest/v1/AlumniProfile?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: restHeaders({ Prefer: "return=representation" }),
+    body: JSON.stringify({
+      verificationStatus: "deleted",
+      isVerifiedJbcnAlumnus: false,
+      isActive: false,
+      updatedAt: new Date().toISOString(),
+    }),
+  });
+  if (!res.ok) throw new Error(`Failed to delete alumni: ${res.status} ${await res.text()}`);
   const rows = await res.json();
   return rows[0];
 }

@@ -14,7 +14,7 @@ const sections = [
     label: "General",
     items: [
       { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-      { href: "/browse", icon: Search, label: "Marketplace" },
+      { href: "/browse", icon: Search, label: "Network" },
       { href: "/bookings", icon: BookOpen, label: "My Bookings" },
       { href: "/browse?tab=saved", icon: Star, label: "Saved" },
     ],
