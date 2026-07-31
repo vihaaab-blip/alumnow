@@ -39,7 +39,7 @@ export default async function AlumniProfileViewPage() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D]">
-      <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mx-auto max-w-5xl px-6 pt-28 pb-12">
         <Link href="/alumni/dashboard" className="inline-flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-white">
           <ArrowLeft size={16} />
           Back to dashboard

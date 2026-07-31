@@ -87,6 +87,7 @@ export async function setRecurringSlots(slots: { dayOfWeek: number; startTime: s
         method: "POST",
         headers: restHeaders({ Prefer: "return=minimal" }),
         body: JSON.stringify(slots.map((s) => ({
+          id: crypto.randomUUID(),
           alumniId: profile.id,
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
@@ -118,6 +119,7 @@ export async function setOneOffSlots(slots: { specificDate: string; startTime: s
         method: "POST",
         headers: restHeaders({ Prefer: "return=minimal" }),
         body: JSON.stringify(slots.map((s) => ({
+          id: crypto.randomUUID(),
           alumniId: profile.id,
           specificDate: s.specificDate,
           startTime: s.startTime,

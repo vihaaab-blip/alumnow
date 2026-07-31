@@ -7,7 +7,7 @@ import {
   Video, Users, Clock, Check, Loader2, ShieldCheck,
   Award,
 } from "lucide-react";
-import { createBookingDraft } from "@/actions/booking.actions";
+import { createBookingDraft, getAlumniBookedRanges } from "@/actions/booking.actions";
 import { getAlumniById } from "@/actions/alumni.actions";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getDurationMinutes } from "@/lib/utils";
@@ -696,6 +696,7 @@ function BookSessionContent() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [bookedRanges, setBookedRanges] = useState<{ scheduledStartAt: string; scheduledEndAt: string }[]>([]);
 
   useEffect(() => {
     if (!alumniId) { setLoading(false); return; }
@@ -703,6 +704,10 @@ function BookSessionContent() {
       .then((d) => d ? setAlumni(d as AlumniData) : setError("Alumni not found."))
       .catch(() => setError("Failed to load."))
       .finally(() => setLoading(false));
+    // Refetched each time this page mounts so a slot another student just
+    // took disappears here without a hard reload - createBookingDraft still
+    // re-checks server-side at submit time, this is just for what's shown.
+    getAlumniBookedRanges(alumniId).then(setBookedRanges).catch(() => setBookedRanges([]));
   }, [alumniId]);
 
   // Derive which days-of-week have slots
@@ -712,18 +717,28 @@ function BookSessionContent() {
     return s;
   }, [alumni]);
 
-  // Derive slot list for selected date
+  // Derive slot list for selected date, with already-booked times removed
   const slotsForDate = useMemo(() => {
     if (!selectedDate || !alumni) return [];
     const jsDay = new Date(selectedDate + "T12:00").getDay();
+    const isBooked = (startTime: string, endTime: string) => {
+      const slotStart = new Date(`${selectedDate}T${startTime}`).getTime();
+      const slotEnd = new Date(`${selectedDate}T${endTime}`).getTime();
+      return bookedRanges.some((b) => {
+        const bStart = new Date(b.scheduledStartAt).getTime();
+        const bEnd = new Date(b.scheduledEndAt).getTime();
+        return slotStart < bEnd && slotEnd > bStart;
+      });
+    };
     return (alumni.availability ?? [])
       .filter((a) => a.dayOfWeek === jsDay)
+      .filter((a) => !isBooked(a.startTime, a.endTime))
       .map((a) => ({
         start: a.startTime.slice(0, 5),
         end: a.endTime.slice(0, 5),
       }))
       .sort((a, b) => a.start.localeCompare(b.start));
-  }, [selectedDate, alumni]);
+  }, [selectedDate, alumni, bookedRanges]);
 
   const duration = selectedOffering ? getDurationMinutes(selectedOffering.type) : 30;
 

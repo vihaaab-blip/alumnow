@@ -4,11 +4,48 @@ import { prisma } from "@/lib/prisma";
 import { bookingDraftSchema } from "@/lib/validation";
 import { sendEmail, emailTemplates } from "@/lib/email";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+function restHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
 async function studentId() {
   const session = await getServerSession();
   if (!session?.user?.id || session.user.role !== "student")
     throw new Error("Please sign in as a student.");
   return session.user.id;
+}
+
+// Used by the booking flow to grey out/hide times another student already
+// booked - the createBookingDraft conflict check below still enforces this
+// server-side as the source of truth, but without this the UI let two
+// students both pick the exact same slot and only found out one had lost
+// the race at final submission.
+export async function getAlumniBookedRanges(alumniId: string) {
+  try {
+    const params = new URLSearchParams({
+      select: "scheduledStartAt,scheduledEndAt",
+      alumniId: `eq.${alumniId}`,
+      status: "neq.cancelled",
+      scheduledStartAt: `gte.${new Date().toISOString()}`,
+    });
+    const res = await fetch(`${supabaseUrl}/rest/v1/Booking?${params.toString()}`, {
+      headers: restHeaders(),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to load booked ranges: ${res.status} ${await res.text()}`);
+    return (await res.json()) as { scheduledStartAt: string; scheduledEndAt: string }[];
+  } catch (error) {
+    console.error("getAlumniBookedRanges error:", error);
+    return [];
+  }
 }
 
 export async function getSessionOfferingWithAlumni(offeringId: string) {

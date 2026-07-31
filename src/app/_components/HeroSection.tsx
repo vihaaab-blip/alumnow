@@ -96,22 +96,8 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div data-hero-in className="flex flex-col gap-5 border-t border-white/8 pb-2 pt-6 mt-8 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-heading text-xl font-bold text-white tabular-nums">300+</span>
-              <span className="text-xs text-white/40">verified alumni</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-heading text-xl font-bold text-white tabular-nums">40+</span>
-              <span className="text-xs text-white/40">universities</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-heading text-xl font-bold text-white tabular-nums">4.8</span>
-              <span className="text-xs text-white/40">avg. session rating</span>
-            </div>
-          </div>
-          <span className="text-xs text-white/20 max-sm:hidden font-mono tracking-wider">
+        <div data-hero-in className="flex flex-col gap-5 border-t border-white/8 pb-2 pt-6 mt-8 sm:flex-row sm:items-center sm:justify-end">
+          <span className="text-xs text-white/20 font-mono tracking-wider">
             From where you are. To where you want to be.
           </span>
         </div>

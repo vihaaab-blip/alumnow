@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useSession, signOut } from "@/hooks/useSession";
 import { Logo } from "./Logo";
 import {
-  LayoutDashboard, Search, BookOpen, Star, User,
+  LayoutDashboard, Search, BookOpen, User,
   LogOut, ChevronRight, GraduationCap
 } from "lucide-react";
 
@@ -16,7 +16,6 @@ const sections = [
       { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { href: "/browse", icon: Search, label: "Network" },
       { href: "/bookings", icon: BookOpen, label: "My Bookings" },
-      { href: "/browse?tab=saved", icon: Star, label: "Saved" },
     ],
   },
   {
