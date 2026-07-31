@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Plus, X, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { setRecurringSlots, setOneOffSlots, deleteSlot } from "@/actions/availability.actions";
+import { DatePickerCalendar } from "@/components/DatePickerCalendar";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -177,38 +178,44 @@ export function AvailabilityEditor({ recurringSlots: initialRecurring, oneOffSlo
           )}
         </div>
 
-        <div className="flex flex-wrap items-end gap-4 border-t border-border pt-5">
-          <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Date</label>
-            <input
-              type="date"
-              value={newOneOff.specificDate}
-              onChange={(e) => setNewOneOff({ ...newOneOff, specificDate: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
+        <div className="grid gap-5 border-t border-border pt-5 lg:grid-cols-[minmax(0,340px)_1fr]">
+          <DatePickerCalendar
+            selectedDate={newOneOff.specificDate || null}
+            onSelectDate={(iso) => setNewOneOff({ ...newOneOff, specificDate: iso })}
+          />
+          <div className="flex flex-col justify-between gap-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Start</label>
+                <input
+                  type="time"
+                  value={newOneOff.startTime}
+                  onChange={(e) => setNewOneOff({ ...newOneOff, startTime: e.target.value })}
+                  className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">End</label>
+                <input
+                  type="time"
+                  value={newOneOff.endTime}
+                  onChange={(e) => setNewOneOff({ ...newOneOff, endTime: e.target.value })}
+                  className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                />
+              </div>
+            </div>
+            <div>
+              {newOneOff.specificDate && (
+                <p className="mb-3 text-sm text-white/50">
+                  {new Date(newOneOff.specificDate + "T12:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                </p>
+              )}
+              <Button onClick={handleAddOneOff} variant="outline" disabled={saving || !newOneOff.specificDate}>
+                <Plus className="mr-1 h-4 w-4" />
+                Add one-off slot
+              </Button>
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Start</label>
-            <input
-              type="time"
-              value={newOneOff.startTime}
-              onChange={(e) => setNewOneOff({ ...newOneOff, startTime: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">End</label>
-            <input
-              type="time"
-              value={newOneOff.endTime}
-              onChange={(e) => setNewOneOff({ ...newOneOff, endTime: e.target.value })}
-              className="h-11 rounded-[10px] border border-border bg-[#1A1A1A] px-3.5 text-sm text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
-          </div>
-          <Button onClick={handleAddOneOff} variant="outline" disabled={saving || !newOneOff.specificDate}>
-            <Plus className="mr-1 h-4 w-4" />
-            Add one-off
-          </Button>
         </div>
       </Card>
     </motion.div>
