@@ -112,26 +112,14 @@ export function PaymentModal({
           </div>
         )}
 
-        {bookingAmount != null && (() => {
-          const platformFee = Math.round(bookingAmount * 0.10);
-          const total = bookingAmount + platformFee;
-          return (
-            <div className="mt-4 rounded-xl border border-border/50 bg-[#0d0d0d]/60 px-4 py-3 text-left space-y-1.5">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Session fee</span>
-                <span className="font-medium text-primary">₹{(bookingAmount / 100).toLocaleString("en-IN")}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Platform fee (10%)</span>
-                <span className="font-medium text-primary">₹{(platformFee / 100).toLocaleString("en-IN")}</span>
-              </div>
-              <div className="flex justify-between text-sm pt-1.5 border-t border-border/40">
-                <span className="font-semibold text-primary">Total</span>
-                <span className="font-mono font-bold text-primary">₹{(total / 100).toLocaleString("en-IN")}</span>
-              </div>
+        {bookingAmount != null && (
+          <div className="mt-4 rounded-xl border border-border/50 bg-[#0d0d0d]/60 px-4 py-3 text-left space-y-1.5">
+            <div className="flex justify-between text-sm pt-0.5">
+              <span className="font-semibold text-primary">Total (no platform fee)</span>
+              <span className="font-mono font-bold text-primary">₹{(bookingAmount / 100).toLocaleString("en-IN")}</span>
             </div>
-          );
-        })()}
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">

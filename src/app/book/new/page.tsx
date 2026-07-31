@@ -49,14 +49,22 @@ const CORAL = "#E8573A";
 const CORAL_GRADIENT = "linear-gradient(135deg, #f06040 0%, #E8573A 60%, #d14a2e 100%)";
 const CORAL_GLOW = "0 0 18px rgba(232,87,58,0.35)";
 
-/** Round pricePaise to nearest ₹10, display without decimals */
-function formatPrice(paise: number): string {
-  const rupees = paise / 100;
-  const rounded = Math.round(rupees / 10) * 10;
-  return `₹${rounded.toLocaleString("en-IN")}`;
-}
 function roundedRupees(paise: number): number {
   return Math.round(paise / 100 / 10) * 10;
+}
+
+// Launch-week promo: the first 100 students pay the reduced rate instead of
+// the original per-session price. Only the two known original prices get the
+// strikethrough treatment - anything custom (e.g. an alumnus with a
+// non-default price) just shows as-is, no fee, no promo claim we can't back.
+const LAUNCH_PROMO: Record<number, { original: number; promo: number }> = {
+  29900: { original: 299, promo: 99 },
+  49900: { original: 499, promo: 179 },
+};
+function promoPricing(pricePaise: number): { original: number | null; final: number } {
+  const promo = LAUNCH_PROMO[pricePaise];
+  if (promo) return { original: promo.original, final: promo.promo };
+  return { original: null, final: roundedRupees(pricePaise) };
 }
 
 /* ─────────────── Step Progress Bar ─────────────── */
@@ -411,8 +419,7 @@ function SessionTypeStep({
         {sessionTypes.map((st) => {
           const active = selected?.id === st.id;
           const durationMin = getDurationMinutes(st.type);
-          const priceRounded = roundedRupees(st.pricePaise);
-          const platformFee = Math.round(priceRounded * 0.10 / 10) * 10;
+          const promo = promoPricing(st.pricePaise);
           const isGroup = st.type.includes("group") || st.maxParticipants > 1;
 
           return (
@@ -473,15 +480,22 @@ function SessionTypeStep({
 
                 {/* Price */}
                 <div className="text-right shrink-0">
+                  {promo.original != null && (
+                    <p className="text-[12px] text-white/25 line-through tabular-nums">
+                      ₹{promo.original.toLocaleString("en-IN")}
+                    </p>
+                  )}
                   <p
                     className="text-[18px] font-bold tabular-nums"
                     style={{ color: active ? CORAL : "rgba(255,255,255,0.85)" }}
                   >
-                    {formatPrice(st.pricePaise)}
+                    ₹{promo.final.toLocaleString("en-IN")}
                   </p>
-                  <p className="text-[11px] text-white/25 mt-0.5">
-                    + ₹{platformFee} fee
-                  </p>
+                  {promo.original != null && (
+                    <p className="text-[10px] font-semibold mt-0.5" style={{ color: CORAL }}>
+                      Launch offer
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -529,9 +543,8 @@ function SummaryRail({
     step === "datetime" ? !!(date && slot) :
     true;
 
-  const priceRounded = sessionType ? roundedRupees(sessionType.pricePaise) : 0;
-  const platformFee = Math.round(priceRounded * 0.10 / 10) * 10;
-  const total = priceRounded + platformFee;
+  const promo = sessionType ? promoPricing(sessionType.pricePaise) : { original: null, final: 0 };
+  const total = promo.final;
 
   const formattedDate = useMemo(() => {
     if (!date) return null;
@@ -581,7 +594,7 @@ function SummaryRail({
                 <Video size={13} className="text-white/25 shrink-0" />
                 <span className="capitalize">{sessionType.type.replace(/_/g, " ")}</span>
               </div>
-              <span className="text-[13px] font-semibold text-white">{formatPrice(sessionType.pricePaise)}</span>
+              <span className="text-[13px] font-semibold text-white">₹{promo.final.toLocaleString("en-IN")}</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-[12px] text-white/20 italic">
@@ -612,21 +625,19 @@ function SummaryRail({
             className="space-y-2 pt-4"
             style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
           >
-            <div className="flex justify-between text-[12px] text-white/35">
-              <span>Session fee</span>
-              <span>₹{priceRounded.toLocaleString("en-IN")}</span>
-            </div>
-            <div className="flex justify-between text-[12px] text-white/35">
-              <span>Platform fee (10%)</span>
-              <span>₹{platformFee.toLocaleString("en-IN")}</span>
-            </div>
+            {promo.original != null && (
+              <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: "rgba(232,87,58,0.08)" }}>
+                <span className="text-[11px] font-semibold" style={{ color: CORAL }}>Launch offer · first 100 students</span>
+                <span className="text-[11px] text-white/30 line-through">₹{promo.original.toLocaleString("en-IN")}</span>
+              </div>
+            )}
             <div
-              className="flex justify-between text-[16px] font-bold text-white pt-2"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+              className="flex justify-between text-[16px] font-bold text-white pt-1"
             >
               <span>Total</span>
               <span style={{ color: CORAL }}>₹{total.toLocaleString("en-IN")}</span>
             </div>
+            <p className="text-[10px] text-white/25">No platform fee — this is the full price.</p>
           </div>
         )}
 

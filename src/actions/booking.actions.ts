@@ -107,10 +107,17 @@ export async function createBookingDraft(input: unknown) {
       include: { alumni: true, sessionType: true },
     });
 
+    // Launch-week promo: the first 100 students pay the reduced rate. Only
+    // the two known original prices get discounted - anything custom is
+    // charged as-is. Applied here, not just in the checkout UI, so the
+    // actual UPI amount the student is asked to pay matches what they saw.
+    const LAUNCH_PROMO_PAISE: Record<number, number> = { 29900: 9900, 49900: 17900 };
+    const amountPaise = LAUNCH_PROMO_PAISE[offering.pricePaise] ?? offering.pricePaise;
+
     await prisma.payment.create({
       data: {
         bookingId: booking.id,
-        amountPaise: offering.pricePaise,
+        amountPaise,
       },
     });
 

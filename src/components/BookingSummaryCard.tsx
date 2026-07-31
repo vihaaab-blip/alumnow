@@ -29,13 +29,9 @@ const statusConfig: Record<string, { label: string; tone: "accent" | "success" |
   no_show: { label: "No show", tone: "neutral" },
 };
 
-const PLATFORM_FEE_RATE = 0.10; // 10%
-
 export function BookingSummaryCard({ booking }: { booking: BookingData }) {
   const amount = booking.payment?.amountPaise;
   const sessionFee = amount ?? null;
-  const platformFee = sessionFee != null ? Math.round(sessionFee * PLATFORM_FEE_RATE) : null;
-  const total = sessionFee != null && platformFee != null ? sessionFee + platformFee : null;
 
   const statusInfo =
     statusConfig[booking.status ?? ""] ?? { label: booking.status ?? "", tone: "neutral" as const };
@@ -97,27 +93,12 @@ export function BookingSummaryCard({ booking }: { booking: BookingData }) {
       {/* ── Itemised pricing ── */}
       {sessionFee != null && (
         <div className="border-t border-border/60 px-5 py-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Session fee</span>
-            <span className="font-medium text-primary">
-              ₹{(sessionFee / 100).toLocaleString("en-IN")}
-            </span>
-          </div>
-          {platformFee != null && platformFee > 0 && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Platform fee (10%)</span>
-              <span className="font-medium text-primary">
-                ₹{(platformFee / 100).toLocaleString("en-IN")}
-              </span>
-            </div>
-          )}
           <div
-            className="flex items-center justify-between pt-2 text-sm"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+            className="flex items-center justify-between pt-0.5 text-sm"
           >
             <span className="font-semibold text-primary">Total</span>
             <span className="font-mono font-bold text-primary">
-              ₹{((total ?? sessionFee) / 100).toLocaleString("en-IN")}
+              ₹{(sessionFee / 100).toLocaleString("en-IN")}
             </span>
           </div>
         </div>

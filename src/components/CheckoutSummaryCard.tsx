@@ -1,8 +1,6 @@
 "use client";
 import { Star, GraduationCap, Clock, CalendarDays } from "lucide-react";
 
-const PLATFORM_FEE_RATE = 0.10;
-
 type CheckoutSummaryProps = {
   alumni: {
     id: string;
@@ -27,8 +25,7 @@ export function CheckoutSummaryCard({
   scheduledTime,
   amountPaise,
 }: CheckoutSummaryProps) {
-  const platformFee = Math.round(amountPaise * PLATFORM_FEE_RATE);
-  const total = amountPaise + platformFee;
+  const total = amountPaise;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
@@ -106,17 +103,8 @@ export function CheckoutSummaryCard({
 
       {/* Itemised pricing */}
       <div className="px-5 py-4 space-y-2">
-        <div className="flex justify-between text-[13px]">
-          <span className="text-white/40">Session fee</span>
-          <span className="font-medium text-white/70">₹{(amountPaise / 100).toLocaleString("en-IN")}</span>
-        </div>
-        <div className="flex justify-between text-[13px]">
-          <span className="text-white/40">Platform fee (10%)</span>
-          <span className="font-medium text-white/70">₹{(platformFee / 100).toLocaleString("en-IN")}</span>
-        </div>
         <div
-          className="flex justify-between text-[14px] pt-2"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          className="flex justify-between text-[14px] pt-0.5"
         >
           <span className="font-semibold text-white">Total</span>
           <span
