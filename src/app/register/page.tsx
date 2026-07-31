@@ -133,13 +133,13 @@ function AlumniWizard({
   const defaultSessionTypes = [
     {
       type: "call_30",
-      pricePaise: 29900,
+      pricePaise: 9900,
       maxParticipants: 1,
       descriptionOneLiner: "A focused 30-minute mentoring call",
     },
     {
       type: "call_60",
-      pricePaise: 49900,
+      pricePaise: 17900,
       maxParticipants: 1,
       descriptionOneLiner: "A deeper 60-minute mentoring session",
     },
